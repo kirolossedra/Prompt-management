@@ -1,6 +1,5 @@
 export type CollectionName =
   | "endeavors"
-  | "folders"
   | "tasks"
   | "prompts"
   | "promptVersions"
@@ -44,19 +43,11 @@ export interface Endeavor extends BaseRecord {
   manualAgenticSummary: string;
 }
 
-export interface Folder extends BaseRecord {
-  name: string;
-  description: string;
-  endeavorId: string;
-  parentFolderId: string;
-}
-
 export interface Task extends BaseRecord {
   name: string;
   description: string;
   purpose: string;
   endeavorId: string;
-  folderId: string;
   manualSuggestedImprovement: string;
 }
 
@@ -130,7 +121,6 @@ export interface Decision extends BaseRecord {
 
 export interface VaultCollections {
   endeavors: Record<string, Endeavor>;
-  folders: Record<string, Folder>;
   tasks: Record<string, Task>;
   prompts: Record<string, Prompt>;
   promptVersions: Record<string, PromptVersion>;

@@ -6,7 +6,6 @@ import { COLLECTION_LABELS } from "../../lib/constants";
 import {
   activeRecords,
   cleanText,
-  isFolderDescendant,
   promptPath,
   recordTitle,
   scopeLabel,
@@ -237,7 +236,6 @@ export function EntityDialog({
 
   const options = useMemo(() => ({
     endeavors: activeRecords(data.endeavors).map((item) => ({ value: item.id, label: item.name })),
-    folders: activeRecords(data.folders).map((item) => ({ value: item.id, label: item.name })),
     tasks: activeRecords(data.tasks).map((item) => ({ value: item.id, label: taskPath(data, item.id) })),
     prompts: activeRecords(data.prompts).map((item) => ({ value: item.id, label: promptPath(data, item.id) })),
     localCommits: activeRecords(data.localCommits).map((item) => ({ value: item.id, label: `${item.displayId} — ${item.message}` })),
@@ -246,16 +244,6 @@ export function EntityDialog({
   if (!state) return null;
   const dialogState = state;
 
-  const endeavorId = text(form, "endeavorId");
-  const parentFolderOptions = options.folders.filter((option) => {
-    const folder = data.folders[option.value];
-    if (!folder || folder.endeavorId !== endeavorId) return false;
-    if (!dialogState.id) return true;
-    return !isFolderDescendant(data.folders, option.value, dialogState.id);
-  });
-  const taskFolderOptions = options.folders.filter(
-    (option) => data.folders[option.value]?.endeavorId === endeavorId,
-  );
 
   const scopeType = text(form, "scopeType");
   const scopeOptions =
@@ -269,7 +257,6 @@ export function EntityDialog({
 
   const artifactOptions = [
     ...options.endeavors.map((item) => ({ value: `endeavors:${item.value}`, label: `Endeavor — ${item.label}` })),
-    ...options.folders.map((item) => ({ value: `folders:${item.value}`, label: `Folder — ${item.label}` })),
     ...options.tasks.map((item) => ({ value: `tasks:${item.value}`, label: `Task — ${item.label}` })),
     ...options.prompts.map((item) => ({ value: `prompts:${item.value}`, label: `Prompt — ${item.label}` })),
   ];
@@ -286,31 +273,13 @@ export function EntityDialog({
       description: cleanText(text(form, "description"), 5_000),
       manualAgenticSummary: cleanText(text(form, "manualAgenticSummary"), 5_000),
     };
-    if (kind === "folders") {
-      const parentFolderId = text(form, "parentFolderId");
-      const nextEndeavor = required("endeavorId", "Endeavor");
-      if (parentFolderId) {
-        const parent = data.folders[parentFolderId];
-        if (!parent || parent.endeavorId !== nextEndeavor) throw new Error("The parent folder must belong to the selected endeavor.");
-        if (dialogState.id && isFolderDescendant(data.folders, parentFolderId, dialogState.id)) throw new Error("A folder cannot be moved inside itself or one of its descendants.");
-      }
-      return {
-        name: required("name", "Folder name", 160),
-        description: cleanText(text(form, "description"), 5_000),
-        endeavorId: nextEndeavor,
-        parentFolderId,
-      };
-    }
     if (kind === "tasks") {
       const nextEndeavor = required("endeavorId", "Endeavor");
-      const folderId = text(form, "folderId");
-      if (folderId && data.folders[folderId]?.endeavorId !== nextEndeavor) throw new Error("The selected folder must belong to the selected endeavor.");
       return {
         name: required("name", "Task name", 160),
         description: cleanText(text(form, "description"), 5_000),
         purpose: required("purpose", "Task purpose", 3_000),
         endeavorId: nextEndeavor,
-        folderId,
         manualSuggestedImprovement: cleanText(text(form, "manualSuggestedImprovement"), 5_000),
       };
     }
@@ -418,16 +387,9 @@ export function EntityDialog({
     <TextArea label="Description" name="description" form={form} setForm={setForm} rows={4} />
     <TextArea label="Agentic summary" name="manualAgenticSummary" form={form} setForm={setForm} hint="Manual Release 1 placeholder. Nothing generates this field." />
   </>;
-  else if (dialogState.kind === "folders") fields = <>
-    <TextInput label="Folder name" name="name" form={form} setForm={setForm} required />
-    <SelectField label="Endeavor" name="endeavorId" form={form} setForm={setForm} options={options.endeavors} required />
-    <SelectField label="Parent folder" name="parentFolderId" form={form} setForm={setForm} options={parentFolderOptions} hint="Leave empty to place this folder at the endeavor root." />
-    <TextArea label="Description" name="description" form={form} setForm={setForm} rows={4} />
-  </>;
   else if (dialogState.kind === "tasks") fields = <>
     <TextInput label="Task name" name="name" form={form} setForm={setForm} required />
     <SelectField label="Endeavor" name="endeavorId" form={form} setForm={setForm} options={options.endeavors} required />
-    <SelectField label="Folder" name="folderId" form={form} setForm={setForm} options={taskFolderOptions} hint="Leave empty to place the task directly under the endeavor." />
     <TextArea label="Purpose" name="purpose" form={form} setForm={setForm} required rows={3} />
     <TextArea label="Description" name="description" form={form} setForm={setForm} rows={4} />
     <TextArea label="Suggested improvement" name="manualSuggestedImprovement" form={form} setForm={setForm} hint="Manual future-AI placeholder." />

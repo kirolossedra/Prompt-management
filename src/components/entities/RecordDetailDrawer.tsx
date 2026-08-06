@@ -1,4 +1,4 @@
-import { Archive, Clock3, Copy, Pencil, Plus, Route, Sparkles } from "lucide-react";
+import { Archive, Clock3, Copy, Pencil, Plus, Route, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useVault } from "../../context/VaultContext";
 import { COLLECTION_LABELS } from "../../lib/constants";
@@ -50,7 +50,7 @@ export function RecordDetailDrawer({
   onClose: () => void;
 }) {
   const { data } = useVault();
-  const { openEdit, openCreate, requestArchive } = useEntityUi();
+  const { openEdit, openCreate, requestArchive, requestDelete } = useEntityUi();
   const record = selection ? (data[selection.collection][selection.id] as VaultRecord | undefined) : undefined;
 
   if (!selection || !record) {
@@ -60,6 +60,7 @@ export function RecordDetailDrawer({
   const genericActions = <>
     <Button variant="secondary" size="sm" icon={<Pencil size={15} />} onClick={() => openEdit(selection.collection, selection.id)}>Edit</Button>
     <Button variant="ghost" size="sm" icon={<Archive size={15} />} onClick={() => requestArchive(selection.collection, selection.id)}>Archive</Button>
+    <Button variant="danger" size="sm" icon={<Trash2 size={15} />} onClick={() => requestDelete(selection.collection, selection.id)}>Delete</Button>
   </>;
 
   let body = <>
@@ -68,25 +69,13 @@ export function RecordDetailDrawer({
 
   if (selection.collection === "endeavors") {
     const endeavor = data.endeavors[selection.id];
-    const folders = activeRecords(data.folders).filter((item) => item.endeavorId === endeavor.id);
+    if (!endeavor) return <Drawer open={false} onClose={onClose} title="Details"><span /></Drawer>;
     const tasks = activeRecords(data.tasks).filter((item) => item.endeavorId === endeavor.id);
     body = <>
       <Field label="Description" value={endeavor.description} />
       <Field label="Manual agentic summary" value={endeavor.manualAgenticSummary} />
-      <section className="detail-section"><span>Contents</span><div className="metric-row"><div><strong>{folders.length}</strong><small>Folders</small></div><div><strong>{tasks.length}</strong><small>Tasks</small></div></div></section>
-      <section className="detail-section"><span>Quick actions</span><div className="button-row"><Button size="sm" icon={<Plus size={15} />} onClick={() => openCreate("folders", { endeavorId: endeavor.id })}>Folder</Button><Button size="sm" icon={<Plus size={15} />} onClick={() => openCreate("tasks", { endeavorId: endeavor.id })}>Task</Button></div></section>
-    </>;
-  }
-
-  if (selection.collection === "folders") {
-    const folder = data.folders[selection.id];
-    const children = activeRecords(data.folders).filter((item) => item.parentFolderId === folder.id);
-    const tasks = activeRecords(data.tasks).filter((item) => item.folderId === folder.id);
-    body = <>
-      <div className="detail-meta"><Badge icon={<Route size={13} />}>{data.endeavors[folder.endeavorId]?.name || "Unavailable endeavor"}</Badge></div>
-      <Field label="Description" value={folder.description} />
-      <section className="detail-section"><span>Contents</span><div className="metric-row"><div><strong>{children.length}</strong><small>Child folders</small></div><div><strong>{tasks.length}</strong><small>Tasks</small></div></div></section>
-      <section className="detail-section"><span>Quick actions</span><div className="button-row"><Button size="sm" icon={<Plus size={15} />} onClick={() => openCreate("folders", { endeavorId: folder.endeavorId, parentFolderId: folder.id })}>Subfolder</Button><Button size="sm" icon={<Plus size={15} />} onClick={() => openCreate("tasks", { endeavorId: folder.endeavorId, folderId: folder.id })}>Task</Button></div></section>
+      <section className="detail-section"><span>Contents</span><div className="metric-row"><div><strong>{tasks.length}</strong><small>Tasks</small></div></div></section>
+      <section className="detail-section"><span>Quick actions</span><div className="button-row"><Button size="sm" icon={<Plus size={15} />} onClick={() => openCreate("tasks", { endeavorId: endeavor.id })}>Task</Button></div></section>
     </>;
   }
 
@@ -117,7 +106,33 @@ export function RecordDetailDrawer({
       <Field label="Manual suggested improvement" value={prompt.manualSuggestedImprovement} />
       <Field label="Manual AI evaluation placeholder" value={prompt.manualAiEvaluation} />
       <Field label="Manual generated context placeholder" value={prompt.manualGeneratedContext} />
-      <section className="detail-section"><div className="detail-section__head"><span>Versions ({versions.length})</span><Button size="sm" icon={<Plus size={15} />} onClick={() => openCreate("promptVersions", { promptId: prompt.id })}>Create version</Button></div>{versions.length ? <div className="timeline">{versions.map((version) => <button key={version.id} onClick={() => openEdit("promptVersions", version.id)}><Clock3 size={15} /><div><strong>{version.versionLabel}</strong><span>{version.changeDescription}</span><small>{formatDate(version.createdAt)}</small></div></button>)}</div> : <p className="muted-copy">No preserved versions yet.</p>}</section>
+      <section className="detail-section">
+        <div className="detail-section__head">
+          <span>Versions ({versions.length})</span>
+          <Button size="sm" icon={<Plus size={15} />} onClick={() => openCreate("promptVersions", { promptId: prompt.id })}>Create version</Button>
+        </div>
+        {versions.length ? (
+          <div className="timeline">
+            {versions.map((version) => (
+              <div className="timeline-row" key={version.id}>
+                <button className="timeline-row__main" onClick={() => openEdit("promptVersions", version.id)}>
+                  <Clock3 size={15} />
+                  <div>
+                    <strong>{version.versionLabel}</strong>
+                    <span>{version.changeDescription}</span>
+                    <small>{formatDate(version.createdAt)}</small>
+                  </div>
+                </button>
+                <div className="timeline-row__actions">
+                  <Button variant="ghost" size="icon" aria-label={`Edit ${version.versionLabel}`} icon={<Pencil size={14} />} onClick={() => openEdit("promptVersions", version.id)} />
+                  <Button variant="ghost" size="icon" aria-label={`Archive ${version.versionLabel}`} icon={<Archive size={14} />} onClick={() => requestArchive("promptVersions", version.id)} />
+                  <Button variant="danger" size="icon" aria-label={`Delete ${version.versionLabel}`} icon={<Trash2 size={14} />} onClick={() => requestDelete("promptVersions", version.id)} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : <p className="muted-copy">No preserved versions yet.</p>}
+      </section>
     </>;
   }
 

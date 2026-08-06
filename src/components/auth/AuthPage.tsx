@@ -54,7 +54,7 @@ export function AuthPage() {
           <p>Organize prompts, methodologies, preferences, and commit history in one private, version-controlled workspace—without sending your content to an AI model.</p>
         </div>
         <div className="auth-features">
-          <div><Layers3 /><strong>Flexible hierarchy</strong><span>Unlimited nested folders, tasks, and prompts.</span></div>
+          <div><Layers3 /><strong>Flexible hierarchy</strong><span>Direct Endeavor → Task → Prompt organization.</span></div>
           <div><GitCommitHorizontal /><strong>Meaningful history</strong><span>Local and global commits with manual evolution summaries.</span></div>
           <div><ShieldCheck /><strong>Private by default</strong><span>Owner-scoped Firebase workspace rules.</span></div>
         </div>

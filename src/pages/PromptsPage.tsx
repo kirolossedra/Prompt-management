@@ -14,7 +14,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 
 export function PromptsPage() {
   const { data } = useVault();
-  const { openCreate, openEdit, requestArchive } = useEntityUi();
+  const { openCreate, openEdit, requestArchive, requestDelete } = useEntityUi();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [query, setQuery] = useState("");
   const [taskId, setTaskId] = useState("");
@@ -27,7 +27,7 @@ export function PromptsPage() {
     <Card className="filter-bar"><label className="search-field"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search prompt titles, descriptions, purposes, or content…" /></label><select value={taskId} onChange={(event) => setTaskId(event.target.value)}><option value="">All tasks</option>{tasks.map((task) => <option key={task.id} value={task.id}>{taskPath(data, task.id)}</option>)}</select></Card>
     {prompts.length ? <div className="entity-grid">{prompts.map((prompt) => {
       const versions = activeRecords(data.promptVersions).filter((version) => version.promptId === prompt.id).length;
-      return <EntityCard key={prompt.id} title={prompt.title} meta={taskPath(data, prompt.taskId)} excerpt={prompt.description} icon={<FileCode2 />} badges={<><Badge tone="info">{versions} version{versions === 1 ? "" : "s"}</Badge><Badge tone="purple">Manual R1</Badge></>} onOpen={() => setSelection({ collection: "prompts", id: prompt.id })} onEdit={() => openEdit("prompts", prompt.id)} onArchive={() => requestArchive("prompts", prompt.id)} />;
+      return <EntityCard key={prompt.id} title={prompt.title} meta={taskPath(data, prompt.taskId)} excerpt={prompt.description} icon={<FileCode2 />} badges={<><Badge tone="info">{versions} version{versions === 1 ? "" : "s"}</Badge><Badge tone="purple">Manual R1</Badge></>} onOpen={() => setSelection({ collection: "prompts", id: prompt.id })} onEdit={() => openEdit("prompts", prompt.id)} onArchive={() => requestArchive("prompts", prompt.id)} onDelete={() => requestDelete("prompts", prompt.id)} />;
     })}</div> : <Card><EmptyState icon={<FileCode2 />} title={query || taskId ? "No prompts match these filters" : "No prompts yet"} description={query || taskId ? "Adjust the search or task filter." : "Create a prompt under a task to start preserving its purpose and evolution."} action={!query && !taskId ? <Button variant="primary" onClick={() => openCreate("prompts")}>Create prompt</Button> : undefined} /></Card>}
     <RecordDetailDrawer selection={selection} onClose={() => setSelection(null)} />
   </>;

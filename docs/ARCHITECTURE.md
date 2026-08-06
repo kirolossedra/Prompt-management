@@ -12,7 +12,6 @@ All private records live under the authenticated user's UID:
 intellectVault/users/{uid}
 ├── profile
 ├── endeavors
-├── folders
 ├── tasks
 ├── prompts
 ├── promptVersions
@@ -23,14 +22,36 @@ intellectVault/users/{uid}
 └── decisions
 ```
 
-Records are maps keyed by Firebase push IDs. Historical and operational records use archival fields instead of irreversible deletion because deletion semantics remain open.
+The content hierarchy is direct:
+
+```text
+Endeavor
+└── Task
+    └── Prompt
+        └── Prompt version
+```
+
+Records are maps keyed by Firebase push IDs.
+
+## CRUD and lifecycle
+
+Every implemented content collection supports:
+
+- Create through entity forms
+- Read through cards, hierarchy rows, search, and detail drawers
+- Update through edit forms
+- Archive and restore
+- Permanent deletion
+
+Permanent deletion is dependency-safe. A record cannot be deleted while another stored record still references it. For example, an endeavor must have no tasks or endeavor-scoped records before it can be permanently deleted.
 
 ## UI architecture
 
 - `AppShell`: responsive navigation, search, command palette, theme controls
-- `VaultProvider`: subscriptions, derived relationships, CRUD operations, blocker checks
+- `VaultProvider`: subscriptions, CRUD operations, archive/restore, permanent deletion, dependency checks
+- `EntityUiProvider`: shared create/edit/archive/delete dialogs
 - `EntityDialog`: entity-specific validated forms
-- `DetailDrawer`: reusable side panel for reading records and related history
+- `RecordDetailDrawer`: reusable side panel for reading and managing records
 - Pages: composed views with minimal direct data mutation
 
 ## Release boundary

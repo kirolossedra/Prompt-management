@@ -11,13 +11,12 @@ import { onValue, push, ref, update } from "firebase/database";
 import { toast } from "sonner";
 import { database, VAULT_ROOT } from "../lib/firebase";
 import { EMPTY_COLLECTIONS } from "../lib/constants";
-import { archiveBlockers, cleanText } from "../lib/utils";
+import { archiveBlockers, cleanText, deleteBlockers } from "../lib/utils";
 import { useAuth } from "./AuthContext";
 import type {
   CollectionName,
   Decision,
   Endeavor,
-  Folder,
   GlobalCommit,
   LocalCommit,
   Mindset,
@@ -42,6 +41,7 @@ interface VaultContextValue {
   createRecord: <T extends VaultRecord>(collection: CollectionName, input: RecordInput<T>) => Promise<string>;
   updateRecord: (collection: CollectionName, id: string, patch: Record<string, unknown>) => Promise<void>;
   archiveRecord: (collection: CollectionName, id: string) => Promise<void>;
+  deleteRecord: (collection: CollectionName, id: string) => Promise<void>;
   restoreRecord: (collection: CollectionName, id: string) => Promise<void>;
   saveProfile: (patch: Partial<WorkspaceProfile>) => Promise<void>;
   exportWorkspace: () => void;
@@ -56,6 +56,41 @@ function normalizeCollection<T extends VaultRecord>(value: unknown): Record<stri
       id,
       { id, ...(record || {}) } as T,
     ]),
+  );
+}
+
+function normalizeDecisions(value: unknown): Record<string, Decision> {
+  const decisions = normalizeCollection<Decision>(value);
+  return Object.fromEntries(
+    Object.entries(decisions).map(([id, decision]) => {
+      if (decision.title === "Unlimited nested folders") {
+        return [id, {
+          ...decision,
+          title: "Direct hierarchy",
+          question: "Direct hierarchy",
+          status: "Finalized",
+          resolution: "The hierarchy is Endeavor → Task → Prompt → Prompt version. Folder entities are not used.",
+          notes: "Updated from the original seeded hierarchy decision.",
+        } as Decision] as const;
+      }
+      if (decision.title === "Markup format" && decision.question.includes("folders")) {
+        return [id, {
+          ...decision,
+          question: "Which approved markup format should define endeavors, tasks, and prompt placeholders?",
+        } as Decision] as const;
+      }
+      if (decision.title === "Historical deletion and rollback") {
+        return [id, {
+          ...decision,
+          title: "Content deletion and rollback",
+          question: "Content deletion and rollback",
+          status: "Finalized",
+          resolution: "Implemented content records support archive/restore and dependency-safe permanent deletion. Permanent deletion is irreversible.",
+          notes: "Updated after full CRUD deletion behavior was explicitly requested.",
+        } as Decision] as const;
+      }
+      return [id, decision] as const;
+    }),
   );
 }
 
@@ -93,7 +128,6 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         setProfile(value.profile || null);
         setData({
           endeavors: normalizeCollection<Endeavor>(value.endeavors),
-          folders: normalizeCollection<Folder>(value.folders),
           tasks: normalizeCollection<Task>(value.tasks),
           prompts: normalizeCollection<Prompt>(value.prompts),
           promptVersions: normalizeCollection<PromptVersion>(value.promptVersions),
@@ -101,7 +135,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           preferences: normalizeCollection<Preference>(value.preferences),
           localCommits: normalizeCollection<LocalCommit>(value.localCommits),
           globalCommits: normalizeCollection<GlobalCommit>(value.globalCommits),
-          decisions: normalizeCollection<Decision>(value.decisions),
+          decisions: normalizeDecisions(value.decisions),
         });
         setLoading(false);
         setConnection("connected");
@@ -169,6 +203,21 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     [data, updateRecord, user],
   );
 
+  const deleteRecord = useCallback(
+    async (collection: CollectionName, id: string) => {
+      if (!user) throw new Error("A signed-in user is required.");
+      if (!id) throw new Error("A record identifier is required.");
+      const blockers = deleteBlockers(collection, id, data);
+      if (blockers.length) {
+        throw new Error(`Delete dependent records first: ${blockers.join(", ")}.`);
+      }
+      await update(ref(database), {
+        [`${VAULT_ROOT}/${user.uid}/${collection}/${id}`]: null,
+      });
+    },
+    [data, user],
+  );
+
   const restoreRecord = useCallback(
     async (collection: CollectionName, id: string) => {
       await updateRecord(collection, id, { archivedAt: null, archivedBy: null });
@@ -223,6 +272,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       createRecord,
       updateRecord,
       archiveRecord,
+      deleteRecord,
       restoreRecord,
       saveProfile,
       exportWorkspace,
@@ -235,6 +285,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       createRecord,
       updateRecord,
       archiveRecord,
+      deleteRecord,
       restoreRecord,
       saveProfile,
       exportWorkspace,

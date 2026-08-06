@@ -38,7 +38,7 @@ export function CommandPalette() {
   }, []);
 
   const records = useMemo(() => {
-    const kinds: CollectionName[] = ["endeavors", "folders", "tasks", "prompts", "mindsets", "preferences", "localCommits", "globalCommits", "decisions"];
+    const kinds: CollectionName[] = ["endeavors", "tasks", "prompts", "mindsets", "preferences", "localCommits", "globalCommits", "decisions"];
     return kinds.flatMap((kind) => activeRecords(data[kind] as Record<string, VaultRecord>).map((record) => ({ kind, record })))
       .filter(({ record }) => !query || JSON.stringify(record).toLowerCase().includes(query.toLowerCase()))
       .slice(0, 8);
@@ -56,7 +56,7 @@ export function CommandPalette() {
               <span className="command-label">Navigate</span>
               {routes.map(([label, path, Icon]) => <button key={path} onClick={() => { navigate(path); setOpen(false); }}><Icon size={17} /><span>{label}</span></button>)}
               <span className="command-label">Create</span>
-              <div className="command-create-grid">{(["endeavors", "folders", "tasks", "prompts", "mindsets", "preferences", "localCommits", "globalCommits"] as CollectionName[]).map((kind) => <button key={kind} onClick={() => { openCreate(kind); setOpen(false); }}>New {kind === "localCommits" ? "local commit" : kind === "globalCommits" ? "global commit" : kind.slice(0, -1)}</button>)}</div>
+              <div className="command-create-grid">{(["endeavors", "tasks", "prompts", "mindsets", "preferences", "localCommits", "globalCommits"] as CollectionName[]).map((kind) => <button key={kind} onClick={() => { openCreate(kind); setOpen(false); }}>New {kind === "localCommits" ? "local commit" : kind === "globalCommits" ? "global commit" : kind.slice(0, -1)}</button>)}</div>
             </> : <>
               <span className="command-label">Records</span>
               {records.map(({ kind, record }) => <button key={`${kind}:${record.id}`} onClick={() => { navigate(`/search?q=${encodeURIComponent(query)}`); setOpen(false); }}><Search size={16} /><span><strong>{recordTitle(kind, record)}</strong><small>{kind}</small></span></button>)}

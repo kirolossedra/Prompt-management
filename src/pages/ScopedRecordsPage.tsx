@@ -14,7 +14,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 
 export function ScopedRecordsPage({ kind }: { kind: "mindsets" | "preferences" }) {
   const { data } = useVault();
-  const { openCreate, openEdit, requestArchive } = useEntityUi();
+  const { openCreate, openEdit, requestArchive, requestDelete } = useEntityUi();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState("");
@@ -38,7 +38,7 @@ export function ScopedRecordsPage({ kind }: { kind: "mindsets" | "preferences" }
     <Card className="filter-bar"><label className="search-field"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${kind}…`} /></label><select value={scope} onChange={(event) => setScope(event.target.value)}><option value="">All scopes</option><option value="global">Global</option><option value="endeavor">Endeavor</option><option value="task">Task</option>{isMindset ? <option value="prompt">Prompt</option> : null}</select></Card>
     {records.length ? <div className="entity-grid">{records.map((record) => {
       const content = isMindset ? (record as Mindset).content : (record as Preference).instruction;
-      return <EntityCard key={record.id} title={record.title} meta={scopeLabel(data, record.scopeType, record.scopeId)} excerpt={content} icon={<Icon />} badges={<><Badge tone={record.scopeType === "global" ? "purple" : "info"}>{record.scopeType}</Badge>{isMindset && (record as Mindset).manualAiGeneratedMindset ? <Badge tone="warning">Manual AI placeholder filled</Badge> : null}</>} onOpen={() => setSelection({ collection: kind as CollectionName, id: record.id })} onEdit={() => openEdit(kind, record.id)} onArchive={() => requestArchive(kind, record.id)} />;
+      return <EntityCard key={record.id} title={record.title} meta={scopeLabel(data, record.scopeType, record.scopeId)} excerpt={content} icon={<Icon />} badges={<><Badge tone={record.scopeType === "global" ? "purple" : "info"}>{record.scopeType}</Badge>{isMindset && (record as Mindset).manualAiGeneratedMindset ? <Badge tone="warning">Manual AI placeholder filled</Badge> : null}</>} onOpen={() => setSelection({ collection: kind as CollectionName, id: record.id })} onEdit={() => openEdit(kind, record.id)} onArchive={() => requestArchive(kind, record.id)} onDelete={() => requestDelete(kind, record.id)} />;
     })}</div> : <Card><EmptyState icon={<Icon />} title={`No ${kind} found`} description={query || scope ? "Adjust the current filters." : `Create the first ${isMindset ? "methodology artifact" : "working preference"} in this workspace.`} action={!query && !scope ? <Button variant="primary" onClick={() => openCreate(kind)}>Create {isMindset ? "mindset" : "preference"}</Button> : undefined} /></Card>}
     <RecordDetailDrawer selection={selection} onClose={() => setSelection(null)} />
   </>;

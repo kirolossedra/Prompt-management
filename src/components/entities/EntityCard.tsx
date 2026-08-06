@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Archive, ArrowUpRight, Pencil } from "lucide-react";
+import { Archive, ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { Button } from "../ui/Button";
 
@@ -12,6 +12,7 @@ export function EntityCard({
   onOpen,
   onEdit,
   onArchive,
+  onDelete,
 }: {
   title: string;
   meta?: string;
@@ -21,6 +22,7 @@ export function EntityCard({
   onOpen: () => void;
   onEdit: () => void;
   onArchive: () => void;
+  onDelete: () => void;
 }) {
   return (
     <motion.article className="entity-card" layout whileHover={{ y: -3 }} transition={{ duration: 0.18 }}>
@@ -37,6 +39,7 @@ export function EntityCard({
       <footer>
         <Button variant="ghost" size="sm" icon={<Pencil size={15} />} onClick={onEdit}>Edit</Button>
         <Button variant="ghost" size="sm" icon={<Archive size={15} />} onClick={onArchive}>Archive</Button>
+        <Button variant="danger" size="sm" icon={<Trash2 size={15} />} onClick={onDelete}>Delete</Button>
       </footer>
     </motion.article>
   );

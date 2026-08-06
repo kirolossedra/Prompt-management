@@ -1,7 +1,6 @@
 import type {
   BaseRecord,
   CollectionName,
-  Folder,
   VaultCollections,
   VaultRecord,
 } from "../types/domain";
@@ -62,8 +61,7 @@ export function taskPath(data: VaultCollections, taskId: string): string {
   const task = data.tasks[taskId];
   if (!task) return "Unassigned task";
   const endeavor = data.endeavors[task.endeavorId];
-  const folder = task.folderId ? data.folders[task.folderId] : undefined;
-  return [endeavor?.name, folder?.name, task.name].filter(Boolean).join(" / ");
+  return [endeavor?.name, task.name].filter(Boolean).join(" / ");
 }
 
 export function promptPath(data: VaultCollections, promptId: string): string {
@@ -84,23 +82,6 @@ export function scopeLabel(
   return "Unknown scope";
 }
 
-export function isFolderDescendant(
-  folders: Record<string, Folder>,
-  candidateParentId: string,
-  folderId: string,
-): boolean {
-  if (!candidateParentId) return false;
-  if (candidateParentId === folderId) return true;
-  const visited = new Set<string>();
-  let cursor: Folder | undefined = folders[candidateParentId];
-  while (cursor && !visited.has(cursor.id)) {
-    if (cursor.parentFolderId === folderId) return true;
-    visited.add(cursor.id);
-    cursor = cursor.parentFolderId ? folders[cursor.parentFolderId] : undefined;
-  }
-  return false;
-}
-
 export function archiveBlockers(
   collection: CollectionName,
   id: string,
@@ -108,15 +89,7 @@ export function archiveBlockers(
 ): string[] {
   const blockers: string[] = [];
   if (collection === "endeavors") {
-    const folders = activeRecords(data.folders).filter((folder) => folder.endeavorId === id).length;
     const tasks = activeRecords(data.tasks).filter((task) => task.endeavorId === id).length;
-    if (folders) blockers.push(`${folders} active folder${folders === 1 ? "" : "s"}`);
-    if (tasks) blockers.push(`${tasks} active task${tasks === 1 ? "" : "s"}`);
-  }
-  if (collection === "folders") {
-    const folders = activeRecords(data.folders).filter((folder) => folder.parentFolderId === id).length;
-    const tasks = activeRecords(data.tasks).filter((task) => task.folderId === id).length;
-    if (folders) blockers.push(`${folders} active child folder${folders === 1 ? "" : "s"}`);
     if (tasks) blockers.push(`${tasks} active task${tasks === 1 ? "" : "s"}`);
   }
   if (collection === "tasks") {
@@ -127,6 +100,62 @@ export function archiveBlockers(
     const versions = activeRecords(data.promptVersions).filter((version) => version.promptId === id).length;
     if (versions) blockers.push(`${versions} active version${versions === 1 ? "" : "s"}`);
   }
+  return blockers;
+}
+
+function artifactReferenceCount(collection: CollectionName, id: string, data: VaultCollections): number {
+  const reference = `${collection}:${id}`;
+  return Object.values(data.localCommits).filter((commit) => commit.changedArtifacts.includes(reference)).length;
+}
+
+export function deleteBlockers(
+  collection: CollectionName,
+  id: string,
+  data: VaultCollections,
+): string[] {
+  const blockers: string[] = [];
+
+  if (collection === "endeavors") {
+    const tasks = Object.values(data.tasks).filter((task) => task.endeavorId === id).length;
+    const mindsets = Object.values(data.mindsets).filter((item) => item.scopeType === "endeavor" && item.scopeId === id).length;
+    const preferences = Object.values(data.preferences).filter((item) => item.scopeType === "endeavor" && item.scopeId === id).length;
+    if (tasks) blockers.push(`${tasks} task${tasks === 1 ? "" : "s"}`);
+    if (mindsets) blockers.push(`${mindsets} endeavor mindset${mindsets === 1 ? "" : "s"}`);
+    if (preferences) blockers.push(`${preferences} endeavor preference${preferences === 1 ? "" : "s"}`);
+  }
+
+  if (collection === "tasks") {
+    const prompts = Object.values(data.prompts).filter((prompt) => prompt.taskId === id).length;
+    const mindsets = Object.values(data.mindsets).filter((item) => item.scopeType === "task" && item.scopeId === id).length;
+    const preferences = Object.values(data.preferences).filter((item) => item.scopeType === "task" && item.scopeId === id).length;
+    const localCommits = Object.values(data.localCommits).filter((commit) => commit.taskId === id).length;
+    const globalCommits = Object.values(data.globalCommits).filter((commit) => commit.taskIds.includes(id)).length;
+    if (prompts) blockers.push(`${prompts} prompt${prompts === 1 ? "" : "s"}`);
+    if (mindsets) blockers.push(`${mindsets} task mindset${mindsets === 1 ? "" : "s"}`);
+    if (preferences) blockers.push(`${preferences} task preference${preferences === 1 ? "" : "s"}`);
+    if (localCommits) blockers.push(`${localCommits} local commit${localCommits === 1 ? "" : "s"}`);
+    if (globalCommits) blockers.push(`${globalCommits} global commit${globalCommits === 1 ? "" : "s"}`);
+  }
+
+  if (collection === "prompts") {
+    const versions = Object.values(data.promptVersions).filter((version) => version.promptId === id).length;
+    const mindsets = Object.values(data.mindsets).filter((item) => item.scopeType === "prompt" && item.scopeId === id).length;
+    if (versions) blockers.push(`${versions} prompt version${versions === 1 ? "" : "s"}`);
+    if (mindsets) blockers.push(`${mindsets} prompt mindset${mindsets === 1 ? "" : "s"}`);
+  }
+
+  if (collection === "localCommits") {
+    const versions = Object.values(data.promptVersions).filter((version) => version.localCommitId === id).length;
+    const globalCommits = Object.values(data.globalCommits).filter((commit) => commit.localCommitIds.includes(id)).length;
+    if (versions) blockers.push(`${versions} prompt version${versions === 1 ? "" : "s"}`);
+    if (globalCommits) blockers.push(`${globalCommits} global commit${globalCommits === 1 ? "" : "s"}`);
+  }
+
+  if (["endeavors", "tasks", "prompts", "promptVersions", "mindsets", "preferences"].includes(collection)) {
+    const references = artifactReferenceCount(collection, id, data);
+    if (references) blockers.push(`${references} local commit artifact reference${references === 1 ? "" : "s"}`);
+  }
+
   return blockers;
 }
 

@@ -18,7 +18,7 @@ export function DashboardPage() {
   const [selection, setSelection] = useState<Selection | null>(null);
 
   const recent = useMemo(() => {
-    const kinds: CollectionName[] = ["endeavors", "folders", "tasks", "prompts", "promptVersions", "mindsets", "preferences", "localCommits", "globalCommits", "decisions"];
+    const kinds: CollectionName[] = ["endeavors", "tasks", "prompts", "promptVersions", "mindsets", "preferences", "localCommits", "globalCommits", "decisions"];
     return kinds.flatMap((kind) => activeRecords(data[kind] as Record<string, VaultRecord>).map((record) => ({ kind, record: record as VaultRecord })))
       .sort((a, b) => b.record.updatedAt - a.record.updatedAt)
       .slice(0, 8);
@@ -59,6 +59,7 @@ export function DashboardPage() {
           <div className="card-header"><div><span className="eyebrow">Quick create</span><h2>Add to the vault</h2></div></div>
           <div className="quick-create-grid">
             <button onClick={() => openCreate("endeavors")}><BriefcaseBusiness /><span>Endeavor</span></button>
+            <button onClick={() => openCreate("tasks")}><BriefcaseBusiness /><span>Task</span></button>
             <button onClick={() => openCreate("prompts")}><FileCode2 /><span>Prompt</span></button>
             <button onClick={() => openCreate("mindsets")}><Brain /><span>Mindset</span></button>
             <button onClick={() => openCreate("preferences")}><SlidersHorizontal /><span>Preference</span></button>

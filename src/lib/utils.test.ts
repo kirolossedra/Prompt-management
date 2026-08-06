@@ -1,35 +1,88 @@
 import { describe, expect, it } from "vitest";
-import { isFolderDescendant } from "./utils";
-import type { Folder } from "../types/domain";
+import { deleteBlockers, taskPath } from "./utils";
+import type { VaultCollections } from "../types/domain";
 
-const stamp = { uid: "u", email: "u@example.com", displayName: "User" };
-const base = { createdAt: 1, updatedAt: 1, createdBy: stamp, updatedBy: stamp };
+const stamp = { uid: "user-1", email: "owner@example.com", displayName: "Owner" };
+const base = {
+  createdAt: 1,
+  updatedAt: 1,
+  createdBy: stamp,
+  updatedBy: stamp,
+  archivedAt: null,
+  archivedBy: null,
+};
 
-function folder(id: string, parentFolderId: string): Folder {
+function emptyData(): VaultCollections {
   return {
-    ...base,
-    id,
-    name: id,
-    description: "",
-    endeavorId: "e1",
-    parentFolderId,
+    endeavors: {},
+    tasks: {},
+    prompts: {},
+    promptVersions: {},
+    mindsets: {},
+    preferences: {},
+    localCommits: {},
+    globalCommits: {},
+    decisions: {},
   };
 }
 
-describe("isFolderDescendant", () => {
-  const folders = {
-    a: folder("a", ""),
-    b: folder("b", "a"),
-    c: folder("c", "b"),
-  };
+describe("direct hierarchy paths", () => {
+  it("builds an Endeavor / Task path without folders", () => {
+    const data = emptyData();
+    data.endeavors.e1 = {
+      ...base,
+      id: "e1",
+      name: "Career",
+      description: "",
+      manualAgenticSummary: "",
+    };
+    data.tasks.t1 = {
+      ...base,
+      id: "t1",
+      name: "Review Resume",
+      description: "",
+      purpose: "Review the resume",
+      endeavorId: "e1",
+      manualSuggestedImprovement: "",
+    };
 
-  it("detects self and descendants", () => {
-    expect(isFolderDescendant(folders, "a", "a")).toBe(true);
-    expect(isFolderDescendant(folders, "c", "a")).toBe(true);
+    expect(taskPath(data, "t1")).toBe("Career / Review Resume");
+  });
+});
+
+describe("dependency-safe deletion", () => {
+  it("blocks deleting an endeavor that still has a task", () => {
+    const data = emptyData();
+    data.endeavors.e1 = {
+      ...base,
+      id: "e1",
+      name: "Career",
+      description: "",
+      manualAgenticSummary: "",
+    };
+    data.tasks.t1 = {
+      ...base,
+      id: "t1",
+      name: "Review Resume",
+      description: "",
+      purpose: "Review the resume",
+      endeavorId: "e1",
+      manualSuggestedImprovement: "",
+    };
+
+    expect(deleteBlockers("endeavors", "e1", data)).toContain("1 task");
   });
 
-  it("allows unrelated or ancestor destinations", () => {
-    expect(isFolderDescendant(folders, "a", "c")).toBe(false);
-    expect(isFolderDescendant(folders, "", "a")).toBe(false);
+  it("allows deleting an unreferenced endeavor", () => {
+    const data = emptyData();
+    data.endeavors.e1 = {
+      ...base,
+      id: "e1",
+      name: "Career",
+      description: "",
+      manualAgenticSummary: "",
+    };
+
+    expect(deleteBlockers("endeavors", "e1", data)).toEqual([]);
   });
 });

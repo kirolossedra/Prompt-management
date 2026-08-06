@@ -17,7 +17,7 @@ export function SearchPage() {
   const query = params.get("q") || "";
   const results = useMemo(() => {
     if (!query) return [];
-    const kinds: CollectionName[] = ["endeavors", "folders", "tasks", "prompts", "promptVersions", "mindsets", "preferences", "localCommits", "globalCommits", "decisions"];
+    const kinds: CollectionName[] = ["endeavors", "tasks", "prompts", "promptVersions", "mindsets", "preferences", "localCommits", "globalCommits", "decisions"];
     return kinds.flatMap((kind) => activeRecords(data[kind] as Record<string, VaultRecord>).map((record) => ({ kind, record: record as VaultRecord }))).filter(({ record }) => matchesSearch(record, query));
   }, [data, query]);
 
