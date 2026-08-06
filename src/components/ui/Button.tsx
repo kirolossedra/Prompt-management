@@ -1,9 +1,9 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, type ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, type HTMLMotionProps } from "motion/react";
 import { cx } from "../../lib/utils";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
   variant?: "primary" | "secondary" | "ghost" | "danger" | "success";
   size?: "sm" | "md" | "lg" | "icon";
   loading?: boolean;
