@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "alerts": {
+      ".read": "auth != null",
+      ".write": true,
+      ".indexOn": ["powerSentAt"]
+    },
+    "labEquipmentTracker": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "activityLogs": {
+        ".indexOn": ["occurredAt"]
+      }
+    },
+    "intellectVault": {
+      "users": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    }
+  }
+}
