@@ -63,11 +63,28 @@ export interface Prompt extends BaseRecord {
   manualGeneratedContext: string;
 }
 
+export interface PromptSnapshot {
+  title: string;
+  description: string;
+  purpose: string;
+  content: string;
+  taskId: string;
+  manualAgenticSummary: string;
+  manualSuggestedImprovement: string;
+  manualAiEvaluation: string;
+  manualGeneratedContext: string;
+}
+
 export interface PromptVersion extends BaseRecord {
   promptId: string;
   versionLabel: string;
+  versionNumber?: number;
   content: string;
+  snapshot?: PromptSnapshot;
   changeDescription: string;
+  changedFields?: string[];
+  source?: "automatic" | "manual" | "copied";
+  changeType?: "created" | "updated" | "copied" | "manual";
   localCommitId: string;
 }
 
@@ -77,6 +94,8 @@ export interface Mindset extends BaseRecord {
   scopeType: ScopeType;
   scopeId: string;
   manualAiGeneratedMindset: string;
+  sourcePromptIds?: string[];
+  constructionMethod?: "manual" | "prompt-selection";
 }
 
 export interface Preference extends BaseRecord {
@@ -99,15 +118,31 @@ export interface LocalCommit extends BaseRecord {
   commitTimestamp: number;
 }
 
+export interface GlobalVersionSnapshot {
+  capturedAt: number;
+  profile: WorkspaceProfile | null;
+  endeavors: Record<string, Endeavor>;
+  tasks: Record<string, Task>;
+  prompts: Record<string, Prompt>;
+  promptVersions: Record<string, PromptVersion>;
+  mindsets: Record<string, Mindset>;
+  preferences: Record<string, Preference>;
+  localCommits: Record<string, LocalCommit>;
+  decisions: Record<string, Decision>;
+}
+
 export interface GlobalCommit extends BaseRecord {
   displayId: string;
   title: string;
   authorName: string;
-  taskIds: string[];
-  localCommitIds: string[];
   summary: string;
   commitToCommitSummary: string;
   commitTimestamp: number;
+  versionNumber?: number;
+  snapshot?: GlobalVersionSnapshot;
+  recordCounts?: Record<string, number>;
+  taskIds?: string[];
+  localCommitIds?: string[];
 }
 
 export interface Decision extends BaseRecord {

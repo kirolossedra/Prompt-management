@@ -184,7 +184,7 @@ function MultiSelectField({
           onChange={(event) =>
             setForm({
               ...form,
-              [name]: Array.from(event.target.selectedOptions, (option) => option.value),
+              [name]: Array.from(event.target.selectedOptions, (option: HTMLOptionElement) => option.value),
             })
           }
         >
@@ -224,7 +224,7 @@ export function EntityDialog({
       next.versionLabel = `Version ${activeRecords(data.promptVersions).filter((v) => v.promptId === promptId).length + 1}`;
     }
     if ((state.kind === "localCommits" || state.kind === "globalCommits") && !record) {
-      const prefix = state.kind === "localCommits" ? "LC" : "GC";
+      const prefix = state.kind === "localCommits" ? "LC" : "GV";
       const count = activeRecords(data[state.kind] as Record<string, VaultRecord>).length + 1;
       next.displayId = `${prefix}-${String(count).padStart(4, "0")}`;
       next.commitTimestamp = new Date().toISOString().slice(0, 16);
@@ -294,13 +294,23 @@ export function EntityDialog({
       manualAiEvaluation: cleanText(text(form, "manualAiEvaluation"), 5_000),
       manualGeneratedContext: cleanText(text(form, "manualGeneratedContext"), 10_000),
     };
-    if (kind === "promptVersions") return {
-      promptId: required("promptId", "Prompt"),
-      versionLabel: required("versionLabel", "Version label", 120),
-      content: required("content", "Version content", 50_000),
-      changeDescription: required("changeDescription", "Change description", 5_000),
-      localCommitId: text(form, "localCommitId"),
-    };
+    if (kind === "promptVersions") {
+      const currentVersion = dialogState.id ? data.promptVersions[dialogState.id] : undefined;
+      const content = required("content", "Version content", 50_000);
+      const payload: Record<string, unknown> = {
+        promptId: required("promptId", "Prompt"),
+        versionLabel: required("versionLabel", "Version label", 120),
+        content,
+        changeDescription: required("changeDescription", "Change description", 5_000),
+        changedFields: currentVersion?.changedFields || ["content"],
+        source: currentVersion?.source || "manual",
+        changeType: currentVersion?.changeType || "manual",
+        localCommitId: text(form, "localCommitId"),
+      };
+      if (currentVersion?.versionNumber !== undefined) payload.versionNumber = currentVersion.versionNumber;
+      if (currentVersion?.snapshot) payload.snapshot = { ...currentVersion.snapshot, content };
+      return payload;
+    }
     if (kind === "mindsets") {
       const nextScope = required("scopeType", "Scope type");
       return {
@@ -309,6 +319,8 @@ export function EntityDialog({
         scopeType: nextScope,
         scopeId: nextScope === "global" ? "" : required("scopeId", "Scope"),
         manualAiGeneratedMindset: cleanText(text(form, "manualAiGeneratedMindset"), 10_000),
+        sourcePromptIds: dialogState.id ? data.mindsets[dialogState.id]?.sourcePromptIds || [] : [],
+        constructionMethod: dialogState.id ? data.mindsets[dialogState.id]?.constructionMethod || "manual" : "manual",
       };
     }
     if (kind === "preferences") {
@@ -338,18 +350,14 @@ export function EntityDialog({
       };
     }
     if (kind === "globalCommits") {
-      const displayId = required("displayId", "Commit identifier", 80);
-      const duplicate = Object.values(data.globalCommits).some((commit) => commit.id !== dialogState.id && commit.displayId.toLowerCase() === displayId.toLowerCase());
-      if (duplicate) throw new Error("That global commit identifier already exists.");
+      const currentVersion = dialogState.id ? data.globalCommits[dialogState.id] : undefined;
       return {
-        displayId,
-        title: required("title", "Global commit title", 240),
-        authorName: required("authorName", "Author", 160),
-        taskIds: list(form, "taskIds"),
-        localCommitIds: list(form, "localCommitIds"),
-        summary: required("summary", "Summary", 10_000),
+        displayId: currentVersion?.displayId || required("displayId", "Global version identifier", 80),
+        title: required("title", "Global version title", 240),
+        authorName: currentVersion?.authorName || required("authorName", "Author", 160),
+        summary: cleanText(text(form, "summary"), 10_000),
         commitToCommitSummary: cleanText(text(form, "commitToCommitSummary"), 10_000),
-        commitTimestamp: new Date(required("commitTimestamp", "Commit timestamp")).getTime(),
+        commitTimestamp: currentVersion?.commitTimestamp || new Date(required("commitTimestamp", "Version timestamp")).getTime(),
       };
     }
     return {
@@ -410,8 +418,8 @@ export function EntityDialog({
     <SelectField label="Prompt" name="promptId" form={form} setForm={setForm} options={options.prompts} required disabled={isEditing} />
     <TextInput label="Version label" name="versionLabel" form={form} setForm={setForm} required />
     <TextArea label="Change description" name="changeDescription" form={form} setForm={setForm} required rows={4} />
-    <SelectField label="Related local commit" name="localCommitId" form={form} setForm={setForm} options={options.localCommits} />
     <TextArea label="Preserved version content" name="content" form={form} setForm={setForm} required rows={16} code />
+    <div className="inline-callout warning"><strong>Historical snapshot</strong><span>Editing this record changes saved history. Normal prompt edits create new versions automatically and do not modify prior versions.</span></div>
   </>;
   else if (dialogState.kind === "mindsets") fields = <>
     <TextInput label="Mindset title" name="title" form={form} setForm={setForm} required />
@@ -451,15 +459,14 @@ export function EntityDialog({
   </>;
   else if (dialogState.kind === "globalCommits") fields = <>
     <div className="form-grid form-grid--2">
-      <TextInput label="Unique identifier" name="displayId" form={form} setForm={setForm} required />
-      <TextInput label="Commit timestamp" name="commitTimestamp" form={form} setForm={setForm} required type="datetime-local" />
+      <TextInput label="Global version identifier" name="displayId" form={form} setForm={setForm} required />
+      <TextInput label="Snapshot timestamp" name="commitTimestamp" form={form} setForm={setForm} required type="datetime-local" />
     </div>
-    <TextInput label="Global commit title" name="title" form={form} setForm={setForm} required />
+    <TextInput label="Global version title" name="title" form={form} setForm={setForm} required />
     <TextInput label="Author" name="authorName" form={form} setForm={setForm} required />
-    <MultiSelectField label="Related tasks" name="taskIds" form={form} setForm={setForm} options={options.tasks} />
-    <MultiSelectField label="Included local commits" name="localCommitIds" form={form} setForm={setForm} options={options.localCommits} />
-    <TextArea label="Summary" name="summary" form={form} setForm={setForm} required rows={7} />
-    <TextArea label="Commit-to-commit summary" name="commitToCommitSummary" form={form} setForm={setForm} rows={5} />
+    <TextArea label="Summary" name="summary" form={form} setForm={setForm} rows={7} />
+    <TextArea label="Version-to-version summary" name="commitToCommitSummary" form={form} setForm={setForm} rows={5} />
+    <div className="inline-callout"><strong>The captured snapshot is immutable here.</strong><span>This form edits only the global version metadata. It does not rewrite the stored vault snapshot.</span></div>
   </>;
   else fields = <>
     <div className="form-grid form-grid--2">

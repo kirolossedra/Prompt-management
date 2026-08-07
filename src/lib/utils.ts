@@ -1,6 +1,9 @@
 import type {
   BaseRecord,
   CollectionName,
+  Prompt,
+  PromptSnapshot,
+  PromptVersion,
   VaultCollections,
   VaultRecord,
 } from "../types/domain";
@@ -82,6 +85,67 @@ export function scopeLabel(
   return "Unknown scope";
 }
 
+export function promptSnapshot(prompt: Pick<Prompt,
+  | "title"
+  | "description"
+  | "purpose"
+  | "content"
+  | "taskId"
+  | "manualAgenticSummary"
+  | "manualSuggestedImprovement"
+  | "manualAiEvaluation"
+  | "manualGeneratedContext"
+>): PromptSnapshot {
+  return {
+    title: prompt.title || "",
+    description: prompt.description || "",
+    purpose: prompt.purpose || "",
+    content: prompt.content || "",
+    taskId: prompt.taskId || "",
+    manualAgenticSummary: prompt.manualAgenticSummary || "",
+    manualSuggestedImprovement: prompt.manualSuggestedImprovement || "",
+    manualAiEvaluation: prompt.manualAiEvaluation || "",
+    manualGeneratedContext: prompt.manualGeneratedContext || "",
+  };
+}
+
+export function promptVersionSnapshot(version: PromptVersion): PromptSnapshot {
+  return version.snapshot || {
+    title: "",
+    description: "",
+    purpose: "",
+    content: version.content || "",
+    taskId: "",
+    manualAgenticSummary: "",
+    manualSuggestedImprovement: "",
+    manualAiEvaluation: "",
+    manualGeneratedContext: "",
+  };
+}
+
+export function promptChangedFields(previous: PromptSnapshot, next: PromptSnapshot): string[] {
+  return (Object.keys(previous) as Array<keyof PromptSnapshot>)
+    .filter((key) => previous[key] !== next[key]);
+}
+
+export function matchesPromptWords(
+  prompt: Prompt,
+  versions: PromptVersion[],
+  query: string,
+): boolean {
+  const words = query
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(Boolean);
+  if (!words.length) return true;
+  const versionText = versions
+    .map((version) => JSON.stringify(version.snapshot || version.content || ""))
+    .join(" ");
+  const searchable = `${JSON.stringify(prompt)} ${versionText}`.toLowerCase();
+  return words.every((word) => searchable.includes(word));
+}
+
 export function archiveBlockers(
   collection: CollectionName,
   id: string,
@@ -96,16 +160,12 @@ export function archiveBlockers(
     const prompts = activeRecords(data.prompts).filter((prompt) => prompt.taskId === id).length;
     if (prompts) blockers.push(`${prompts} active prompt${prompts === 1 ? "" : "s"}`);
   }
-  if (collection === "prompts") {
-    const versions = activeRecords(data.promptVersions).filter((version) => version.promptId === id).length;
-    if (versions) blockers.push(`${versions} active version${versions === 1 ? "" : "s"}`);
-  }
   return blockers;
 }
 
 function artifactReferenceCount(collection: CollectionName, id: string, data: VaultCollections): number {
   const reference = `${collection}:${id}`;
-  return Object.values(data.localCommits).filter((commit) => commit.changedArtifacts.includes(reference)).length;
+  return Object.values(data.localCommits).filter((commit) => commit.changedArtifacts?.includes(reference)).length;
 }
 
 export function deleteBlockers(
@@ -129,31 +189,27 @@ export function deleteBlockers(
     const mindsets = Object.values(data.mindsets).filter((item) => item.scopeType === "task" && item.scopeId === id).length;
     const preferences = Object.values(data.preferences).filter((item) => item.scopeType === "task" && item.scopeId === id).length;
     const localCommits = Object.values(data.localCommits).filter((commit) => commit.taskId === id).length;
-    const globalCommits = Object.values(data.globalCommits).filter((commit) => commit.taskIds.includes(id)).length;
     if (prompts) blockers.push(`${prompts} prompt${prompts === 1 ? "" : "s"}`);
     if (mindsets) blockers.push(`${mindsets} task mindset${mindsets === 1 ? "" : "s"}`);
     if (preferences) blockers.push(`${preferences} task preference${preferences === 1 ? "" : "s"}`);
-    if (localCommits) blockers.push(`${localCommits} local commit${localCommits === 1 ? "" : "s"}`);
-    if (globalCommits) blockers.push(`${globalCommits} global commit${globalCommits === 1 ? "" : "s"}`);
+    if (localCommits) blockers.push(`${localCommits} legacy local commit${localCommits === 1 ? "" : "s"}`);
   }
 
   if (collection === "prompts") {
-    const versions = Object.values(data.promptVersions).filter((version) => version.promptId === id).length;
     const mindsets = Object.values(data.mindsets).filter((item) => item.scopeType === "prompt" && item.scopeId === id).length;
-    if (versions) blockers.push(`${versions} prompt version${versions === 1 ? "" : "s"}`);
+    const constructions = Object.values(data.mindsets).filter((item) => item.sourcePromptIds?.includes(id)).length;
     if (mindsets) blockers.push(`${mindsets} prompt mindset${mindsets === 1 ? "" : "s"}`);
+    if (constructions) blockers.push(`${constructions} constructed mindset source reference${constructions === 1 ? "" : "s"}`);
   }
 
   if (collection === "localCommits") {
     const versions = Object.values(data.promptVersions).filter((version) => version.localCommitId === id).length;
-    const globalCommits = Object.values(data.globalCommits).filter((commit) => commit.localCommitIds.includes(id)).length;
     if (versions) blockers.push(`${versions} prompt version${versions === 1 ? "" : "s"}`);
-    if (globalCommits) blockers.push(`${globalCommits} global commit${globalCommits === 1 ? "" : "s"}`);
   }
 
   if (["endeavors", "tasks", "prompts", "promptVersions", "mindsets", "preferences"].includes(collection)) {
     const references = artifactReferenceCount(collection, id, data);
-    if (references) blockers.push(`${references} local commit artifact reference${references === 1 ? "" : "s"}`);
+    if (references) blockers.push(`${references} legacy local commit artifact reference${references === 1 ? "" : "s"}`);
   }
 
   return blockers;

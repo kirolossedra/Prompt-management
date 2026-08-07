@@ -9,6 +9,7 @@ export function EntityCard({
   excerpt,
   icon,
   badges,
+  extraActions,
   onOpen,
   onEdit,
   onArchive,
@@ -19,6 +20,7 @@ export function EntityCard({
   excerpt?: string;
   icon: ReactNode;
   badges?: ReactNode;
+  extraActions?: ReactNode;
   onOpen: () => void;
   onEdit: () => void;
   onArchive: () => void;
@@ -37,6 +39,7 @@ export function EntityCard({
       </button>
       {badges ? <div className="entity-card__badges">{badges}</div> : null}
       <footer>
+        {extraActions}
         <Button variant="ghost" size="sm" icon={<Pencil size={15} />} onClick={onEdit}>Edit</Button>
         <Button variant="ghost" size="sm" icon={<Archive size={15} />} onClick={onArchive}>Archive</Button>
         <Button variant="danger" size="sm" icon={<Trash2 size={15} />} onClick={onDelete}>Delete</Button>

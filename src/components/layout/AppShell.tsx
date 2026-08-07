@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, ArchiveRestore, Brain, BriefcaseBusiness, ChevronDown, FileCode2, GitCommitHorizontal, LayoutDashboard, LogOut, Menu, Moon, Network, Settings2, SlidersHorizontal, Sun, X } from "lucide-react";
+import { Archive, ArchiveRestore, Brain, BrainCircuit, BriefcaseBusiness, Camera, ChevronDown, FileCode2, LayoutDashboard, LogOut, Menu, Moon, Network, Settings2, SlidersHorizontal, Sun, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { toast } from "sonner";
@@ -17,8 +17,9 @@ const nav = [
   ["Hierarchy", "/hierarchy", Network, "endeavors"],
   ["Prompts", "/prompts", FileCode2, "prompts"],
   ["Mindsets", "/mindsets", Brain, "mindsets"],
+  ["Mindset construction", "/mindset-construction", BrainCircuit, ""],
   ["Preferences", "/preferences", SlidersHorizontal, "preferences"],
-  ["Commits", "/commits", GitCommitHorizontal, ""],
+  ["Versions", "/commits", Camera, ""],
   ["Decisions", "/decisions", BriefcaseBusiness, "decisions"],
 ] as const;
 

@@ -54,6 +54,9 @@ export function EntityUiProvider({ children }: { children: ReactNode }) {
   const archiveDependencies = archiveTarget ? archiveBlockers(archiveTarget.kind, archiveTarget.id, data) : [];
   const deleteRecordTarget = deleteTarget ? data[deleteTarget.kind][deleteTarget.id] : undefined;
   const deleteDependencies = deleteTarget ? deleteBlockers(deleteTarget.kind, deleteTarget.id, data) : [];
+  const cascadingPromptVersions = deleteTarget?.kind === "prompts"
+    ? Object.values(data.promptVersions).filter((version) => version.promptId === deleteTarget.id).length
+    : 0;
 
   async function confirmArchive() {
     if (!archiveTarget) return;
@@ -129,7 +132,9 @@ export function EntityUiProvider({ children }: { children: ReactNode }) {
         ) : (
           <div className="inline-callout warning">
             <strong>This action cannot be undone.</strong>
-            <span>The record will be removed from Firebase permanently. Use Archive instead when you may need it later.</span>
+            <span>{deleteTarget?.kind === "prompts" && cascadingPromptVersions
+              ? `The prompt and its ${cascadingPromptVersions} saved version${cascadingPromptVersions === 1 ? "" : "s"} will be removed from Firebase permanently.`
+              : "The record will be removed from Firebase permanently. Use Archive instead when you may need it later."}</span>
           </div>
         )}
       </Modal>

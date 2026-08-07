@@ -7,8 +7,8 @@ export const COLLECTION_LABELS: Record<CollectionName, string> = {
   promptVersions: "Prompt version",
   mindsets: "Mindset",
   preferences: "Preference",
-  localCommits: "Local commit",
-  globalCommits: "Global commit",
+  localCommits: "Legacy local commit",
+  globalCommits: "Global version",
   decisions: "Decision",
 };
 
@@ -26,8 +26,6 @@ export const EMPTY_COLLECTIONS = {
 
 export const OPEN_PRODUCT_DECISIONS = [
   ["Markup format", "Markup-defined hierarchy", "Which approved markup format should define endeavors, tasks, and prompt placeholders?"],
-  ["Prompt-version creation behavior", "Prompt versions", "Should versions be created manually, on every edit, or only through local commits?"],
-  ["Mindset internal structure", "Mindsets", "Should mindsets remain free text or use structured fields?"],
   ["Mindset inheritance", "Mindsets", "How should scoped mindsets combine, inherit, and resolve conflicts?"],
   ["Preference precedence", "Preferences", "Should scoped preferences merge, override, or surface conflicts without resolution?"],
   ["Collaboration storage model", "Collaboration", "Should collaborators edit live shared records, replicas, or synchronized copies?"],
@@ -37,9 +35,12 @@ export const OPEN_PRODUCT_DECISIONS = [
 
 export const FINALIZED_DECISIONS = [
   ["Manual-first Release 1", "Release scope", "Release 1 performs no AI calls or automatic AI generation."],
-  ["Direct hierarchy", "Hierarchy", "The hierarchy is Endeavor → Task → Prompt → Prompt version. Folder entities are not used."],
-  ["Manual prompt history", "Prompt versions", "Previous prompt content is preserved through explicit version records."],
-  ["Two commit levels", "Change tracking", "The product supports user-controlled local and global commits."],
+  ["Direct hierarchy", "Hierarchy", "The hierarchy is Endeavor → Task → Prompt → Prompt version."],
+  ["Automatic prompt history", "Prompt versions", "Creating or saving a prompt automatically records a complete prompt snapshot in that prompt's local history."],
+  ["Global versions", "Version control", "The owner can explicitly release a named global version containing a snapshot of the current vault."],
+  ["Prompt copying", "Prompts", "A prompt can be copied into a new prompt with its own independent history."],
+  ["Vault-wide prompt search", "Prompts", "Prompt word search runs across prompt fields and version content without requiring an endeavor or task filter."],
+  ["Mindset construction", "Mindsets", "A persona-style mindset can be manually assembled from a user-selected set of prompts without AI generation."],
   ["Private by default", "Workspace", "Workspace content is owner-private unless future collaboration is explicitly configured."],
   ["Full content CRUD", "Data lifecycle", "Implemented content records support create, read, update, archive/restore, and dependency-safe permanent deletion."],
 ] as const;
@@ -59,7 +60,7 @@ export function initialDecisions(): Omit<Decision, "id" | "createdAt" | "updated
     status: "Finalized" as const,
     question: title,
     resolution,
-    notes: "Imported from the approved Release 1 specification and subsequent product decisions.",
+    notes: "Imported from approved product decisions.",
   }));
   return [...open, ...finalized];
 }

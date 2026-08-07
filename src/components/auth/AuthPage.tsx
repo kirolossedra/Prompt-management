@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { Archive, GitCommitHorizontal, Layers3, ShieldCheck, Sparkles } from "lucide-react";
+import { Archive, Camera, History, Layers3, ShieldCheck, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../ui/Button";
@@ -55,7 +55,8 @@ export function AuthPage() {
         </div>
         <div className="auth-features">
           <div><Layers3 /><strong>Flexible hierarchy</strong><span>Direct Endeavor → Task → Prompt organization.</span></div>
-          <div><GitCommitHorizontal /><strong>Meaningful history</strong><span>Local and global commits with manual evolution summaries.</span></div>
+          <div><History /><strong>Automatic prompt history</strong><span>Every saved prompt state is preserved locally.</span></div>
+          <div><Camera /><strong>Global versions</strong><span>Release named snapshots of the complete current vault.</span></div>
           <div><ShieldCheck /><strong>Private by default</strong><span>Owner-scoped Firebase workspace rules.</span></div>
         </div>
       </motion.section>
