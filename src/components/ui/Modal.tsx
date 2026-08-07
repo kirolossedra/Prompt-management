@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { X } from "lucide-react";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { Button } from "./Button";
 
 export function Modal({
@@ -23,6 +24,7 @@ export function Modal({
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const isPhone = useMediaQuery("(max-width: 680px)");
 
   useEffect(() => {
     if (!open) return;
@@ -75,11 +77,12 @@ export function Modal({
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={description ? descriptionId : undefined}
-            initial={{ opacity: 0, y: 18, scale: 0.985 }}
+            initial={isPhone ? { opacity: 0, y: 56 } : { opacity: 0, y: 12, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.99 }}
-            transition={{ type: "spring", stiffness: 390, damping: 32 }}
+            exit={isPhone ? { opacity: 0, y: 40 } : { opacity: 0, y: 8, scale: 0.995 }}
+            transition={{ type: "spring", stiffness: 430, damping: 36 }}
           >
+            <div className="modal-handle" aria-hidden />
             <header className="modal-header">
               <div>
                 <h2 id={titleId}>{title}</h2>
