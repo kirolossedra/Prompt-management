@@ -28,6 +28,7 @@ import {
   Save,
   Trash2,
   UploadCloud,
+  WandSparkles,
 } from "lucide-react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -292,8 +293,10 @@ export function PromptWorkspacePage() {
           <Button size="sm" variant="ghost" icon={<Focus size={15} />} onClick={() => setFocusMode((value) => !value)}>{focusMode ? "Exit focus" : "Focus"}</Button>
           <Button size="sm" variant="ghost" icon={inspectorOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />} onClick={() => setInspectorOpen((value) => !value)}>Details</Button>
           <Button size="sm" variant="secondary" icon={<Copy size={15} />} onClick={() => void copyCurrentPromptText()}>Copy</Button>
+          <Button size="sm" variant="ghost" icon={<WandSparkles size={15} />} onClick={() => navigate(`/ai/repurpose-prompt?source=${encodeURIComponent(prompt.id)}`)}>Repurpose</Button>
           <ActionMenu items={[
             { label: "Copy prompt text", icon: <Copy size={15} />, onSelect: () => void copyCurrentPromptText() },
+            { label: "Repurpose with AI", icon: <WandSparkles size={15} />, onSelect: () => navigate(`/ai/repurpose-prompt?source=${encodeURIComponent(prompt.id)}`) },
             { label: "Duplicate prompt", icon: <Files size={15} />, onSelect: () => void duplicate() },
             { label: "Archive prompt", icon: <Archive size={15} />, onSelect: () => requestArchive("prompts", prompt.id), separatorBefore: true },
             { label: "Delete prompt", icon: <Trash2 size={15} />, onSelect: () => requestDelete("prompts", prompt.id), danger: true },

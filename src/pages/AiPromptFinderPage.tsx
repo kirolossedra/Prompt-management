@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { ArrowRight, BrainCircuit, Copy, FileSearch2, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BrainCircuit, Copy, FileSearch2, Search, ShieldCheck, Sparkles, WandSparkles } from "lucide-react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { buildActivePromptIndex } from "../ai/promptIndex";
@@ -108,7 +108,7 @@ export function AiPromptFinderPage() {
 
       {!result && !error ? (
         <section className="ai-finder-start-state">
-          <div className="ai-finder-privacy-note"><ShieldCheck size={17} /><div><strong>Focused retrieval payload</strong><p>Only current active Prompt ID, title, description, purpose, content, Task, and Endeavor are sent for matching. Attachments, version history, achievements, and profile data are excluded.</p></div></div>
+          <div className="ai-finder-privacy-note"><ShieldCheck size={17} /><div><strong>Focused retrieval payload</strong><p>Current active Prompt ID, title, description, purpose, content, Task, Endeavor, and direct Inspired by / Inspires relationships are sent for matching. Attachments, version history, achievements, profile data, Mindsets, Preferences, and Decisions are excluded.</p></div></div>
           <div className="ai-finder-examples"><span className="eyebrow">Try a description</span>{EXAMPLES.map((example) => <button key={example} onClick={() => setQuery(example)}><BrainCircuit size={15} /><span>{example}</span><ArrowRight size={14} /></button>)}</div>
         </section>
       ) : null}
@@ -129,6 +129,7 @@ export function AiPromptFinderPage() {
               </div>
               <div className="ai-match__actions">
                 <Button variant="secondary" size="sm" icon={<ArrowRight size={14} />} onClick={() => navigate(`/prompts/${prompt.id}`)}>Open Prompt</Button>
+                <Button variant="ghost" size="sm" icon={<WandSparkles size={14} />} onClick={() => navigate(`/ai/repurpose-prompt?source=${encodeURIComponent(prompt.id)}`)}>Repurpose</Button>
                 <Button variant="ghost" size="sm" icon={<Copy size={14} />} onClick={() => void copyPrompt(prompt.id)}>Copy</Button>
               </div>
             </article>

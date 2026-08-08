@@ -19,6 +19,7 @@ import {
   Search,
   Share2,
   Sparkles,
+  WandSparkles,
   Settings2,
   SlidersHorizontal,
   Sun,
@@ -50,6 +51,7 @@ const workspaceNav = [
 
 const aiNav = [
   ["Find Prompt", "/ai/find-prompt", Sparkles, ""],
+  ["Repurpose Prompt", "/ai/repurpose-prompt", WandSparkles, ""],
 ] as const;
 
 const historyNav = [

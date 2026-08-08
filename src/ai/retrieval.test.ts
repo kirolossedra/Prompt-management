@@ -3,8 +3,8 @@ import { normalizePromptFinderMatches } from "./retrieval";
 import type { SearchablePrompt } from "./types";
 
 const prompts: SearchablePrompt[] = [
-  { id: "p1", title: "One", description: "", purpose: "", content: "", task: "Task", endeavor: "Endeavor" },
-  { id: "p2", title: "Two", description: "", purpose: "", content: "", task: "Task", endeavor: "Endeavor" },
+  { id: "p1", title: "One", description: "", purpose: "", content: "", task: "Task", endeavor: "Endeavor", relationships: { inspiredBy: [], inspires: [] } },
+  { id: "p2", title: "Two", description: "", purpose: "", content: "", task: "Task", endeavor: "Endeavor", relationships: { inspiredBy: [], inspires: [] } },
 ];
 
 describe("normalizePromptFinderMatches", () => {

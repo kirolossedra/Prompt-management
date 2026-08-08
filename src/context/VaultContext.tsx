@@ -73,6 +73,7 @@ interface VaultContextValue {
   removePromptRelation: (relationId: string) => Promise<void>;
   recordRelationshipMapDownload: (format: "svg" | "png") => Promise<void>;
   recordPromptFinderSearch: (matchCount: number) => Promise<void>;
+  recordPromptRepurpose: (sourcePromptId: string) => Promise<void>;
   createGlobalVersion: (title: string, summary: string) => Promise<string>;
   saveProfile: (patch: Partial<WorkspaceProfile>) => Promise<void>;
   exportWorkspace: () => void;
@@ -666,6 +667,18 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     [recordActivity],
   );
 
+  const recordPromptRepurpose = useCallback(
+    async (sourcePromptId: string) => {
+      await recordActivity(
+        "ai.prompt-repurpose.generated",
+        "ai",
+        sourcePromptId,
+        `Repurposed ${data.prompts[sourcePromptId]?.title || "Prompt"}`,
+      );
+    },
+    [data.prompts, recordActivity],
+  );
+
   const createGlobalVersion = useCallback(
     async (title: string, summary: string) => {
       if (!user) throw new Error("A signed-in user is required.");
@@ -853,6 +866,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       removePromptRelation,
       recordRelationshipMapDownload,
       recordPromptFinderSearch,
+      recordPromptRepurpose,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,
@@ -877,6 +891,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       removePromptRelation,
       recordRelationshipMapDownload,
       recordPromptFinderSearch,
+      recordPromptRepurpose,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,

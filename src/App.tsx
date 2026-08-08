@@ -10,6 +10,7 @@ import { AppShell } from "./components/layout/AppShell";
 import { LoadingScreen } from "./components/ui/LoadingScreen";
 import { AchievementsPage } from "./pages/AchievementsPage";
 import { AiPromptFinderPage } from "./pages/AiPromptFinderPage";
+import { AiPromptRepurposePage } from "./pages/AiPromptRepurposePage";
 import { ArchivePage } from "./pages/ArchivePage";
 import { CommitsPage } from "./pages/CommitsPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -35,6 +36,7 @@ function AuthenticatedRoutes() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="achievements" element={<AchievementsPage />} />
           <Route path="ai/find-prompt" element={<AiPromptFinderPage />} />
+          <Route path="ai/repurpose-prompt" element={<AiPromptRepurposePage />} />
           <Route path="hierarchy" element={<HierarchyPage />} />
           <Route path="prompts" element={<PromptsPage />} />
           <Route path="prompts/:promptId" element={<PromptWorkspacePage />} />

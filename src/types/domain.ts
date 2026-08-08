@@ -42,7 +42,8 @@ export type ActivityAction =
   | "relationship.updated"
   | "relationship.removed"
   | "relationship.map-downloaded"
-  | "ai.prompt-finder.searched";
+  | "ai.prompt-finder.searched"
+  | "ai.prompt-repurpose.generated";
 
 export interface ActivityDay {
   date: string;
