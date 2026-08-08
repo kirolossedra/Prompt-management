@@ -72,6 +72,7 @@ interface VaultContextValue {
   updatePromptRelation: (relationId: string, parentPromptId: string, childPromptId: string) => Promise<void>;
   removePromptRelation: (relationId: string) => Promise<void>;
   recordRelationshipMapDownload: (format: "svg" | "png") => Promise<void>;
+  recordPromptFinderSearch: (matchCount: number) => Promise<void>;
   createGlobalVersion: (title: string, summary: string) => Promise<string>;
   saveProfile: (patch: Partial<WorkspaceProfile>) => Promise<void>;
   exportWorkspace: () => void;
@@ -653,6 +654,18 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     [recordActivity],
   );
 
+  const recordPromptFinderSearch = useCallback(
+    async (matchCount: number) => {
+      await recordActivity(
+        "ai.prompt-finder.searched",
+        "ai",
+        "semantic-prompt-finder",
+        `${matchCount} semantic match${matchCount === 1 ? "" : "es"}`,
+      );
+    },
+    [recordActivity],
+  );
+
   const createGlobalVersion = useCallback(
     async (title: string, summary: string) => {
       if (!user) throw new Error("A signed-in user is required.");
@@ -839,6 +852,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       updatePromptRelation,
       removePromptRelation,
       recordRelationshipMapDownload,
+      recordPromptFinderSearch,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,
@@ -862,6 +876,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       updatePromptRelation,
       removePromptRelation,
       recordRelationshipMapDownload,
+      recordPromptFinderSearch,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,

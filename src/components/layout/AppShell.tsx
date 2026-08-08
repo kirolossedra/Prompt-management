@@ -18,6 +18,7 @@ import {
   PanelLeftOpen,
   Search,
   Share2,
+  Sparkles,
   Settings2,
   SlidersHorizontal,
   Sun,
@@ -45,6 +46,10 @@ const workspaceNav = [
   ["Mindsets", "/mindsets", Brain, "mindsets"],
   ["Mindset builder", "/mindset-construction", BrainCircuit, ""],
   ["Preferences", "/preferences", SlidersHorizontal, "preferences"],
+] as const;
+
+const aiNav = [
+  ["Find Prompt", "/ai/find-prompt", Sparkles, ""],
 ] as const;
 
 const historyNav = [
@@ -110,13 +115,14 @@ export function AppShell() {
       const endeavor = task ? data.endeavors[task.endeavorId] : undefined;
       return [endeavor?.name, task?.name, prompt?.title].filter(Boolean) as string[];
     }
-    const entries = [...workspaceNav, ...historyNav, ...systemNav];
+    const entries = [...workspaceNav, ...aiNav, ...historyNav, ...systemNav];
     const current = entries.find(([, path]) => location.pathname === path || location.pathname.startsWith(`${path}/`));
     return [profile?.workspaceName || "Personal Vault", current?.[0] || "IntellectVault"];
   }, [data.endeavors, data.prompts, data.tasks, location.pathname, profile?.workspaceName]);
 
   const groups = [
     ["Workspace", workspaceNav],
+    ["AI", aiNav],
     ["History", historyNav],
     ["System", systemNav],
   ] as const;
