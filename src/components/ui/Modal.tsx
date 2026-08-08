@@ -24,13 +24,18 @@ export function Modal({
     <Dialog.Root open={open} onOpenChange={(value) => { if (!value) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal-backdrop" />
-        <Dialog.Content className={`modal-panel modal-panel--${size}`} onOpenAutoFocus={(event) => {
-          const target = event.currentTarget.querySelector("input, textarea, select") as HTMLElement | null;
-          if (target) {
-            event.preventDefault();
-            target.focus();
-          }
-        }}>
+        <Dialog.Content
+          className={`modal-panel modal-panel--${size}`}
+          onOpenAutoFocus={(event) => {
+            const content = event.currentTarget as HTMLElement | null;
+            const target = content?.querySelector<HTMLElement>("input, textarea, select") ?? null;
+
+            if (target) {
+              event.preventDefault();
+              target.focus();
+            }
+          }}
+        >
           <div className="modal-handle" aria-hidden />
           <header className="modal-header">
             <div>
@@ -38,7 +43,9 @@ export function Modal({
               {description ? <Dialog.Description>{description}</Dialog.Description> : null}
             </div>
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon" aria-label="Close dialog"><X size={19} /></Button>
+              <Button variant="ghost" size="icon" aria-label="Close dialog">
+                <X size={19} />
+              </Button>
             </Dialog.Close>
           </header>
           <div className="modal-content">{children}</div>
