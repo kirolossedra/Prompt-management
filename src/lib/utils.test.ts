@@ -24,6 +24,7 @@ function emptyData(): VaultCollections {
     tasks: {},
     prompts: {},
     promptVersions: {},
+    promptAttachments: {},
     mindsets: {},
     preferences: {},
     localCommits: {},
