@@ -48,6 +48,7 @@ export const FINALIZED_DECISIONS = [
   ["Prompt inspiration relationships", "Prompts", "Prompts can link across endeavors using a directed Inspired by relationship; the inverse view is shown as Inspires, and the complete relationship graph can be downloaded."],
   ["Semantic Prompt Finder", "AI", "The first AI capability is read-only semantic retrieval: Gemini ranks existing active Prompt IDs while Firebase/current vault data remains authoritative."],
   ["Prompt Repurposer", "AI", "A user can combine an original Prompt Y with a repurpose objective X; Gemini generates an editable candidate that is saved only on explicit confirmation as a new independent Prompt."],
+  ["Prompt Mixer", "AI", "A user can combine two or more existing Prompts into one editable AI-generated candidate, then discard it, save it as a new Prompt, or intentionally save it as the next version of an existing Prompt."],
   ["AI pipeline registry", "AI", "Every active AI feature must document its client payload, server prompting contract, structured output, validation, and persistence behavior in docs/AI_PIPELINES.md."],
   ["Activity achievements", "Engagement", "Activity milestones count distinct local calendar days of vault use; they are cumulative and do not require consecutive-day streaks."],
   ["Private by default", "Workspace", "Workspace content is owner-private unless future collaboration is explicitly configured."],

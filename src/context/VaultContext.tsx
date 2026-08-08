@@ -74,6 +74,7 @@ interface VaultContextValue {
   recordRelationshipMapDownload: (format: "svg" | "png") => Promise<void>;
   recordPromptFinderSearch: (matchCount: number) => Promise<void>;
   recordPromptRepurpose: (sourcePromptId: string) => Promise<void>;
+  recordPromptMix: (sourcePromptIds: string[]) => Promise<void>;
   createGlobalVersion: (title: string, summary: string) => Promise<string>;
   saveProfile: (patch: Partial<WorkspaceProfile>) => Promise<void>;
   exportWorkspace: () => void;
@@ -679,6 +680,19 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     [data.prompts, recordActivity],
   );
 
+  const recordPromptMix = useCallback(
+    async (sourcePromptIds: string[]) => {
+      const ids = [...new Set(sourcePromptIds.filter(Boolean))];
+      await recordActivity(
+        "ai.prompt-mixer.generated",
+        "ai",
+        ids.join(","),
+        `Mixed ${ids.length} Prompt${ids.length === 1 ? "" : "s"}`,
+      );
+    },
+    [recordActivity],
+  );
+
   const createGlobalVersion = useCallback(
     async (title: string, summary: string) => {
       if (!user) throw new Error("A signed-in user is required.");
@@ -867,6 +881,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       recordRelationshipMapDownload,
       recordPromptFinderSearch,
       recordPromptRepurpose,
+      recordPromptMix,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,
@@ -892,6 +907,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       recordRelationshipMapDownload,
       recordPromptFinderSearch,
       recordPromptRepurpose,
+      recordPromptMix,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,

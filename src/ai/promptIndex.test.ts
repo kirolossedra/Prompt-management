@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildActivePromptIndex, buildRepurposePromptSource, MAX_PROMPT_INDEX_CONTENT_CHARS } from "./promptIndex";
+import { buildActivePromptIndex, buildPromptMixSources, buildRepurposePromptSource, MAX_PROMPT_INDEX_CONTENT_CHARS } from "./promptIndex";
 import type { VaultCollections } from "../types/domain";
 
 const stamp = { uid: "u1", email: "u@example.com", displayName: "User" };
@@ -58,5 +58,13 @@ describe("buildRepurposePromptSource", () => {
       task: "App",
       endeavor: "Engineering",
     });
+  });
+});
+
+
+describe("buildPromptMixSources", () => {
+  it("preserves selected order while removing duplicates and unavailable prompts", () => {
+    const vault = data();
+    expect(buildPromptMixSources(vault, ["p2", "p1", "p2", "missing"]).map((prompt) => prompt.id)).toEqual(["p2", "p1"]);
   });
 });

@@ -17,6 +17,7 @@ import {
   History,
   GitFork,
   Link2,
+  Layers3,
   Map,
   Pencil,
   Plus,
@@ -294,9 +295,11 @@ export function PromptWorkspacePage() {
           <Button size="sm" variant="ghost" icon={inspectorOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />} onClick={() => setInspectorOpen((value) => !value)}>Details</Button>
           <Button size="sm" variant="secondary" icon={<Copy size={15} />} onClick={() => void copyCurrentPromptText()}>Copy</Button>
           <Button size="sm" variant="ghost" icon={<WandSparkles size={15} />} onClick={() => navigate(`/ai/repurpose-prompt?source=${encodeURIComponent(prompt.id)}`)}>Repurpose</Button>
+          <Button size="sm" variant="ghost" icon={<Layers3 size={15} />} onClick={() => navigate(`/ai/prompt-mixer?source=${encodeURIComponent(prompt.id)}`)}>Mix</Button>
           <ActionMenu items={[
             { label: "Copy prompt text", icon: <Copy size={15} />, onSelect: () => void copyCurrentPromptText() },
             { label: "Repurpose with AI", icon: <WandSparkles size={15} />, onSelect: () => navigate(`/ai/repurpose-prompt?source=${encodeURIComponent(prompt.id)}`) },
+            { label: "Mix with other Prompts", icon: <Layers3 size={15} />, onSelect: () => navigate(`/ai/prompt-mixer?source=${encodeURIComponent(prompt.id)}`) },
             { label: "Duplicate prompt", icon: <Files size={15} />, onSelect: () => void duplicate() },
             { label: "Archive prompt", icon: <Archive size={15} />, onSelect: () => requestArchive("prompts", prompt.id), separatorBefore: true },
             { label: "Delete prompt", icon: <Trash2 size={15} />, onSelect: () => requestDelete("prompts", prompt.id), danger: true },

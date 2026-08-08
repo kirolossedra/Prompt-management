@@ -69,3 +69,26 @@ export interface PromptRepurposeResponse {
   model: string;
   sourcePromptId: string;
 }
+
+
+export interface PromptMixSource extends RepurposePromptSource {}
+
+export interface MixedPromptDraft {
+  title: string;
+  description: string;
+  purpose: string;
+  content: string;
+}
+
+export interface PromptMixRequest {
+  uid: string;
+  prompts: PromptMixSource[];
+  direction?: string;
+}
+
+export interface PromptMixResponse {
+  draft: MixedPromptDraft;
+  provider: "gemini";
+  model: string;
+  sourcePromptIds: string[];
+}

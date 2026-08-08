@@ -10,6 +10,7 @@ import {
   FileCode2,
   Home,
   LayoutDashboard,
+  Layers3,
   LogOut,
   Menu,
   Moon,
@@ -51,6 +52,7 @@ const workspaceNav = [
 
 const aiNav = [
   ["Find Prompt", "/ai/find-prompt", Sparkles, ""],
+  ["Prompt Mixer", "/ai/prompt-mixer", Layers3, ""],
   ["Repurpose Prompt", "/ai/repurpose-prompt", WandSparkles, ""],
 ] as const;
 

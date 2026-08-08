@@ -3,6 +3,7 @@ import type { Prompt, VaultCollections } from "../types/domain";
 import type {
   PromptRelationshipPeer,
   RepurposePromptSource,
+  PromptMixSource,
   SearchablePrompt,
 } from "./types";
 
@@ -85,4 +86,15 @@ export function buildRepurposePromptSource(data: VaultCollections, promptId: str
     task: location.task,
     endeavor: location.endeavor,
   };
+}
+
+
+export function buildPromptMixSources(data: VaultCollections, promptIds: string[]): PromptMixSource[] {
+  const seen = new Set<string>();
+  return promptIds.flatMap((promptId) => {
+    if (!promptId || seen.has(promptId)) return [];
+    seen.add(promptId);
+    const source = buildRepurposePromptSource(data, promptId);
+    return source ? [source] : [];
+  });
 }
