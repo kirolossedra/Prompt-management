@@ -20,7 +20,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { useVault } from "../context/VaultContext";
 import { copyTextToClipboard } from "../lib/clipboard";
-import { lineDiff } from "../lib/diff";
+import { compactDiff, diffStats, lineDiff, sideBySideDiff } from "../lib/diff";
 import { activeRecords, cx, formatDate, promptVersionSnapshot, taskPath } from "../lib/utils";
 import type { PromptSnapshot } from "../types/domain";
 import { useEntityUi } from "../components/entities/EntityUiProvider";
@@ -59,6 +59,7 @@ export function PromptWorkspacePage() {
   const [compareA, setCompareA] = useState("");
   const [compareB, setCompareB] = useState("");
   const [diffMode, setDiffMode] = useState<"unified" | "side">("unified");
+  const [diffScope, setDiffScope] = useState<"changes" | "all">("changes");
   const tab = searchParams.get("tab") === "history" ? "history" : "editor";
 
   useEffect(() => {
@@ -156,6 +157,9 @@ export function PromptWorkspacePage() {
   const snapshotA = selectedA ? promptVersionSnapshot(selectedA) : null;
   const snapshotB = selectedB ? promptVersionSnapshot(selectedB) : null;
   const diff = snapshotA && snapshotB ? lineDiff(snapshotA.content, snapshotB.content) : [];
+  const stats = diffStats(diff);
+  const unifiedRows = diffScope === "changes" ? compactDiff(diff, 2) : diff.map((line) => ({ kind: "line" as const, line }));
+  const sideRows = sideBySideDiff(diff);
   const currentVersion = versions[0]?.versionNumber || versions.length;
 
   return (
@@ -199,9 +203,64 @@ export function PromptWorkspacePage() {
             <div className="version-timeline__list">{versions.map((version, index) => <button key={version.id} className={compareB === version.id ? "current" : ""} onClick={() => setCompareB(version.id)}><span className="timeline-node" /><span><strong>{version.versionLabel}</strong><small>{version.changeDescription}</small><time>{formatDate(version.createdAt)}</time></span>{index === 0 ? <Badge tone="success">Current</Badge> : null}</button>)}</div>
           </aside>
           <main className="version-inspector">
-            <div className="compare-toolbar"><div><label>From<select value={compareA} onChange={(event) => setCompareA(event.target.value)}>{versions.map((version) => <option key={version.id} value={version.id}>{version.versionLabel}</option>)}</select></label><span>→</span><label>To<select value={compareB} onChange={(event) => setCompareB(event.target.value)}>{versions.map((version) => <option key={version.id} value={version.id}>{version.versionLabel}</option>)}</select></label></div><div className="segmented-control"><button className={diffMode === "unified" ? "active" : ""} onClick={() => setDiffMode("unified")}>Unified</button><button className={diffMode === "side" ? "active" : ""} onClick={() => setDiffMode("side")}>Side by side</button></div></div>
+            <div className="compare-toolbar">
+              <div>
+                <label>From<select value={compareA} onChange={(event) => setCompareA(event.target.value)}>{versions.map((version) => <option key={version.id} value={version.id}>{version.versionLabel}</option>)}</select></label>
+                <span>→</span>
+                <label>To<select value={compareB} onChange={(event) => setCompareB(event.target.value)}>{versions.map((version) => <option key={version.id} value={version.id}>{version.versionLabel}</option>)}</select></label>
+              </div>
+              <div className="diff-toolbar-options">
+                <div className="segmented-control" aria-label="Diff scope">
+                  <button className={diffScope === "changes" ? "active" : ""} onClick={() => setDiffScope("changes")}>Changes only</button>
+                  <button className={diffScope === "all" ? "active" : ""} onClick={() => setDiffScope("all")}>All lines</button>
+                </div>
+                <div className="segmented-control" aria-label="Diff layout">
+                  <button className={diffMode === "unified" ? "active" : ""} onClick={() => setDiffMode("unified")}>Unified</button>
+                  <button className={diffMode === "side" ? "active" : ""} onClick={() => setDiffMode("side")}>Side by side</button>
+                </div>
+              </div>
+            </div>
             {selectedB ? <div className="version-summary"><div><Badge tone="info">{selectedB.versionLabel}</Badge><strong>{selectedB.changeDescription}</strong><small>{formatDate(selectedB.createdAt)} · changed {selectedB.changedFields?.join(", ") || "content"}</small></div><div><Button size="sm" variant="ghost" icon={<Copy size={15} />} onClick={async () => { try { await copyTextToClipboard(snapshotB?.content || ""); toast.success("Historical content copied."); } catch (error) { toast.error(error instanceof Error ? error.message : "Could not copy historical content."); } }}>Copy content</Button>{versions[0]?.id !== selectedB.id ? <Button size="sm" icon={<RotateCcw size={15} />} onClick={() => void restoreVersion(selectedB.id)}>Restore as new version</Button> : null}</div></div> : null}
-            {snapshotA && snapshotB ? diffMode === "unified" ? <div className="diff-view diff-view--unified">{diff.map((line, index) => <div key={index} className={`diff-line diff-line--${line.kind}`}><span>{line.kind === "add" ? "+" : line.kind === "remove" ? "−" : " "}</span><code>{line.text || " "}</code></div>)}</div> : <div className="diff-side"><section><header>{selectedA?.versionLabel}</header><pre>{snapshotA.content}</pre></section><section><header>{selectedB?.versionLabel}</header><pre>{snapshotB.content}</pre></section></div> : <div className="empty-surface"><Eye size={26} /><h2>Select versions to compare</h2></div>}
+            {snapshotA && snapshotB ? (
+              <>
+                <div className="diff-stats" aria-label={`${stats.additions} lines added and ${stats.removals} lines removed`}>
+                  <span className="diff-stat diff-stat--add">+{stats.additions} added</span>
+                  <span className="diff-stat diff-stat--remove">−{stats.removals} removed</span>
+                  {stats.additions === 0 && stats.removals === 0 ? <span className="diff-stat diff-stat--same">No line changes</span> : null}
+                </div>
+                {diffMode === "unified" ? (
+                  <div className="diff-view diff-view--unified" role="table" aria-label={`Line diff from ${selectedA?.versionLabel || "older version"} to ${selectedB?.versionLabel || "newer version"}`}>
+                    <div className="diff-header-row" role="row">
+                      <span title="Old line">Old</span><span title="New line">New</span><span aria-hidden="true" /><code>Prompt content</code>
+                    </div>
+                    {unifiedRows.map((row, index) => row.kind === "omitted" ? (
+                      <div key={`omitted-${index}`} className="diff-omitted"><span>•••</span><span>{row.count} unchanged {row.count === 1 ? "line" : "lines"}</span></div>
+                    ) : (
+                      <div key={`${row.line.kind}-${row.line.oldLineNumber ?? "x"}-${row.line.newLineNumber ?? "x"}-${index}`} className={`diff-line diff-line--${row.line.kind}`} role="row">
+                        <span className="diff-line-number">{row.line.oldLineNumber ?? ""}</span>
+                        <span className="diff-line-number">{row.line.newLineNumber ?? ""}</span>
+                        <span className="diff-marker" aria-label={row.line.kind === "add" ? "Added line" : row.line.kind === "remove" ? "Removed line" : "Unchanged line"}>{row.line.kind === "add" ? "+" : row.line.kind === "remove" ? "−" : " "}</span>
+                        <code>{row.line.text || " "}</code>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="diff-side diff-side--review" role="table" aria-label={`Side-by-side line diff from ${selectedA?.versionLabel || "older version"} to ${selectedB?.versionLabel || "newer version"}`}>
+                    <div className="diff-side__header"><span>{selectedA?.versionLabel}</span><span>{selectedB?.versionLabel}</span></div>
+                    {sideRows.map((row, index) => {
+                      const changed = row.left.kind !== "same" || row.right.kind !== "same";
+                      if (diffScope === "changes" && !changed) return null;
+                      return (
+                        <div key={`side-${index}`} className={cx("diff-side-row", changed && "diff-side-row--changed")}>
+                          <div className={cx("diff-side-cell", `diff-side-cell--${row.left.kind}`)}><span className="diff-line-number">{row.left.lineNumber ?? ""}</span><span className="diff-marker">{row.left.kind === "remove" ? "−" : row.left.kind === "same" ? " " : ""}</span><code>{row.left.text || " "}</code></div>
+                          <div className={cx("diff-side-cell", `diff-side-cell--${row.right.kind}`)}><span className="diff-line-number">{row.right.lineNumber ?? ""}</span><span className="diff-marker">{row.right.kind === "add" ? "+" : row.right.kind === "same" ? " " : ""}</span><code>{row.right.text || " "}</code></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : <div className="empty-surface"><Eye size={26} /><h2>Select versions to compare</h2></div>}
           </main>
         </div>
       )}
