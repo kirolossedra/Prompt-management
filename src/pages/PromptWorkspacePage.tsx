@@ -7,6 +7,7 @@ import {
   Copy,
   Eye,
   FileCode2,
+  Files,
   Focus,
   History,
   PanelRightClose,
@@ -18,6 +19,7 @@ import {
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { useVault } from "../context/VaultContext";
+import { copyTextToClipboard } from "../lib/clipboard";
 import { lineDiff } from "../lib/diff";
 import { activeRecords, cx, formatDate, promptVersionSnapshot, taskPath } from "../lib/utils";
 import type { PromptSnapshot } from "../types/domain";
@@ -120,6 +122,15 @@ export function PromptWorkspacePage() {
     }
   }
 
+  async function copyCurrentPromptText() {
+    try {
+      await copyTextToClipboard(draft.content || "");
+      toast.success("Prompt text copied to clipboard.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not copy prompt text.");
+    }
+  }
+
   async function duplicate() {
     if (!prompt) return;
     const id = await copyPrompt(prompt.id);
@@ -156,8 +167,10 @@ export function PromptWorkspacePage() {
         <div className="prompt-workspace__toolbar">
           <Button size="sm" variant="ghost" icon={<Focus size={15} />} onClick={() => setFocusMode((value) => !value)}>{focusMode ? "Exit focus" : "Focus"}</Button>
           <Button size="sm" variant="ghost" icon={inspectorOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />} onClick={() => setInspectorOpen((value) => !value)}>Details</Button>
+          <Button size="sm" variant="secondary" icon={<Copy size={15} />} onClick={() => void copyCurrentPromptText()}>Copy</Button>
           <ActionMenu items={[
-            { label: "Duplicate prompt", icon: <Copy size={15} />, onSelect: () => void duplicate() },
+            { label: "Copy prompt text", icon: <Copy size={15} />, onSelect: () => void copyCurrentPromptText() },
+            { label: "Duplicate prompt", icon: <Files size={15} />, onSelect: () => void duplicate() },
             { label: "Archive prompt", icon: <Archive size={15} />, onSelect: () => requestArchive("prompts", prompt.id), separatorBefore: true },
             { label: "Delete prompt", icon: <Trash2 size={15} />, onSelect: () => requestDelete("prompts", prompt.id), danger: true },
           ]} />
@@ -187,13 +200,13 @@ export function PromptWorkspacePage() {
           </aside>
           <main className="version-inspector">
             <div className="compare-toolbar"><div><label>From<select value={compareA} onChange={(event) => setCompareA(event.target.value)}>{versions.map((version) => <option key={version.id} value={version.id}>{version.versionLabel}</option>)}</select></label><span>→</span><label>To<select value={compareB} onChange={(event) => setCompareB(event.target.value)}>{versions.map((version) => <option key={version.id} value={version.id}>{version.versionLabel}</option>)}</select></label></div><div className="segmented-control"><button className={diffMode === "unified" ? "active" : ""} onClick={() => setDiffMode("unified")}>Unified</button><button className={diffMode === "side" ? "active" : ""} onClick={() => setDiffMode("side")}>Side by side</button></div></div>
-            {selectedB ? <div className="version-summary"><div><Badge tone="info">{selectedB.versionLabel}</Badge><strong>{selectedB.changeDescription}</strong><small>{formatDate(selectedB.createdAt)} · changed {selectedB.changedFields?.join(", ") || "content"}</small></div><div><Button size="sm" variant="ghost" icon={<Copy size={15} />} onClick={async () => { await navigator.clipboard.writeText(snapshotB?.content || ""); toast.success("Historical content copied."); }}>Copy content</Button>{versions[0]?.id !== selectedB.id ? <Button size="sm" icon={<RotateCcw size={15} />} onClick={() => void restoreVersion(selectedB.id)}>Restore as new version</Button> : null}</div></div> : null}
+            {selectedB ? <div className="version-summary"><div><Badge tone="info">{selectedB.versionLabel}</Badge><strong>{selectedB.changeDescription}</strong><small>{formatDate(selectedB.createdAt)} · changed {selectedB.changedFields?.join(", ") || "content"}</small></div><div><Button size="sm" variant="ghost" icon={<Copy size={15} />} onClick={async () => { try { await copyTextToClipboard(snapshotB?.content || ""); toast.success("Historical content copied."); } catch (error) { toast.error(error instanceof Error ? error.message : "Could not copy historical content."); } }}>Copy content</Button>{versions[0]?.id !== selectedB.id ? <Button size="sm" icon={<RotateCcw size={15} />} onClick={() => void restoreVersion(selectedB.id)}>Restore as new version</Button> : null}</div></div> : null}
             {snapshotA && snapshotB ? diffMode === "unified" ? <div className="diff-view diff-view--unified">{diff.map((line, index) => <div key={index} className={`diff-line diff-line--${line.kind}`}><span>{line.kind === "add" ? "+" : line.kind === "remove" ? "−" : " "}</span><code>{line.text || " "}</code></div>)}</div> : <div className="diff-side"><section><header>{selectedA?.versionLabel}</header><pre>{snapshotA.content}</pre></section><section><header>{selectedB?.versionLabel}</header><pre>{snapshotB.content}</pre></section></div> : <div className="empty-surface"><Eye size={26} /><h2>Select versions to compare</h2></div>}
           </main>
         </div>
       )}
 
-      <div className="mobile-prompt-actions"><button onClick={() => setSearchParams(tab === "history" ? {} : { tab: "history" })}>{tab === "history" ? <FileCode2 size={18} /> : <History size={18} />}<span>{tab === "history" ? "Editor" : "History"}</span></button><button onClick={() => setInspectorOpen((value) => !value)}><PanelRightOpen size={18} /><span>Details</span></button><Button variant="primary" loading={saving} disabled={!dirty} icon={<Save size={17} />} onClick={() => void save()}>Save</Button></div>
+      <div className="mobile-prompt-actions"><button onClick={() => setSearchParams(tab === "history" ? {} : { tab: "history" })}>{tab === "history" ? <FileCode2 size={18} /> : <History size={18} />}<span>{tab === "history" ? "Editor" : "History"}</span></button><button onClick={() => void copyCurrentPromptText()}><Copy size={18} /><span>Copy</span></button><button onClick={() => setInspectorOpen((value) => !value)}><PanelRightOpen size={18} /><span>Details</span></button><Button variant="primary" loading={saving} disabled={!dirty} icon={<Save size={17} />} onClick={() => void save()}>Save</Button></div>
     </div>
   );
 }

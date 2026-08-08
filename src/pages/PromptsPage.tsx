@@ -4,6 +4,7 @@ import {
   CheckSquare,
   Copy,
   FileCode2,
+  Files,
   Grid2X2,
   List,
   MoveRight,
@@ -15,6 +16,7 @@ import { ContextMenu } from "radix-ui";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useVault } from "../context/VaultContext";
+import { copyTextToClipboard } from "../lib/clipboard";
 import { activeRecords, matchesPromptWords, taskPath } from "../lib/utils";
 import { useEntityUi } from "../components/entities/EntityUiProvider";
 import { ActionMenu } from "../components/ui/ActionMenu";
@@ -55,6 +57,17 @@ export function PromptsPage() {
 
   function toggleSelected(id: string) {
     setSelected((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  }
+
+  async function copyPromptText(id: string) {
+    const prompt = data.prompts[id];
+    if (!prompt) return;
+    try {
+      await copyTextToClipboard(prompt.content || "");
+      toast.success("Prompt text copied to clipboard.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not copy prompt text.");
+    }
   }
 
   async function duplicate(id: string) {
@@ -109,13 +122,13 @@ export function PromptsPage() {
       <div className="library-meta"><span>{prompts.length} prompt{prompts.length === 1 ? "" : "s"}</span>{query ? <span>All words must match somewhere in the prompt or its history.</span> : null}</div>
 
       {view === "list" ? <div className="prompt-table" role="table" aria-label="Prompt library">
-        <div className="prompt-table__header" role="row"><label><input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(prompts.map((prompt) => prompt.id)))} aria-label="Select all prompts" /></label><span>Prompt</span><span>Task / Endeavor</span><span>Version</span><span>Updated</span><span /></div>
+        <div className="prompt-table__header" role="row"><label><input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(prompts.map((prompt) => prompt.id)))} aria-label="Select all prompts" /></label><span>Prompt</span><span>Task / Endeavor</span><span>Version</span><span>Updated</span><span>Actions</span></div>
         {prompts.map((prompt) => {
           const count = versions.filter((version) => version.promptId === prompt.id).length;
-          const row = <div className="prompt-table__row" role="row" key={prompt.id}><label className="row-select"><input type="checkbox" checked={selected.has(prompt.id)} onChange={() => toggleSelected(prompt.id)} aria-label={`Select ${prompt.title}`} /></label><button className="prompt-table__primary" onClick={() => navigate(`/prompts/${prompt.id}`)}><span className="artifact-icon"><FileCode2 size={16} /></span><span><strong><HighlightText text={prompt.title} query={query} /></strong><small><HighlightText text={prompt.description || prompt.purpose || "No description"} query={query} /></small></span></button><span className="prompt-table__path">{taskPath(data, prompt.taskId)}</span><span className="version-pill">v{count}</span><time>{new Date(prompt.updatedAt).toLocaleDateString()}</time><ActionMenu items={[{ label: "Open", onSelect: () => navigate(`/prompts/${prompt.id}`) }, { label: "Duplicate", icon: <Copy size={15} />, onSelect: () => void duplicate(prompt.id) }, { label: "Archive", icon: <Archive size={15} />, onSelect: () => requestArchive("prompts", prompt.id), separatorBefore: true }, { label: "Delete", icon: <Trash2 size={15} />, onSelect: () => requestDelete("prompts", prompt.id), danger: true }]} /></div>;
-          return <ContextMenu.Root key={prompt.id}><ContextMenu.Trigger asChild>{row}</ContextMenu.Trigger><ContextMenu.Portal><ContextMenu.Content className="menu-content"><ContextMenu.Item className="menu-item" onSelect={() => navigate(`/prompts/${prompt.id}`)}>Open prompt</ContextMenu.Item><ContextMenu.Item className="menu-item" onSelect={() => void duplicate(prompt.id)}>Duplicate</ContextMenu.Item><ContextMenu.Separator className="menu-separator" /><ContextMenu.Item className="menu-item" onSelect={() => requestArchive("prompts", prompt.id)}>Archive</ContextMenu.Item><ContextMenu.Item className="menu-item menu-item--danger" onSelect={() => requestDelete("prompts", prompt.id)}>Delete</ContextMenu.Item></ContextMenu.Content></ContextMenu.Portal></ContextMenu.Root>;
+          const row = <div className="prompt-table__row" role="row" key={prompt.id}><label className="row-select"><input type="checkbox" checked={selected.has(prompt.id)} onChange={() => toggleSelected(prompt.id)} aria-label={`Select ${prompt.title}`} /></label><button className="prompt-table__primary" onClick={() => navigate(`/prompts/${prompt.id}`)}><span className="artifact-icon"><FileCode2 size={16} /></span><span><strong><HighlightText text={prompt.title} query={query} /></strong><small><HighlightText text={prompt.description || prompt.purpose || "No description"} query={query} /></small></span></button><span className="prompt-table__path">{taskPath(data, prompt.taskId)}</span><span className="version-pill">v{count}</span><time>{new Date(prompt.updatedAt).toLocaleDateString()}</time><div className="prompt-table__actions"><Button size="sm" variant="ghost" icon={<Copy size={14} />} onClick={() => void copyPromptText(prompt.id)}>Copy</Button><ActionMenu items={[{ label: "Open", onSelect: () => navigate(`/prompts/${prompt.id}`) }, { label: "Copy prompt text", icon: <Copy size={15} />, onSelect: () => void copyPromptText(prompt.id) }, { label: "Duplicate prompt", icon: <Files size={15} />, onSelect: () => void duplicate(prompt.id) }, { label: "Archive", icon: <Archive size={15} />, onSelect: () => requestArchive("prompts", prompt.id), separatorBefore: true }, { label: "Delete", icon: <Trash2 size={15} />, onSelect: () => requestDelete("prompts", prompt.id), danger: true }]} /></div></div>;
+          return <ContextMenu.Root key={prompt.id}><ContextMenu.Trigger asChild>{row}</ContextMenu.Trigger><ContextMenu.Portal><ContextMenu.Content className="menu-content"><ContextMenu.Item className="menu-item" onSelect={() => navigate(`/prompts/${prompt.id}`)}>Open prompt</ContextMenu.Item><ContextMenu.Item className="menu-item" onSelect={() => void copyPromptText(prompt.id)}>Copy prompt text</ContextMenu.Item><ContextMenu.Item className="menu-item" onSelect={() => void duplicate(prompt.id)}>Duplicate prompt</ContextMenu.Item><ContextMenu.Separator className="menu-separator" /><ContextMenu.Item className="menu-item" onSelect={() => requestArchive("prompts", prompt.id)}>Archive</ContextMenu.Item><ContextMenu.Item className="menu-item menu-item--danger" onSelect={() => requestDelete("prompts", prompt.id)}>Delete</ContextMenu.Item></ContextMenu.Content></ContextMenu.Portal></ContextMenu.Root>;
         })}
-      </div> : <div className="prompt-grid">{prompts.map((prompt) => { const count = versions.filter((version) => version.promptId === prompt.id).length; return <article className="prompt-grid-card" key={prompt.id}><button className="prompt-grid-card__main" onClick={() => navigate(`/prompts/${prompt.id}`)}><span className="artifact-icon"><FileCode2 size={17} /></span><span><small>{taskPath(data, prompt.taskId)}</small><strong><HighlightText text={prompt.title} query={query} /></strong><p><HighlightText text={prompt.description || prompt.purpose || "No description"} query={query} /></p></span></button><footer><span className="version-pill">v{count}</span><ActionMenu items={[{ label: "Open", onSelect: () => navigate(`/prompts/${prompt.id}`) }, { label: "Duplicate", icon: <Copy size={15} />, onSelect: () => void duplicate(prompt.id) }, { label: "Archive", icon: <Archive size={15} />, onSelect: () => requestArchive("prompts", prompt.id), separatorBefore: true }, { label: "Delete", icon: <Trash2 size={15} />, onSelect: () => requestDelete("prompts", prompt.id), danger: true }]} /></footer></article>; })}</div>}
+      </div> : <div className="prompt-grid">{prompts.map((prompt) => { const count = versions.filter((version) => version.promptId === prompt.id).length; return <article className="prompt-grid-card" key={prompt.id}><button className="prompt-grid-card__main" onClick={() => navigate(`/prompts/${prompt.id}`)}><span className="artifact-icon"><FileCode2 size={17} /></span><span><small>{taskPath(data, prompt.taskId)}</small><strong><HighlightText text={prompt.title} query={query} /></strong><p><HighlightText text={prompt.description || prompt.purpose || "No description"} query={query} /></p></span></button><footer><span className="version-pill">v{count}</span><div className="prompt-grid-card__actions"><Button size="sm" variant="ghost" icon={<Copy size={14} />} onClick={() => void copyPromptText(prompt.id)}>Copy</Button><ActionMenu items={[{ label: "Open", onSelect: () => navigate(`/prompts/${prompt.id}`) }, { label: "Copy prompt text", icon: <Copy size={15} />, onSelect: () => void copyPromptText(prompt.id) }, { label: "Duplicate prompt", icon: <Files size={15} />, onSelect: () => void duplicate(prompt.id) }, { label: "Archive", icon: <Archive size={15} />, onSelect: () => requestArchive("prompts", prompt.id), separatorBefore: true }, { label: "Delete", icon: <Trash2 size={15} />, onSelect: () => requestDelete("prompts", prompt.id), danger: true }]} /></div></footer></article>; })}</div>}
 
       {!prompts.length ? <div className="empty-surface"><FileCode2 size={28} /><h2>No matching prompts</h2><p>{query || endeavorFilter || taskFilter ? "Change the search or filters." : "Create a prompt to begin building your versioned knowledge library."}</p>{!query && !endeavorFilter && !taskFilter ? <Button variant="primary" onClick={() => openCreate("prompts")}>Create prompt</Button> : null}</div> : null}
 
