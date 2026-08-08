@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ArrowRight, Copy, FilePlus2, History, Layers3, Plus, RefreshCw, Save, ShieldCheck, Sparkles, Trash2, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
-import { buildPromptMixSources } from "../ai/promptIndex";
+import { buildCustomPromptMixSource, buildVaultPromptMixSource } from "../ai/promptIndex";
 import { mixPrompts } from "../ai/mix";
-import type { MixedPromptDraft } from "../ai/types";
+import type { MixedPromptDraft, PromptMixSource } from "../ai/types";
 import { Button } from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
 import { useVault } from "../context/VaultContext";
@@ -13,10 +13,25 @@ import { activeRecords, promptPath, taskPath } from "../lib/utils";
 import type { Prompt } from "../types/domain";
 
 const EMPTY_DRAFT: MixedPromptDraft = { title: "", description: "", purpose: "", content: "" };
-const MIN_SOURCES = 2;
-const MAX_SOURCES = 8;
+const MIN_SOURCE_WINDOWS = 2;
 
 type SaveMode = "new" | "version";
+type SourceMode = "vault" | "custom";
+
+interface MixerSourceWindow {
+  key: string;
+  mode: SourceMode;
+  vaultPromptId: string;
+  customTitle: string;
+  customContent: string;
+}
+
+function sourceWindow(mode: SourceMode = "custom", vaultPromptId = ""): MixerSourceWindow {
+  const key = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `mix-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return { key, mode, vaultPromptId, customTitle: "", customContent: "" };
+}
 
 export function AiPromptMixerPage() {
   const { user } = useAuth();
@@ -29,7 +44,10 @@ export function AiPromptMixerPage() {
 
   const activePrompts = useMemo(() => activeRecords(data.prompts).sort((a, b) => a.title.localeCompare(b.title)), [data.prompts]);
   const activeEndeavors = useMemo(() => activeRecords(data.endeavors).sort((a, b) => a.name.localeCompare(b.name)), [data.endeavors]);
-  const [sourceIds, setSourceIds] = useState<string[]>(initialSourceId ? [initialSourceId, ""] : ["", ""]);
+  const [sourceWindows, setSourceWindows] = useState<MixerSourceWindow[]>(() => [
+    initialSourceId ? sourceWindow("vault", initialSourceId) : sourceWindow(),
+    sourceWindow(),
+  ]);
   const [direction, setDirection] = useState("");
   const [draft, setDraft] = useState<MixedPromptDraft>(EMPTY_DRAFT);
   const [model, setModel] = useState("");
@@ -41,8 +59,15 @@ export function AiPromptMixerPage() {
   const [destinationTaskId, setDestinationTaskId] = useState(initialSourcePrompt?.taskId || "");
   const [versionTargetId, setVersionTargetId] = useState("");
 
-  const selectedIds = useMemo(() => sourceIds.filter(Boolean), [sourceIds]);
-  const selectedSources = useMemo(() => buildPromptMixSources(data, selectedIds), [data, selectedIds]);
+  const preparedSources = useMemo(() => sourceWindows.flatMap((window, index): PromptMixSource[] => {
+    if (window.mode === "vault") {
+      const source = buildVaultPromptMixSource(data, window.vaultPromptId, window.key);
+      return source ? [source] : [];
+    }
+    const source = buildCustomPromptMixSource(window.key, window.customTitle || `Pasted Prompt ${index + 1}`, window.customContent);
+    return source ? [source] : [];
+  }), [data, sourceWindows]);
+
   const destinationTasks = useMemo(
     () => activeRecords(data.tasks).filter((task) => task.endeavorId === destinationEndeavorId).sort((a, b) => a.name.localeCompare(b.name)),
     [data.tasks, destinationEndeavorId],
@@ -52,19 +77,25 @@ export function AiPromptMixerPage() {
     if (destinationTaskId && !destinationTasks.some((task) => task.id === destinationTaskId)) setDestinationTaskId("");
   }, [destinationTaskId, destinationTasks]);
 
-  function selectSource(index: number, nextId: string) {
-    if (nextId && sourceIds.some((id, sourceIndex) => sourceIndex !== index && id === nextId)) {
-      setError("Each Prompt can appear only once in the mixer.");
-      return;
-    }
-    const next = [...sourceIds];
-    next[index] = nextId;
-    setSourceIds(next);
+  function invalidatePreview() {
     setDraft(EMPTY_DRAFT);
     setModel("");
     setError("");
-    if (index === 0 && nextId) {
-      const prompt = data.prompts[nextId];
+  }
+
+  function updateWindow(index: number, updater: (window: MixerSourceWindow) => MixerSourceWindow) {
+    setSourceWindows((current) => current.map((window, sourceIndex) => sourceIndex === index ? updater(window) : window));
+    invalidatePreview();
+  }
+
+  function setSourceMode(index: number, mode: SourceMode) {
+    updateWindow(index, (window) => ({ ...window, mode }));
+  }
+
+  function selectVaultSource(index: number, promptId: string) {
+    updateWindow(index, (window) => ({ ...window, vaultPromptId: promptId }));
+    if (index === 0 && promptId) {
+      const prompt = data.prompts[promptId];
       const task = prompt ? data.tasks[prompt.taskId] : undefined;
       setDestinationEndeavorId(task?.endeavorId || "");
       setDestinationTaskId(prompt?.taskId || "");
@@ -72,35 +103,37 @@ export function AiPromptMixerPage() {
   }
 
   function addSourceWindow() {
-    if (sourceIds.length >= MAX_SOURCES) return;
-    setSourceIds((current) => [...current, ""]);
+    setSourceWindows((current) => [...current, sourceWindow()]);
+    invalidatePreview();
   }
 
   function removeSourceWindow(index: number) {
-    if (sourceIds.length <= MIN_SOURCES) return;
-    setSourceIds((current) => current.filter((_, sourceIndex) => sourceIndex !== index));
-    setDraft(EMPTY_DRAFT);
-    setModel("");
-    setError("");
+    if (sourceWindows.length <= MIN_SOURCE_WINDOWS) return;
+    setSourceWindows((current) => current.filter((_, sourceIndex) => sourceIndex !== index));
+    invalidatePreview();
   }
 
   async function generate(event?: FormEvent) {
     event?.preventDefault();
     if (!user) { setError("Sign in before using Prompt Mixer."); return; }
-    if (selectedSources.length < MIN_SOURCES) { setError("Choose at least two different active Prompts to mix."); return; }
+    if (preparedSources.length < MIN_SOURCE_WINDOWS) {
+      setError("Provide at least two non-empty source windows. Each window can load a vault Prompt or contain a Prompt you paste/type directly.");
+      return;
+    }
 
     setGenerating(true);
     setError("");
     try {
       const idToken = await user.getIdToken();
-      const response = await mixPrompts({ uid: user.uid, prompts: selectedSources, direction: direction.trim(), idToken });
+      const response = await mixPrompts({ uid: user.uid, prompts: preparedSources, direction: direction.trim(), idToken });
       setDraft(response.draft);
       setModel(response.model);
-      await recordPromptMix(selectedSources.map((source) => source.id));
+      const vaultPromptIds = preparedSources.flatMap((source) => source.promptId ? [source.promptId] : []);
+      await recordPromptMix(vaultPromptIds, preparedSources.length);
     } catch (generationError) {
       setDraft(EMPTY_DRAFT);
       setModel("");
-      setError(generationError instanceof Error ? generationError.message : "Prompt Mixer could not combine the selected Prompts.");
+      setError(generationError instanceof Error ? generationError.message : "Prompt Mixer could not combine the source windows.");
     } finally {
       setGenerating(false);
     }
@@ -110,7 +143,7 @@ export function AiPromptMixerPage() {
     setDraft(EMPTY_DRAFT);
     setModel("");
     setError("");
-    toast.success("Mixed Prompt preview discarded. Source Prompts were not changed.");
+    toast.success("Mixed Prompt preview discarded. Vault Prompts and pasted source text were not changed.");
   }
 
   async function copyDraft() {
@@ -167,43 +200,52 @@ export function AiPromptMixerPage() {
   return (
     <div className="ai-mixer-page">
       <header className="workspace-heading workspace-heading--compact ai-finder-heading">
-        <div><span className="eyebrow">AI · Multi-Prompt synthesis</span><h1>Prompt Mixer</h1><p>Place different Prompts into separate source windows, mix them into one detailed candidate, then discard it, save it as a brand-new Prompt, or make it the next version of an existing Prompt.</p></div>
-        <div className="ai-finder-provider"><Layers3 size={15} /><span>Gemini</span><small>{MIN_SOURCES}–{MAX_SOURCES} sources → one controlled draft</small></div>
+        <div><span className="eyebrow">AI · Multi-Prompt synthesis</span><h1>Prompt Mixer</h1><p>Use as many source windows as you need. Each window can load an existing vault Prompt or accept a Prompt pasted directly into the Mixer. Generate one detailed candidate, then discard it, save it as a brand-new Prompt, or make it the next version of another Prompt.</p></div>
+        <div className="ai-finder-provider"><Layers3 size={15} /><span>Gemini</span><small>2+ non-empty source windows → one controlled draft</small></div>
       </header>
 
       <section className="ai-mixer-layout">
         <form className="ai-mixer-config" onSubmit={(event) => void generate(event)}>
-          <div className="ai-mixer-section-heading"><div><span className="eyebrow">Source windows</span><h2>Prompts to mix</h2></div><Button type="button" variant="ghost" size="sm" icon={<Plus size={15} />} disabled={sourceIds.length >= MAX_SOURCES} onClick={addSourceWindow}>Add window</Button></div>
+          <div className="ai-mixer-section-heading"><div><span className="eyebrow">Source windows</span><h2>Prompts to mix</h2></div><Button type="button" variant="ghost" size="sm" icon={<Plus size={15} />} onClick={addSourceWindow}>Add window</Button></div>
           <div className="ai-mixer-source-list">
-            {sourceIds.map((sourceId, index) => {
-              const source = data.prompts[sourceId];
-              const unavailableIds = new Set(sourceIds.filter((id, sourceIndex) => sourceIndex !== index && id));
-              return <article className="ai-mixer-source-window" key={`mix-source-${index}`}>
-                <header><span>Prompt {index + 1}</span>{sourceIds.length > MIN_SOURCES ? <button type="button" aria-label={`Remove Prompt ${index + 1} window`} onClick={() => removeSourceWindow(index)}><X size={15} /></button> : null}</header>
-                <select aria-label={`Prompt ${index + 1}`} value={sourceId} onChange={(event) => selectSource(index, event.target.value)}>
-                  <option value="">Select Prompt…</option>
-                  {activePrompts.map((prompt) => <option key={prompt.id} value={prompt.id} disabled={unavailableIds.has(prompt.id)}>{promptPath(data, prompt.id)}</option>)}
-                </select>
-                {source ? <div className="ai-mixer-source-summary"><strong>{source.title}</strong><span>{taskPath(data, source.taskId)}</span><p>{source.purpose}</p><button type="button" onClick={() => navigate(`/prompts/${source.id}`)}>Open <ArrowRight size={13} /></button></div> : <div className="ai-mixer-source-empty">Choose an active Prompt for this window.</div>}
+            {sourceWindows.map((window, index) => {
+              const vaultSource = data.prompts[window.vaultPromptId];
+              return <article className="ai-mixer-source-window" key={window.key}>
+                <header><span>Prompt {index + 1}</span>{sourceWindows.length > MIN_SOURCE_WINDOWS ? <button type="button" aria-label={`Remove Prompt ${index + 1} window`} onClick={() => removeSourceWindow(index)}><X size={15} /></button> : null}</header>
+                <div className="ai-mixer-source-mode" role="tablist" aria-label={`Prompt ${index + 1} source type`}>
+                  <button type="button" className={window.mode === "custom" ? "active" : ""} onClick={() => setSourceMode(index, "custom")}>Paste / type</button>
+                  <button type="button" className={window.mode === "vault" ? "active" : ""} onClick={() => setSourceMode(index, "vault")}>Load from vault</button>
+                </div>
+
+                {window.mode === "vault" ? <>
+                  <select aria-label={`Vault Prompt ${index + 1}`} value={window.vaultPromptId} onChange={(event) => selectVaultSource(index, event.target.value)}>
+                    <option value="">Select Prompt…</option>
+                    {activePrompts.map((prompt) => <option key={prompt.id} value={prompt.id}>{promptPath(data, prompt.id)}</option>)}
+                  </select>
+                  {vaultSource ? <div className="ai-mixer-source-summary"><strong>{vaultSource.title}</strong><span>{taskPath(data, vaultSource.taskId)}</span><p>{vaultSource.purpose}</p><button type="button" onClick={() => navigate(`/prompts/${vaultSource.id}`)}>Open <ArrowRight size={13} /></button></div> : <div className="ai-mixer-source-empty">Load any active Prompt from IntellectVault into this window.</div>}
+                </> : <div className="ai-mixer-custom-source">
+                  <label>Label <span>optional</span><input value={window.customTitle} onChange={(event) => updateWindow(index, (current) => ({ ...current, customTitle: event.target.value }))} placeholder={`Pasted Prompt ${index + 1}`} /></label>
+                  <label>Prompt content<textarea rows={12} value={window.customContent} onChange={(event) => updateWindow(index, (current) => ({ ...current, customContent: event.target.value }))} placeholder="Paste or write any Prompt here. It does not need to exist in IntellectVault." /></label>
+                </div>}
               </article>;
             })}
           </div>
 
           <label className="ai-mixer-direction">Mix direction <span>optional</span><textarea rows={5} maxLength={5000} value={direction} onChange={(event) => setDirection(event.target.value)} placeholder="Optional: tell Gemini what the combined Prompt should emphasize, prioritize, or accomplish. Leave blank for a faithful general synthesis." /></label>
-          <div className="ai-repurpose-rule"><ShieldCheck size={17} /><div><strong>Mixing rule</strong><p>Preserve distinct requirements and source detail, consolidate real duplication, and resolve conflicts into one coherent standalone Prompt. Your source Prompts are never modified by generation.</p></div></div>
-          <Button type="submit" variant="primary" loading={generating} icon={hasDraft ? <RefreshCw size={16} /> : <Sparkles size={16} />}>{hasDraft ? "Remix selected Prompts" : "Mix selected Prompts"}</Button>
+          <div className="ai-repurpose-rule"><ShieldCheck size={17} /><div><strong>Mixing rule</strong><p>Use every non-empty source window, preserve distinct requirements and detail, consolidate real duplication, and resolve conflicts into one coherent standalone Prompt. Loading a vault Prompt is optional; pasted Prompts are first-class Mixer sources.</p></div></div>
+          <Button type="submit" variant="primary" loading={generating} icon={hasDraft ? <RefreshCw size={16} /> : <Sparkles size={16} />}>{hasDraft ? "Remix source windows" : "Mix source windows"}</Button>
         </form>
 
         <aside className="ai-repurpose-pipeline" aria-label="Prompt Mixer pipeline">
           <span className="eyebrow">Current AI payload</span>
-          <div><strong>Sources</strong><span>Selected Prompt titles, descriptions, purposes, full current content, Tasks, and Endeavors</span></div><ArrowRight size={15} />
+          <div><strong>Sources</strong><span>Every non-empty source window. Vault sources include Prompt metadata/content; pasted sources include their optional label and full pasted text.</span></div><ArrowRight size={15} />
           <div><strong>Direction</strong><span>Your optional synthesis objective or priority</span></div><ArrowRight size={15} />
           <div><strong>Gemini</strong><span>Returns one title, description, purpose, and complete mixed Prompt</span></div>
           <p>Relationships, versions, attachments, Mindsets, Preferences, activity, and achievements are not sent to this feature.</p>
         </aside>
       </section>
 
-      {error ? <div className="ai-finder-error"><strong>Prompt Mixer</strong><p>{error}</p><span>Your source Prompts remain unchanged.</span></div> : null}
+      {error ? <div className="ai-finder-error"><strong>Prompt Mixer</strong><p>{error}</p><span>No source Prompt is modified by generation.</span></div> : null}
 
       {hasDraft ? <section className="ai-mixer-result" aria-live="polite">
         <div className="ai-finder-results__heading"><div><span className="eyebrow">Mixed candidate</span><h2>Preview and decide what happens next</h2></div><small>{model || "Gemini"} · editable preview</small></div>

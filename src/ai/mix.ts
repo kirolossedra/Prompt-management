@@ -17,6 +17,13 @@ export async function mixPrompts(request: PromptMixRequest & { idToken: string }
     body: JSON.stringify({ uid: request.uid, prompts: request.prompts, direction: request.direction || "" }),
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(typeof payload?.error === "string" ? payload.error : "Prompt Mixer could not combine the selected Prompts.");
-  return { draft: normalizeMixedPromptDraft(payload), provider: "gemini", model: clean(payload?.model) || "Gemini", sourcePromptIds: Array.isArray(payload?.sourcePromptIds) ? payload.sourcePromptIds.map(clean).filter(Boolean) : request.prompts.map((prompt) => prompt.id) };
+  if (!response.ok) throw new Error(typeof payload?.error === "string" ? payload.error : "Prompt Mixer could not combine the source windows.");
+  const fallbackVaultIds = request.prompts.flatMap((prompt) => prompt.promptId ? [prompt.promptId] : []);
+  return {
+    draft: normalizeMixedPromptDraft(payload),
+    provider: "gemini",
+    model: clean(payload?.model) || "Gemini",
+    sourcePromptIds: Array.isArray(payload?.sourcePromptIds) ? payload.sourcePromptIds.map(clean).filter(Boolean) : fallbackVaultIds,
+    sourceCount: Number.isFinite(payload?.sourceCount) ? Number(payload.sourceCount) : request.prompts.length,
+  };
 }

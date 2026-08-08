@@ -1120,6 +1120,15 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .ai-mixer-source-window > header span { color: var(--text-soft); font-size: 10px; font-weight: 760; text-transform: uppercase; letter-spacing: .055em; }
 .ai-mixer-source-window > header button { width: 26px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--text-faint); }
 .ai-mixer-source-window > header button:hover { background: var(--panel); color: var(--danger); }
+.ai-mixer-source-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); }
+.ai-mixer-source-mode button { min-height: 30px; padding: 5px 7px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--text-faint); font-size: 9px; font-weight: 720; }
+.ai-mixer-source-mode button.active { border-color: var(--line); background: var(--panel-soft); color: var(--text); box-shadow: var(--shadow-1); }
+.ai-mixer-custom-source { display: grid; gap: 8px; }
+.ai-mixer-custom-source label { display: grid; gap: 5px; color: var(--text-soft); font-size: 9px; font-weight: 700; }
+.ai-mixer-custom-source label > span { margin-left: 4px; color: var(--text-faint); font-weight: 500; }
+.ai-mixer-custom-source input, .ai-mixer-custom-source textarea { width: 100%; border: 1px solid var(--line); border-radius: 7px; background: var(--input); color: var(--text); font: inherit; }
+.ai-mixer-custom-source input { min-height: 38px; padding: 8px 9px; font-size: 12px; }
+.ai-mixer-custom-source textarea { min-height: 190px; padding: 10px; resize: vertical; font-size: 12px; line-height: 1.55; }
 .ai-mixer-source-window > select, .ai-mixer-direction textarea, .ai-mixer-save-body select { width: 100%; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--input); color: var(--text); font: inherit; }
 .ai-mixer-source-window > select, .ai-mixer-save-body select { min-height: 40px; padding: 8px 10px; font-size: 12px; }
 .ai-mixer-source-summary { min-height: 104px; display: grid; align-content: start; gap: 3px; padding: 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); }
@@ -1156,7 +1165,7 @@ button:disabled { cursor: not-allowed; opacity: .5; }
   .ai-mixer-config, .ai-mixer-save-panel { padding: 12px; }
   .ai-mixer-section-heading { align-items: flex-start; flex-direction: column; }
   .ai-mixer-source-list { grid-template-columns: 1fr; }
-  .ai-mixer-source-window > select, .ai-mixer-save-body select, .ai-mixer-direction textarea { font-size: 16px; }
-  .ai-mixer-source-window > select, .ai-mixer-save-body select { min-height: 44px; }
+  .ai-mixer-source-window > select, .ai-mixer-save-body select, .ai-mixer-direction textarea, .ai-mixer-custom-source input, .ai-mixer-custom-source textarea { font-size: 16px; }
+  .ai-mixer-source-window > select, .ai-mixer-save-body select, .ai-mixer-custom-source input { min-height: 44px; }
   .ai-mixer-preview-actions, .ai-mixer-save-mode { grid-template-columns: 1fr; }
 }

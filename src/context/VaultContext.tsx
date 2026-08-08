@@ -74,7 +74,7 @@ interface VaultContextValue {
   recordRelationshipMapDownload: (format: "svg" | "png") => Promise<void>;
   recordPromptFinderSearch: (matchCount: number) => Promise<void>;
   recordPromptRepurpose: (sourcePromptId: string) => Promise<void>;
-  recordPromptMix: (sourcePromptIds: string[]) => Promise<void>;
+  recordPromptMix: (sourcePromptIds: string[], sourceCount?: number) => Promise<void>;
   createGlobalVersion: (title: string, summary: string) => Promise<string>;
   saveProfile: (patch: Partial<WorkspaceProfile>) => Promise<void>;
   exportWorkspace: () => void;
@@ -681,13 +681,14 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   );
 
   const recordPromptMix = useCallback(
-    async (sourcePromptIds: string[]) => {
+    async (sourcePromptIds: string[], sourceCount?: number) => {
       const ids = [...new Set(sourcePromptIds.filter(Boolean))];
+      const count = Math.max(sourceCount || 0, ids.length);
       await recordActivity(
         "ai.prompt-mixer.generated",
         "ai",
-        ids.join(","),
-        `Mixed ${ids.length} Prompt${ids.length === 1 ? "" : "s"}`,
+        ids.join(",") || `custom-sources:${count}`,
+        `Mixed ${count} source Prompt${count === 1 ? "" : "s"}`,
       );
     },
     [recordActivity],

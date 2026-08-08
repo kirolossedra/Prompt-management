@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildActivePromptIndex, buildPromptMixSources, buildRepurposePromptSource, MAX_PROMPT_INDEX_CONTENT_CHARS } from "./promptIndex";
+import { buildActivePromptIndex, buildCustomPromptMixSource, buildPromptMixSources, buildRepurposePromptSource, buildVaultPromptMixSource, MAX_PROMPT_INDEX_CONTENT_CHARS } from "./promptIndex";
 import type { VaultCollections } from "../types/domain";
 
 const stamp = { uid: "u1", email: "u@example.com", displayName: "User" };
@@ -62,9 +62,24 @@ describe("buildRepurposePromptSource", () => {
 });
 
 
-describe("buildPromptMixSources", () => {
-  it("preserves selected order while removing duplicates and unavailable prompts", () => {
+describe("Prompt Mixer source builders", () => {
+  it("builds existing vault Prompt sources while preserving selected order", () => {
     const vault = data();
-    expect(buildPromptMixSources(vault, ["p2", "p1", "p2", "missing"]).map((prompt) => prompt.id)).toEqual(["p2", "p1"]);
+    expect(buildPromptMixSources(vault, ["p2", "p1", "p2", "missing"]).map((prompt) => prompt.promptId)).toEqual(["p2", "p1"]);
+    expect(buildVaultPromptMixSource(vault, "p1", "window-1")).toMatchObject({ sourceKey: "window-1", sourceType: "vault", promptId: "p1", content: "Keep old features" });
+  });
+
+  it("builds ad-hoc pasted Prompt sources that do not need to exist in the vault", () => {
+    expect(buildCustomPromptMixSource("window-custom", "Temporary source", "Paste-only prompt text")).toEqual({
+      sourceKey: "window-custom",
+      sourceType: "custom",
+      title: "Temporary source",
+      description: "",
+      purpose: "",
+      content: "Paste-only prompt text",
+      task: "",
+      endeavor: "",
+    });
+    expect(buildCustomPromptMixSource("window-empty", "", "   ")).toBeNull();
   });
 });

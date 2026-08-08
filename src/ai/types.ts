@@ -70,8 +70,19 @@ export interface PromptRepurposeResponse {
   sourcePromptId: string;
 }
 
+export type PromptMixSourceType = "vault" | "custom";
 
-export interface PromptMixSource extends RepurposePromptSource {}
+export interface PromptMixSource {
+  sourceKey: string;
+  sourceType: PromptMixSourceType;
+  promptId?: string;
+  title: string;
+  description: string;
+  purpose: string;
+  content: string;
+  task: string;
+  endeavor: string;
+}
 
 export interface MixedPromptDraft {
   title: string;
@@ -91,4 +102,5 @@ export interface PromptMixResponse {
   provider: "gemini";
   model: string;
   sourcePromptIds: string[];
+  sourceCount: number;
 }

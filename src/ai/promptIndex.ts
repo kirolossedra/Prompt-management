@@ -89,12 +89,43 @@ export function buildRepurposePromptSource(data: VaultCollections, promptId: str
 }
 
 
+export function buildVaultPromptMixSource(data: VaultCollections, promptId: string, sourceKey = promptId): PromptMixSource | null {
+  const source = buildRepurposePromptSource(data, promptId);
+  if (!source) return null;
+  return {
+    sourceKey,
+    sourceType: "vault",
+    promptId: source.id,
+    title: source.title,
+    description: source.description,
+    purpose: source.purpose,
+    content: source.content,
+    task: source.task,
+    endeavor: source.endeavor,
+  };
+}
+
+export function buildCustomPromptMixSource(sourceKey: string, title: string, content: string): PromptMixSource | null {
+  const cleanContent = String(content || "").trim();
+  if (!cleanContent) return null;
+  return {
+    sourceKey,
+    sourceType: "custom",
+    title: String(title || "").trim() || "Pasted Prompt",
+    description: "",
+    purpose: "",
+    content: cleanContent,
+    task: "",
+    endeavor: "",
+  };
+}
+
 export function buildPromptMixSources(data: VaultCollections, promptIds: string[]): PromptMixSource[] {
   const seen = new Set<string>();
   return promptIds.flatMap((promptId) => {
     if (!promptId || seen.has(promptId)) return [];
     seen.add(promptId);
-    const source = buildRepurposePromptSource(data, promptId);
+    const source = buildVaultPromptMixSource(data, promptId, promptId);
     return source ? [source] : [];
   });
 }
