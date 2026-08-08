@@ -1,21 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { Archive, Brain, BrainCircuit, BriefcaseBusiness, Camera, Command, FileCode2, Search, Settings2, SlidersHorizontal, Target, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Brain, BrainCircuit, Camera, FileCode2, Network, Plus, Search, Settings2, SlidersHorizontal } from "lucide-react";
+import { Dialog } from "radix-ui";
 import { useNavigate } from "react-router";
 import { useVault } from "../../context/VaultContext";
-import { activeRecords, recordTitle } from "../../lib/utils";
-import type { CollectionName, VaultRecord } from "../../types/domain";
+import { activeRecords, matchesPromptWords, taskPath } from "../../lib/utils";
+import { HighlightText } from "../ui/HighlightText";
 import { useEntityUi } from "../entities/EntityUiProvider";
 
 const routes = [
-  ["Dashboard", "/dashboard", Target],
-  ["Hierarchy", "/hierarchy", BriefcaseBusiness],
-  ["Prompts", "/prompts", FileCode2],
+  ["Vault explorer", "/hierarchy", Network],
+  ["Prompt library", "/prompts", FileCode2],
   ["Mindsets", "/mindsets", Brain],
-  ["Mindset construction", "/mindset-construction", BrainCircuit],
+  ["Mindset builder", "/mindset-construction", BrainCircuit],
   ["Preferences", "/preferences", SlidersHorizontal],
-  ["Versions", "/commits", Camera],
-  ["Archive", "/archive", Archive],
+  ["Global Versions", "/versions", Camera],
   ["Settings", "/settings", Settings2],
 ] as const;
 
@@ -25,47 +23,64 @@ export function CommandPalette() {
   const { openCreate } = useEntityUi();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const listener = (event: KeyboardEvent) => {
+    const keyListener = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setOpen((value) => !value);
+        event.preventDefault(); setOpen((value) => !value);
       }
-      if (event.key === "Escape") setOpen(false);
     };
-    window.addEventListener("keydown", listener);
-    return () => window.removeEventListener("keydown", listener);
+    const openListener = () => setOpen(true);
+    window.addEventListener("keydown", keyListener);
+    window.addEventListener("iv-open-command", openListener as EventListener);
+    return () => { window.removeEventListener("keydown", keyListener); window.removeEventListener("iv-open-command", openListener as EventListener); };
   }, []);
 
-  const records = useMemo(() => {
-    const kinds: CollectionName[] = ["endeavors", "tasks", "prompts", "promptVersions", "mindsets", "preferences", "globalCommits", "decisions"];
-    return kinds.flatMap((kind) => activeRecords(data[kind] as Record<string, VaultRecord>).map((record) => ({ kind, record })))
-      .filter(({ record }) => !query || JSON.stringify(record).toLowerCase().includes(query.toLowerCase()))
-      .slice(0, 8);
-  }, [data, query]);
+  const prompts = useMemo(() => {
+    const versions = activeRecords(data.promptVersions);
+    return activeRecords(data.prompts)
+      .filter((prompt) => matchesPromptWords(prompt, versions.filter((version) => version.promptId === prompt.id), query))
+      .slice(0, query ? 12 : 6);
+  }, [data.promptVersions, data.prompts, query]);
 
-  return <>
-    <button className="command-trigger" onClick={() => setOpen(true)}><Search size={16} /><span>Search or jump to…</span><kbd><Command size={12} />K</kbd></button>
-    <AnimatePresence>
-      {open ? <motion.div className="command-layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-        <button className="command-scrim" aria-label="Close command palette" onClick={() => setOpen(false)} />
-        <motion.div className="command-palette" role="dialog" aria-modal="true" initial={{ opacity: 0, y: -12, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: .99 }}>
-          <div className="command-input"><Search size={18} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search records or pages…" /><button aria-label="Close" onClick={() => setOpen(false)}><X size={17} /></button></div>
-          <div className="command-results">
-            {!query ? <>
-              <span className="command-label">Navigate</span>
-              {routes.map(([label, path, Icon]) => <button key={path} onClick={() => { navigate(path); setOpen(false); }}><Icon size={17} /><span>{label}</span></button>)}
-              <span className="command-label">Create</span>
-              <div className="command-create-grid">{(["endeavors", "tasks", "prompts", "mindsets", "preferences"] as CollectionName[]).map((kind) => <button key={kind} onClick={() => { openCreate(kind); setOpen(false); }}>New {kind.slice(0, -1)}</button>)}</div>
-            </> : <>
-              <span className="command-label">Records</span>
-              {records.map(({ kind, record }) => <button key={`${kind}:${record.id}`} onClick={() => { navigate(`/search?q=${encodeURIComponent(query)}`); setOpen(false); }}><Search size={16} /><span><strong>{recordTitle(kind, record)}</strong><small>{kind === "globalCommits" ? "global version" : kind}</small></span></button>)}
-              <button onClick={() => { navigate(`/search?q=${encodeURIComponent(query)}`); setOpen(false); }}><Search size={16} /><span>See all results for “{query}”</span></button>
-            </>}
-          </div>
-        </motion.div>
-      </motion.div> : null}
-    </AnimatePresence>
-  </>;
+  const results = useMemo(() => query.trim()
+    ? prompts.map((prompt) => ({ type: "prompt" as const, id: prompt.id, label: prompt.title }))
+    : routes.map(([label, path]) => ({ type: "route" as const, id: path, label })), [prompts, query]);
+
+  useEffect(() => setActiveIndex(0), [query, open]);
+
+  function close() { setOpen(false); setQuery(""); }
+  function openResult(item: (typeof results)[number]) {
+    if (item.type === "prompt") navigate(`/prompts/${item.id}`); else navigate(item.id);
+    close();
+  }
+
+  return (
+    <>
+      <button className="command-trigger" onClick={() => setOpen(true)}><Search size={16} /><span>Search prompts or jump to…</span><kbd>⌘ K</kbd></button>
+      <Dialog.Root open={open} onOpenChange={(value) => { if (!value) close(); else setOpen(true); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="command-scrim" />
+          <Dialog.Content className="command-palette" onOpenAutoFocus={(event) => { event.preventDefault(); inputRef.current?.focus(); }}>
+            <Dialog.Title className="sr-only">Search IntellectVault</Dialog.Title>
+            <div className="command-input"><Search size={19} /><input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search every prompt by title, purpose, description, or content…" onKeyDown={(event) => {
+              if (event.key === "ArrowDown") { event.preventDefault(); setActiveIndex((value) => Math.min(results.length - 1, value + 1)); }
+              if (event.key === "ArrowUp") { event.preventDefault(); setActiveIndex((value) => Math.max(0, value - 1)); }
+              if (event.key === "Enter" && results[activeIndex]) { event.preventDefault(); openResult(results[activeIndex]); }
+            }} /></div>
+            <div className="command-results">
+              {query ? <span className="command-label">Prompts</span> : <span className="command-label">Jump to</span>}
+              {query && !prompts.length ? <div className="command-empty">No prompt contains all of those words.</div> : null}
+              {query ? prompts.map((prompt, index) => <button key={prompt.id} className={index === activeIndex ? "active" : ""} onMouseEnter={() => setActiveIndex(index)} onClick={() => openResult({ type: "prompt", id: prompt.id, label: prompt.title })}><FileCode2 size={17} /><span><strong><HighlightText text={prompt.title} query={query} /></strong><small>{taskPath(data, prompt.taskId)}</small></span></button>)
+                : routes.map(([label, path, Icon], index) => <button key={path} className={index === activeIndex ? "active" : ""} onMouseEnter={() => setActiveIndex(index)} onClick={() => openResult({ type: "route", id: path, label })}><Icon size={17} /><span><strong>{label}</strong></span></button>)}
+              {!query ? <><span className="command-label">Create</span><div className="command-create-grid"><button onClick={() => { openCreate("endeavors"); close(); }}><Plus size={15} /> Endeavor</button><button onClick={() => { openCreate("tasks"); close(); }}><Plus size={15} /> Task</button><button onClick={() => { openCreate("prompts"); close(); }}><Plus size={15} /> Prompt</button><button onClick={() => { openCreate("mindsets"); close(); }}><Plus size={15} /> Mindset</button></div></> : null}
+            </div>
+            <div className="command-footer"><span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span><span><kbd>↵</kbd> Open</span><span><kbd>Esc</kbd> Close</span></div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
+  );
 }

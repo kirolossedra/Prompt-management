@@ -1,47 +1,31 @@
-import { useMemo, useState } from "react";
-import { Brain, BrainCircuit, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Archive, Brain, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useVault } from "../context/VaultContext";
-import { useNavigate } from "react-router";
-import { activeRecords, matchesSearch, scopeLabel } from "../lib/utils";
-import type { CollectionName, Mindset, Preference, Selection } from "../types/domain";
-import { EntityCard } from "../components/entities/EntityCard";
+import { activeRecords, scopeLabel } from "../lib/utils";
+import type { Mindset, Preference } from "../types/domain";
 import { useEntityUi } from "../components/entities/EntityUiProvider";
-import { RecordDetailDrawer } from "../components/entities/RecordDetailDrawer";
+import { ActionMenu } from "../components/ui/ActionMenu";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { EmptyState } from "../components/ui/EmptyState";
-import { PageHeader } from "../components/ui/PageHeader";
+import { RecordDetailDrawer } from "../components/entities/RecordDetailDrawer";
 
 export function ScopedRecordsPage({ kind }: { kind: "mindsets" | "preferences" }) {
   const { data } = useVault();
-  const navigate = useNavigate();
   const { openCreate, openEdit, requestArchive, requestDelete } = useEntityUi();
-  const [selection, setSelection] = useState<Selection | null>(null);
-  const [query, setQuery] = useState("");
-  const [scope, setScope] = useState("");
-  const records = useMemo<Array<Mindset | Preference>>(() => {
-    const source: Array<Mindset | Preference> = kind === "mindsets"
-      ? activeRecords(data.mindsets)
-      : activeRecords(data.preferences);
-    return source.filter((record) => (!scope || record.scopeType === scope) && matchesSearch(record, query));
-  }, [data.mindsets, data.preferences, kind, query, scope]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const isMindset = kind === "mindsets";
-  const Icon = isMindset ? Brain : SlidersHorizontal;
+  const records: Array<Mindset | Preference> = isMindset
+    ? activeRecords(data.mindsets)
+    : activeRecords(data.preferences);
 
-  return <>
-    <PageHeader
-      eyebrow={isMindset ? "Methodology artifacts" : "Working instructions"}
-      title={isMindset ? "Mindsets" : "Preferences"}
-      description={isMindset ? "Capture the principles and intellectual approach used at global, endeavor, task, or prompt scope." : "Define how work should be performed at global, endeavor, or task scope. Applicable preferences are shown together without inventing precedence."}
-      actions={<>{isMindset ? <Button icon={<BrainCircuit size={17} />} onClick={() => navigate("/mindset-construction")}>Mindset construction</Button> : null}<Button variant="primary" icon={<Plus size={17} />} onClick={() => openCreate(kind)}>New {isMindset ? "mindset" : "preference"}</Button></>}
-    />
-    {!isMindset ? <div className="inline-callout warning page-callout"><strong>Preference conflict behavior — Status: Open</strong><span>The product specification does not yet define merge, override, or priority rules. This interface therefore exposes scope without applying silent precedence.</span></div> : null}
-    <Card className="filter-bar"><label className="search-field"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${kind}…`} /></label><select value={scope} onChange={(event) => setScope(event.target.value)}><option value="">All scopes</option><option value="global">Global</option><option value="endeavor">Endeavor</option><option value="task">Task</option>{isMindset ? <option value="prompt">Prompt</option> : null}</select></Card>
-    {records.length ? <div className="entity-grid">{records.map((record) => {
-      const content = isMindset ? (record as Mindset).content : (record as Preference).instruction;
-      return <EntityCard key={record.id} title={record.title} meta={scopeLabel(data, record.scopeType, record.scopeId)} excerpt={content} icon={<Icon />} badges={<><Badge tone={record.scopeType === "global" ? "purple" : "info"}>{record.scopeType}</Badge>{isMindset && (record as Mindset).constructionMethod === "prompt-selection" ? <Badge tone="success">Constructed from {(record as Mindset).sourcePromptIds?.length || 0} prompts</Badge> : null}{isMindset && (record as Mindset).manualAiGeneratedMindset ? <Badge tone="warning">Manual AI placeholder filled</Badge> : null}</>} onOpen={() => setSelection({ collection: kind as CollectionName, id: record.id })} onEdit={() => openEdit(kind, record.id)} onArchive={() => requestArchive(kind, record.id)} onDelete={() => requestDelete(kind, record.id)} />;
-    })}</div> : <Card><EmptyState icon={<Icon />} title={`No ${kind} found`} description={query || scope ? "Adjust the current filters." : `Create the first ${isMindset ? "methodology artifact" : "working preference"} in this workspace.`} action={!query && !scope ? <Button variant="primary" onClick={() => openCreate(kind)}>Create {isMindset ? "mindset" : "preference"}</Button> : undefined} /></Card>}
-    <RecordDetailDrawer selection={selection} onClose={() => setSelection(null)} />
-  </>;
+  return <div className="records-page">
+    <header className="workspace-heading workspace-heading--compact"><div><span className="eyebrow">{isMindset ? "Methodology" : "Behavior rules"}</span><h1>{isMindset ? "Mindsets" : "Preferences"}</h1><p>{isMindset ? "Preserve the principles and intellectual approaches used across your work." : "Define how work should be performed at global, endeavor, or task scope."}</p></div><Button variant="primary" icon={<Plus size={17} />} onClick={() => openCreate(kind)}>New {isMindset ? "mindset" : "preference"}</Button></header>
+    <div className="records-table">{records.map((record) => {
+      const typed = record as Mindset | Preference;
+      const body = isMindset ? (typed as Mindset).content : (typed as Preference).instruction;
+      return <div className="record-row" key={record.id}><button className="record-row__main" onClick={() => setSelectedId(record.id)}><span className="artifact-icon">{isMindset ? <Brain size={17} /> : <SlidersHorizontal size={17} />}</span><span><strong>{typed.title}</strong><p>{body}</p></span></button><Badge tone="info">{scopeLabel(data, typed.scopeType, typed.scopeId)}</Badge><ActionMenu items={[{ label: "Edit", icon: <Pencil size={15} />, onSelect: () => openEdit(kind, record.id) }, { label: "Archive", icon: <Archive size={15} />, onSelect: () => requestArchive(kind, record.id), separatorBefore: true }, { label: "Delete", icon: <Trash2 size={15} />, onSelect: () => requestDelete(kind, record.id), danger: true }]} /></div>;
+    })}</div>
+    {!records.length ? <div className="empty-surface">{isMindset ? <Brain size={28} /> : <SlidersHorizontal size={28} />}<h2>No {isMindset ? "mindsets" : "preferences"} yet</h2><p>Create one to preserve this layer of your working system.</p></div> : null}
+    <RecordDetailDrawer selection={selectedId ? { collection: kind, id: selectedId } : null} onClose={() => setSelectedId(null)} />
+  </div>;
 }

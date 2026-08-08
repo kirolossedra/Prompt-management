@@ -1,77 +1,59 @@
-import { useMemo, useState } from "react";
-import { Brain, BrainCircuit, BriefcaseBusiness, Camera, FileCode2, History, Plus, SlidersHorizontal, Sparkles } from "lucide-react";
+import { useMemo } from "react";
+import { ArrowRight, Brain, Camera, FileCode2, Network, Plus, Sparkles, Target } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useVault } from "../context/VaultContext";
-import { activeRecords, formatRelativeTime, recordTitle } from "../lib/utils";
-import type { CollectionName, Selection, VaultRecord } from "../types/domain";
+import { activeRecords, formatRelativeTime, taskPath } from "../lib/utils";
 import { useEntityUi } from "../components/entities/EntityUiProvider";
-import { RecordDetailDrawer } from "../components/entities/RecordDetailDrawer";
-import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
-import { PageHeader } from "../components/ui/PageHeader";
-import { StatCard } from "../components/ui/StatCard";
 
 export function DashboardPage() {
   const { data, profile } = useVault();
   const { openCreate } = useEntityUi();
   const navigate = useNavigate();
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const prompts = activeRecords(data.prompts);
+  const promptVersions = activeRecords(data.promptVersions);
+  const globalVersions = activeRecords(data.globalCommits);
 
-  const recent = useMemo(() => {
-    const kinds: CollectionName[] = ["endeavors", "tasks", "prompts", "promptVersions", "mindsets", "preferences", "globalCommits", "decisions"];
-    return kinds.flatMap((kind) => activeRecords(data[kind] as Record<string, VaultRecord>).map((record) => ({ kind, record: record as VaultRecord })))
-      .sort((a, b) => b.record.updatedAt - a.record.updatedAt)
-      .slice(0, 8);
-  }, [data]);
+  const recentPrompts = prompts.slice(0, 6);
+  const recentVersions = useMemo(() => promptVersions.slice(0, 7), [promptVersions]);
+  const latestGlobal = globalVersions[0];
 
-  const openDecisions = activeRecords(data.decisions).filter((item) => item.status === "Open");
-  const promptVersionCount = activeRecords(data.promptVersions).length;
-  const globalVersionCount = activeRecords(data.globalCommits).length;
+  return (
+    <div className="dashboard-page">
+      <header className="workspace-heading">
+        <div><span className="eyebrow">Personal knowledge system</span><h1>{profile?.workspaceName || "IntellectVault"}</h1><p>Preserve the prompts, methods, and versions that define how you work.</p></div>
+        <Button variant="primary" icon={<Plus size={17} />} onClick={() => openCreate("prompts")}>New prompt</Button>
+      </header>
 
-  return <>
-    <PageHeader
-      eyebrow="Workspace overview"
-      title={`Welcome to ${profile?.workspaceName || "IntellectVault"}`}
-      description="Your manual-first system for preserving prompts, automatic prompt history, global vault versions, methodologies, and preferences."
-      actions={<Button variant="primary" icon={<Plus size={17} />} onClick={() => openCreate("prompts")}>New prompt</Button>}
-    />
+      <section className="summary-strip" aria-label="Vault summary">
+        <button onClick={() => navigate("/hierarchy")}><Network size={17} /><span><strong>{activeRecords(data.endeavors).length}</strong><small>Endeavors</small></span></button>
+        <button onClick={() => navigate("/hierarchy")}><Target size={17} /><span><strong>{activeRecords(data.tasks).length}</strong><small>Tasks</small></span></button>
+        <button onClick={() => navigate("/prompts")}><FileCode2 size={17} /><span><strong>{prompts.length}</strong><small>Prompts</small></span></button>
+        <button onClick={() => navigate("/mindsets")}><Brain size={17} /><span><strong>{activeRecords(data.mindsets).length}</strong><small>Mindsets</small></span></button>
+      </section>
 
-    <div className="stats-grid">
-      <StatCard label="Endeavors" value={activeRecords(data.endeavors).length} helper="Major areas of work" icon={<BriefcaseBusiness />} />
-      <StatCard label="Prompts" value={activeRecords(data.prompts).length} helper={`${promptVersionCount} automatic local versions`} icon={<FileCode2 />} delay={.04} />
-      <StatCard label="Methodology" value={activeRecords(data.mindsets).length + activeRecords(data.preferences).length} helper="Mindsets and preferences" icon={<Brain />} delay={.08} />
-      <StatCard label="Global versions" value={globalVersionCount} helper="Owner-released vault snapshots" icon={<Camera />} delay={.12} />
-    </div>
+      <div className="dashboard-workspace-grid">
+        <section className="workspace-section workspace-section--wide">
+          <div className="section-heading"><div><span className="eyebrow">Continue working</span><h2>Recently edited prompts</h2></div><button className="text-action" onClick={() => navigate("/prompts")}>View library <ArrowRight size={15} /></button></div>
+          {recentPrompts.length ? <div className="recent-prompt-list">{recentPrompts.map((prompt) => <button key={prompt.id} onClick={() => navigate(`/prompts/${prompt.id}`)}><span className="artifact-icon"><FileCode2 size={17} /></span><span className="recent-prompt-list__copy"><strong>{prompt.title}</strong><small>{taskPath(data, prompt.taskId)}</small></span><time>{formatRelativeTime(prompt.updatedAt)}</time><ArrowRight size={15} /></button>)}</div> : <EmptyState icon={<Sparkles />} title="Start your vault" description="Create your first prompt and its history begins automatically." action={<Button variant="primary" onClick={() => openCreate("prompts")}>Create prompt</Button>} />}
+        </section>
 
-    <div className="dashboard-grid">
-      <Card className="dashboard-card">
-        <div className="card-header"><div><span className="eyebrow">Continue working</span><h2>Recent activity</h2></div></div>
-        {recent.length ? <div className="activity-list">{recent.map(({ kind, record }) => <button key={`${kind}:${record.id}`} onClick={() => setSelection({ collection: kind, id: record.id })}><span className="activity-dot" /><div><strong>{recordTitle(kind, record)}</strong><small>{kind === "globalCommits" ? "global version" : kind} · updated {formatRelativeTime(record.updatedAt)}</small></div></button>)}</div> : <EmptyState icon={<Sparkles />} title="Your vault is ready" description="Create an endeavor or prompt to start preserving your working methodology." action={<Button onClick={() => openCreate("endeavors")}>Create first endeavor</Button>} />}
-      </Card>
+        <section className="workspace-section version-activity-panel">
+          <div className="section-heading"><div><span className="eyebrow">Local history</span><h2>Prompt versions</h2></div></div>
+          {recentVersions.length ? <div className="version-feed">{recentVersions.map((version) => { const prompt = data.prompts[version.promptId]; return <button key={version.id} onClick={() => prompt && navigate(`/prompts/${prompt.id}?tab=history`)}><span className="version-badge">v{version.versionNumber || "—"}</span><span><strong>{prompt?.title || "Deleted prompt"}</strong><small>{version.changedFields?.join(", ") || version.changeDescription}</small></span><time>{formatRelativeTime(version.createdAt)}</time></button>; })}</div> : <p className="muted-copy">Prompt edits will appear here as automatic versions.</p>}
+        </section>
 
-      <div className="dashboard-side">
-        <Card className="dashboard-card">
-          <div className="card-header"><div><span className="eyebrow">Release discipline</span><h2>Open decisions</h2></div><Badge tone="warning">{openDecisions.length} Open</Badge></div>
-          <p className="muted-copy">These decisions remain explicit so implementation does not silently invent product behavior.</p>
-          <div className="compact-list">{openDecisions.slice(0, 5).map((decision) => <button key={decision.id} onClick={() => setSelection({ collection: "decisions", id: decision.id })}><span>{decision.category}</span><strong>{decision.title}</strong></button>)}</div>
-        </Card>
-        <Card className="dashboard-card">
-          <div className="card-header"><div><span className="eyebrow">Quick actions</span><h2>Work in the vault</h2></div></div>
-          <div className="quick-create-grid">
-            <button onClick={() => openCreate("endeavors")}><BriefcaseBusiness /><span>Endeavor</span></button>
-            <button onClick={() => openCreate("tasks")}><BriefcaseBusiness /><span>Task</span></button>
-            <button onClick={() => openCreate("prompts")}><FileCode2 /><span>Prompt</span></button>
-            <button onClick={() => openCreate("mindsets")}><Brain /><span>Mindset</span></button>
-            <button onClick={() => openCreate("preferences")}><SlidersHorizontal /><span>Preference</span></button>
-            <button onClick={() => navigate("/mindset-construction")}><BrainCircuit /><span>Mindset construction</span></button>
-            <button onClick={() => navigate("/commits")}><History /><span>Prompt history</span></button>
-            <button onClick={() => navigate("/commits")}><Camera /><span>Global versions</span></button>
-          </div>
-        </Card>
+        <section className="workspace-section global-version-panel">
+          <div className="section-heading"><div><span className="eyebrow">Vault baseline</span><h2>Latest Global Version</h2></div><Camera size={18} /></div>
+          {latestGlobal ? <button className="global-version-preview" onClick={() => navigate("/versions")}><span className="global-version-id">{latestGlobal.displayId}</span><strong>{latestGlobal.title}</strong><p>{latestGlobal.summary || "Snapshot of the complete vault."}</p><div><span>{latestGlobal.recordCounts?.prompts || 0} prompts</span><span>{formatRelativeTime(latestGlobal.commitTimestamp)}</span></div></button> : <div className="empty-inline"><p>No Global Version has been released yet.</p><Button size="sm" onClick={() => navigate("/versions")}>Release baseline</Button></div>}
+        </section>
+
+        <section className="workspace-section quick-actions-panel">
+          <div className="section-heading"><div><span className="eyebrow">Create</span><h2>Quick actions</h2></div></div>
+          <div className="quick-action-list"><button onClick={() => openCreate("endeavors")}><Network size={17} /><span><strong>New endeavor</strong><small>Start a major area of work</small></span></button><button onClick={() => openCreate("tasks")}><Target size={17} /><span><strong>New task</strong><small>Add focused work beneath an endeavor</small></span></button><button onClick={() => openCreate("prompts")}><FileCode2 size={17} /><span><strong>New prompt</strong><small>Create a version-tracked instruction</small></span></button><button onClick={() => navigate("/mindset-construction")}><Brain size={17} /><span><strong>Construct mindset</strong><small>Build a persona from selected prompts</small></span></button></div>
+        </section>
       </div>
     </div>
-    <RecordDetailDrawer selection={selection} onClose={() => setSelection(null)} />
-  </>;
+  );
 }
