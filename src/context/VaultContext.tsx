@@ -4,13 +4,15 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { onValue, push, ref, update } from "firebase/database";
+import { increment, onValue, push, ref, update } from "firebase/database";
 import { toast } from "sonner";
 import { database, VAULT_ROOT } from "../lib/firebase";
 import { EMPTY_COLLECTIONS } from "../lib/constants";
+import { achievementById, evaluateAchievements } from "../lib/achievements";
 import {
   archiveBlockers,
   cleanText,
@@ -20,6 +22,11 @@ import {
 } from "../lib/utils";
 import { useAuth } from "./AuthContext";
 import type {
+  AchievementId,
+  AchievementUnlock,
+  ActivityAction,
+  ActivityDay,
+  ActivityStats,
   CollectionName,
   Decision,
   Endeavor,
@@ -35,6 +42,7 @@ import type {
   Task,
   UserStamp,
   VaultCollections,
+  VaultEngagement,
   VaultRecord,
   WorkspaceProfile,
 } from "../types/domain";
@@ -46,6 +54,7 @@ interface VaultContextValue {
   profile: WorkspaceProfile | null;
   loading: boolean;
   connection: ConnectionState;
+  engagement: VaultEngagement;
   createRecord: <T extends VaultRecord>(collection: CollectionName, input: RecordInput<T>) => Promise<string>;
   updateRecord: (collection: CollectionName, id: string, patch: Record<string, unknown>) => Promise<void>;
   archiveRecord: (collection: CollectionName, id: string) => Promise<void>;
@@ -67,6 +76,57 @@ function normalizeCollection<T extends VaultRecord>(value: unknown): Record<stri
       { id, ...(record || {}) } as T,
     ]),
   );
+}
+
+function normalizeActivityDays(value: unknown): Record<string, ActivityDay> {
+  if (!value || typeof value !== "object") return {};
+  return value as Record<string, ActivityDay>;
+}
+
+function normalizeActivityStats(value: unknown): ActivityStats {
+  if (!value || typeof value !== "object") return { totalEvents: 0, actionCounts: {}, actionFirstAt: {}, actionLastAt: {} };
+  const stats = value as Partial<ActivityStats>;
+  return {
+    trackingStartedAt: stats.trackingStartedAt,
+    lastActivityAt: stats.lastActivityAt,
+    lastAction: stats.lastAction,
+    lastEntityType: stats.lastEntityType,
+    lastEntityId: stats.lastEntityId,
+    lastLabel: stats.lastLabel,
+    totalEvents: Number(stats.totalEvents || 0),
+    actionCounts: stats.actionCounts || {},
+    actionFirstAt: stats.actionFirstAt || {},
+    actionLastAt: stats.actionLastAt || {},
+  };
+}
+
+function normalizeAchievementUnlocks(value: unknown): Partial<Record<AchievementId, AchievementUnlock>> {
+  if (!value || typeof value !== "object") return {};
+  return value as Partial<Record<AchievementId, AchievementUnlock>>;
+}
+
+function localDateKey(now = new Date()) {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function activityActionForPatch(collection: CollectionName, patch: Record<string, unknown>): ActivityAction {
+  if (Object.prototype.hasOwnProperty.call(patch, "archivedAt")) {
+    return patch.archivedAt ? "record.archived" : "record.restored";
+  }
+  if (collection === "decisions" && (Object.prototype.hasOwnProperty.call(patch, "status") || Object.prototype.hasOwnProperty.call(patch, "resolution"))) {
+    return "decision.changed";
+  }
+  return "record.updated";
+}
+
+function recordLabel(collection: CollectionName, record: Record<string, unknown> | undefined, fallback: string) {
+  if (!record) return fallback;
+  if (collection === "endeavors" || collection === "tasks") return String(record.name || fallback);
+  if (collection === "prompts" || collection === "mindsets" || collection === "preferences" || collection === "decisions" || collection === "globalCommits") return String(record.title || fallback);
+  return fallback;
 }
 
 function normalizeDecisions(value: unknown): Record<string, Decision> {
@@ -138,13 +198,47 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [data, setData] = useState<VaultCollections>(EMPTY_COLLECTIONS as VaultCollections);
   const [profile, setProfile] = useState<WorkspaceProfile | null>(null);
+  const [engagement, setEngagement] = useState<VaultEngagement>({ activityDays: {}, activityStats: { totalEvents: 0, actionCounts: {}, actionFirstAt: {}, actionLastAt: {} }, achievements: {} });
   const [loading, setLoading] = useState(Boolean(user));
   const [connection, setConnection] = useState<ConnectionState>("idle");
+  const achievementWritesInFlight = useRef(new Set<AchievementId>());
+  const sessionRecordedRef = useRef("");
+
+  const recordActivity = useCallback(
+    async (action: ActivityAction, entityType: string, entityId: string, label: string) => {
+      if (!user) return;
+      try {
+        const now = Date.now();
+        const date = localDateKey(new Date(now));
+        const actionKey = action.replaceAll(".", "_");
+        await update(ref(database), {
+          [`${VAULT_ROOT}/${user.uid}/activityDays/${date}/date`]: date,
+          [`${VAULT_ROOT}/${user.uid}/activityDays/${date}/lastAt`]: now,
+          [`${VAULT_ROOT}/${user.uid}/activityDays/${date}/eventCount`]: increment(1),
+          [`${VAULT_ROOT}/${user.uid}/activityDays/${date}/actionTypes/${actionKey}`]: true,
+          [`${VAULT_ROOT}/${user.uid}/activityStats/lastActivityAt`]: now,
+          [`${VAULT_ROOT}/${user.uid}/activityStats/lastAction`]: action,
+          [`${VAULT_ROOT}/${user.uid}/activityStats/lastEntityType`]: entityType,
+          [`${VAULT_ROOT}/${user.uid}/activityStats/lastEntityId`]: entityId,
+          [`${VAULT_ROOT}/${user.uid}/activityStats/lastLabel`]: label,
+          [`${VAULT_ROOT}/${user.uid}/activityStats/totalEvents`]: increment(1),
+          [`${VAULT_ROOT}/${user.uid}/activityStats/actionCounts/${actionKey}`]: increment(1),
+          [`${VAULT_ROOT}/${user.uid}/activityStats/actionFirstAt/${actionKey}`]: engagement.activityStats.actionFirstAt?.[actionKey] || now,
+          [`${VAULT_ROOT}/${user.uid}/activityStats/actionLastAt/${actionKey}`]: now,
+          [`${VAULT_ROOT}/${user.uid}/activityStats/trackingStartedAt`]: engagement.activityStats.trackingStartedAt || now,
+        });
+      } catch (error) {
+        console.warn("IntellectVault activity tracking failed:", error);
+      }
+    },
+    [engagement.activityStats.actionFirstAt, engagement.activityStats.trackingStartedAt, user],
+  );
 
   useEffect(() => {
     if (!user) {
       setData(EMPTY_COLLECTIONS as VaultCollections);
       setProfile(null);
+      setEngagement({ activityDays: {}, activityStats: { totalEvents: 0, actionCounts: {}, actionFirstAt: {}, actionLastAt: {} }, achievements: {} });
       setLoading(false);
       setConnection("idle");
       return;
@@ -169,6 +263,11 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           globalCommits: normalizeCollection<GlobalCommit>(value.globalCommits),
           decisions: normalizeDecisions(value.decisions),
         });
+        setEngagement({
+          activityDays: normalizeActivityDays(value.activityDays),
+          activityStats: normalizeActivityStats(value.activityStats),
+          achievements: normalizeAchievementUnlocks(value.achievements),
+        });
         setLoading(false);
         setConnection("connected");
       },
@@ -182,6 +281,44 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       },
     );
   }, [user]);
+
+  useEffect(() => {
+    if (!user || connection !== "connected") return;
+    const date = localDateKey();
+    const sessionKey = `${user.uid}:${date}`;
+    if (engagement.activityDays[date] || sessionRecordedRef.current === sessionKey) return;
+    sessionRecordedRef.current = sessionKey;
+    void recordActivity("session.opened", "workspace", user.uid, profile?.workspaceName || "Personal Vault");
+  }, [connection, engagement.activityDays, profile?.workspaceName, recordActivity, user]);
+
+  useEffect(() => {
+    if (!user || connection !== "connected") return;
+    const met = evaluateAchievements(data, engagement).filter(
+      (achievement) => achievement.met && !achievement.unlock && !achievementWritesInFlight.current.has(achievement.id),
+    );
+    if (!met.length) return;
+    const now = Date.now();
+    const writes: Record<string, unknown> = {};
+    met.forEach((achievement) => {
+      achievementWritesInFlight.current.add(achievement.id);
+      writes[`${VAULT_ROOT}/${user.uid}/achievements/${achievement.id}`] = {
+        id: achievement.id,
+        unlockedAt: achievement.earnedAt || now,
+        progressAtUnlock: achievement.current,
+      };
+    });
+    void update(ref(database), writes)
+      .then(() => {
+        if (met.length === 1) {
+          const definition = achievementById(met[0].id);
+          toast.success(`Achievement unlocked: ${definition?.title || met[0].title}`, { description: definition?.description });
+        } else {
+          toast.success(`${met.length} achievements unlocked`, { description: met.map((item) => item.title).join(" · ") });
+        }
+      })
+      .catch((error) => console.error("Could not persist achievement unlocks:", error))
+      .finally(() => met.forEach((achievement) => achievementWritesInFlight.current.delete(achievement.id)));
+  }, [connection, data, engagement, user]);
 
   const createRecord = useCallback(
     async <T extends VaultRecord>(collection: CollectionName, input: RecordInput<T>) => {
@@ -227,15 +364,17 @@ export function VaultProvider({ children }: { children: ReactNode }) {
             archivedBy: null,
           },
         });
+        await recordActivity("record.created", "prompts", itemRef.key, String((input as unknown as Record<string, unknown>).title || "Prompt"));
         return itemRef.key;
       }
 
       await update(ref(database), {
         [`${VAULT_ROOT}/${user.uid}/${collection}/${itemRef.key}`]: record,
       });
+      await recordActivity("record.created", collection, itemRef.key, recordLabel(collection, input as unknown as Record<string, unknown>, collection));
       return itemRef.key;
     },
-    [user],
+    [recordActivity, user],
   );
 
   const updateRecord = useCallback(
@@ -266,6 +405,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
             updatedAt: now,
             updatedBy: stamp,
           });
+          await recordActivity(activityActionForPatch(collection, patch), "prompts", id, current.title);
           return;
         }
         const previousSnapshot = promptSnapshot(current);
@@ -302,16 +442,19 @@ export function VaultProvider({ children }: { children: ReactNode }) {
             archivedBy: null,
           },
         });
+        await recordActivity("prompt.committed", "prompts", id, String(patch.title || current.title));
         return;
       }
 
+      const currentRecord = data[collection][id] as unknown as Record<string, unknown> | undefined;
       await update(ref(database, `${VAULT_ROOT}/${user.uid}/${collection}/${id}`), {
         ...patch,
         updatedAt: now,
         updatedBy: stamp,
       });
+      await recordActivity(activityActionForPatch(collection, patch), collection, id, recordLabel(collection, { ...currentRecord, ...patch }, collection));
     },
-    [data.prompts, data.promptVersions, user],
+    [data, recordActivity, user],
   );
 
   const copyPrompt = useCallback(
@@ -353,6 +496,9 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       const snapshot: GlobalVersionSnapshot = clone({
         capturedAt: now,
         profile,
+        activityDays: engagement.activityDays,
+        activityStats: engagement.activityStats,
+        achievements: engagement.achievements,
         endeavors: data.endeavors,
         tasks: data.tasks,
         prompts: data.prompts,
@@ -391,9 +537,10 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           archivedBy: null,
         },
       });
+      await recordActivity("global-version.released", "globalCommits", itemRef.key, cleanTitle);
       return itemRef.key;
     },
-    [data, profile, user],
+    [data, engagement.activityDays, engagement.activityStats, engagement.achievements, profile, recordActivity, user],
   );
 
   const archiveRecord = useCallback(
@@ -429,13 +576,16 @@ export function VaultProvider({ children }: { children: ReactNode }) {
             writes[`${VAULT_ROOT}/${user.uid}/promptVersions/${version.id}`] = null;
           });
         await update(ref(database), writes);
+        await recordActivity("record.deleted", "prompts", id, data.prompts[id]?.title || "Prompt");
         return;
       }
+      const currentRecord = data[collection][id] as unknown as Record<string, unknown> | undefined;
       await update(ref(database), {
         [`${VAULT_ROOT}/${user.uid}/${collection}/${id}`]: null,
       });
+      await recordActivity("record.deleted", collection, id, recordLabel(collection, currentRecord, collection));
     },
-    [data, user],
+    [data, recordActivity, user],
   );
 
   const restoreRecord = useCallback(
@@ -454,8 +604,9 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         if (!sanitized.workspaceName) throw new Error("Workspace name is required.");
       }
       await update(ref(database, `${VAULT_ROOT}/${user.uid}/profile`), sanitized);
+      await recordActivity("record.updated", "profile", user.uid, String(sanitized.workspaceName || profile?.workspaceName || "Workspace"));
     },
-    [user],
+    [profile?.workspaceName, recordActivity, user],
   );
 
   const exportWorkspace = useCallback(() => {
@@ -467,6 +618,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
             exportedAt: new Date().toISOString(),
             ownerUid: user.uid,
             profile,
+            engagement,
             ...data,
           },
           null,
@@ -481,7 +633,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     anchor.download = `intellectvault-${new Date().toISOString().slice(0, 10)}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
-  }, [data, profile, user]);
+  }, [data, engagement, profile, user]);
 
   const value = useMemo<VaultContextValue>(
     () => ({
@@ -489,6 +641,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       profile,
       loading,
       connection,
+      engagement,
       createRecord,
       updateRecord,
       archiveRecord,
@@ -504,6 +657,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       profile,
       loading,
       connection,
+      engagement,
       createRecord,
       updateRecord,
       archiveRecord,

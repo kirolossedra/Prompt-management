@@ -20,6 +20,7 @@ import {
   Settings2,
   SlidersHorizontal,
   Sun,
+  Trophy,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -36,6 +37,7 @@ import { CommandPalette } from "./CommandPalette";
 
 const workspaceNav = [
   ["Overview", "/dashboard", LayoutDashboard, ""],
+  ["Achievements", "/achievements", Trophy, ""],
   ["Vault", "/hierarchy", Network, "endeavors"],
   ["Prompts", "/prompts", FileCode2, "prompts"],
   ["Mindsets", "/mindsets", Brain, "mindsets"],

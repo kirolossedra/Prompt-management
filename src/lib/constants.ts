@@ -41,6 +41,8 @@ export const FINALIZED_DECISIONS = [
   ["Prompt copying", "Prompts", "A prompt can be copied into a new prompt with its own independent history."],
   ["Vault-wide prompt search", "Prompts", "Prompt word search runs across prompt fields and version content without requiring an endeavor or task filter."],
   ["Mindset construction", "Mindsets", "A persona-style mindset can be manually assembled from a user-selected set of prompts without AI generation."],
+  ["Achievement system", "Engagement", "Achievements unlock automatically from persisted vault behavior and remain unlocked once earned."],
+  ["Activity achievements", "Engagement", "Activity milestones count distinct local calendar days of vault use; they are cumulative and do not require consecutive-day streaks."],
   ["Private by default", "Workspace", "Workspace content is owner-private unless future collaboration is explicitly configured."],
   ["Full content CRUD", "Data lifecycle", "Implemented content records support create, read, update, archive/restore, and dependency-safe permanent deletion."],
 ] as const;

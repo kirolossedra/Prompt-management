@@ -13,6 +13,61 @@ export type ScopeType = "global" | "endeavor" | "task" | "prompt";
 export type PreferenceScopeType = Exclude<ScopeType, "prompt">;
 export type DecisionStatus = "Open" | "Finalized";
 
+
+export type AchievementId =
+  | "first-prompt-commit"
+  | "first-global-commit"
+  | "first-mindset"
+  | "first-endeavor"
+  | "active-7-days"
+  | "active-30-days"
+  | "builder"
+  | "fussy-builder"
+  | "skeptical";
+
+export type ActivityAction =
+  | "session.opened"
+  | "record.created"
+  | "record.updated"
+  | "record.archived"
+  | "record.restored"
+  | "record.deleted"
+  | "prompt.committed"
+  | "global-version.released"
+  | "decision.changed";
+
+export interface ActivityDay {
+  date: string;
+  lastAt: number;
+  eventCount: number;
+  actionTypes?: Record<string, boolean>;
+}
+
+export interface ActivityStats {
+  trackingStartedAt?: number;
+  lastActivityAt?: number;
+  lastAction?: ActivityAction;
+  lastEntityType?: string;
+  lastEntityId?: string;
+  lastLabel?: string;
+  totalEvents: number;
+  actionCounts?: Record<string, number>;
+  actionFirstAt?: Record<string, number>;
+  actionLastAt?: Record<string, number>;
+}
+
+export interface AchievementUnlock {
+  id: AchievementId;
+  unlockedAt: number;
+  progressAtUnlock: number;
+}
+
+export interface VaultEngagement {
+  activityDays: Record<string, ActivityDay>;
+  activityStats: ActivityStats;
+  achievements: Partial<Record<AchievementId, AchievementUnlock>>;
+}
+
 export interface UserStamp {
   uid: string;
   email: string;
@@ -121,6 +176,9 @@ export interface LocalCommit extends BaseRecord {
 export interface GlobalVersionSnapshot {
   capturedAt: number;
   profile: WorkspaceProfile | null;
+  activityDays?: Record<string, ActivityDay>;
+  activityStats?: ActivityStats;
+  achievements?: Partial<Record<AchievementId, AchievementUnlock>>;
   endeavors: Record<string, Endeavor>;
   tasks: Record<string, Task>;
   prompts: Record<string, Prompt>;

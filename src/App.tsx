@@ -8,6 +8,7 @@ import { AuthPage } from "./components/auth/AuthPage";
 import { EntityUiProvider } from "./components/entities/EntityUiProvider";
 import { AppShell } from "./components/layout/AppShell";
 import { LoadingScreen } from "./components/ui/LoadingScreen";
+import { AchievementsPage } from "./pages/AchievementsPage";
 import { ArchivePage } from "./pages/ArchivePage";
 import { CommitsPage } from "./pages/CommitsPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -30,6 +31,7 @@ function AuthenticatedRoutes() {
         <Route element={<AppShell />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="achievements" element={<AchievementsPage />} />
           <Route path="hierarchy" element={<HierarchyPage />} />
           <Route path="prompts" element={<PromptsPage />} />
           <Route path="prompts/:promptId" element={<PromptWorkspacePage />} />
