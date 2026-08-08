@@ -14,6 +14,7 @@ import { database, VAULT_ROOT } from "../lib/firebase";
 import { EMPTY_COLLECTIONS } from "../lib/constants";
 import { achievementById, evaluateAchievements } from "../lib/achievements";
 import { downloadAttachmentFile, readFileAsBase64, validateAttachmentBatch } from "../lib/attachments";
+import { validatePromptRelation } from "../lib/relationships";
 import {
   archiveBlockers,
   cleanText,
@@ -38,6 +39,7 @@ import type {
   Preference,
   Prompt,
   PromptAttachment,
+  PromptRelation,
   PromptSnapshot,
   PromptVersion,
   RecordInput,
@@ -66,6 +68,10 @@ interface VaultContextValue {
   addPromptAttachments: (promptId: string, files: File[]) => Promise<number>;
   removePromptAttachment: (attachmentId: string) => Promise<void>;
   downloadPromptAttachment: (attachmentId: string) => Promise<void>;
+  createPromptRelation: (parentPromptId: string, childPromptId: string) => Promise<string>;
+  updatePromptRelation: (relationId: string, parentPromptId: string, childPromptId: string) => Promise<void>;
+  removePromptRelation: (relationId: string) => Promise<void>;
+  recordRelationshipMapDownload: (format: "svg" | "png") => Promise<void>;
   createGlobalVersion: (title: string, summary: string) => Promise<string>;
   saveProfile: (patch: Partial<WorkspaceProfile>) => Promise<void>;
   exportWorkspace: () => void;
@@ -263,6 +269,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           prompts: normalizeCollection<Prompt>(value.prompts),
           promptVersions: normalizeCollection<PromptVersion>(value.promptVersions),
           promptAttachments: normalizeCollection<PromptAttachment>(value.promptAttachments),
+          promptRelations: normalizeCollection<PromptRelation>(value.promptRelations),
           mindsets: normalizeCollection<Mindset>(value.mindsets),
           preferences: normalizeCollection<Preference>(value.preferences),
           localCommits: normalizeCollection<LocalCommit>(value.localCommits),
@@ -577,6 +584,75 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     [data.promptAttachments, recordActivity],
   );
 
+  const createPromptRelation = useCallback(
+    async (parentPromptId: string, childPromptId: string) => {
+      if (!user) throw new Error("A signed-in user is required.");
+      const validation = validatePromptRelation(data, parentPromptId, childPromptId);
+      if (!validation.ok) throw new Error(validation.message);
+      const itemRef = push(ref(database, `${VAULT_ROOT}/${user.uid}/promptRelations`));
+      if (!itemRef.key) throw new Error("Firebase could not allocate a relationship identifier.");
+      const now = Date.now();
+      const stamp = userStamp(user);
+      await update(ref(database), {
+        [`${VAULT_ROOT}/${user.uid}/promptRelations/${itemRef.key}`]: {
+          id: itemRef.key,
+          parentPromptId,
+          childPromptId,
+          relationshipType: "inspired-by",
+          createdAt: now,
+          updatedAt: now,
+          createdBy: stamp,
+          updatedBy: stamp,
+          archivedAt: null,
+          archivedBy: null,
+        },
+      });
+      await recordActivity("relationship.added", "promptRelations", itemRef.key, `${data.prompts[parentPromptId]?.title || "Prompt"} → ${data.prompts[childPromptId]?.title || "Prompt"}`);
+      return itemRef.key;
+    },
+    [data, recordActivity, user],
+  );
+
+  const updatePromptRelation = useCallback(
+    async (relationId: string, parentPromptId: string, childPromptId: string) => {
+      if (!user) throw new Error("A signed-in user is required.");
+      const current = data.promptRelations[relationId];
+      if (!current) throw new Error("The prompt relationship could not be found.");
+      const validation = validatePromptRelation(data, parentPromptId, childPromptId, relationId);
+      if (!validation.ok) throw new Error(validation.message);
+      const now = Date.now();
+      await update(ref(database, `${VAULT_ROOT}/${user.uid}/promptRelations/${relationId}`), {
+        parentPromptId,
+        childPromptId,
+        relationshipType: "inspired-by",
+        updatedAt: now,
+        updatedBy: userStamp(user),
+      });
+      await recordActivity("relationship.updated", "promptRelations", relationId, `${data.prompts[parentPromptId]?.title || "Prompt"} → ${data.prompts[childPromptId]?.title || "Prompt"}`);
+    },
+    [data, recordActivity, user],
+  );
+
+  const removePromptRelation = useCallback(
+    async (relationId: string) => {
+      if (!user) throw new Error("A signed-in user is required.");
+      const relation = data.promptRelations[relationId];
+      if (!relation) throw new Error("The prompt relationship could not be found.");
+      await update(ref(database), {
+        [`${VAULT_ROOT}/${user.uid}/promptRelations/${relationId}`]: null,
+      });
+      await recordActivity("relationship.removed", "promptRelations", relationId, `${data.prompts[relation.parentPromptId]?.title || "Prompt"} → ${data.prompts[relation.childPromptId]?.title || "Prompt"}`);
+    },
+    [data.promptRelations, data.prompts, recordActivity, user],
+  );
+
+  const recordRelationshipMapDownload = useCallback(
+    async (format: "svg" | "png") => {
+      await recordActivity("relationship.map-downloaded", "promptRelations", format, `Relationship map · ${format.toUpperCase()}`);
+    },
+    [recordActivity],
+  );
+
   const createGlobalVersion = useCallback(
     async (title: string, summary: string) => {
       if (!user) throw new Error("A signed-in user is required.");
@@ -598,6 +674,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         prompts: data.prompts,
         promptVersions: data.promptVersions,
         promptAttachments: data.promptAttachments,
+        promptRelations: data.promptRelations,
         mindsets: data.mindsets,
         preferences: data.preferences,
         localCommits: data.localCommits,
@@ -609,6 +686,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         prompts: Object.keys(data.prompts).length,
         promptVersions: Object.keys(data.promptVersions).length,
         promptAttachments: Object.keys(data.promptAttachments).length,
+        promptRelations: Object.keys(data.promptRelations).length,
         mindsets: Object.keys(data.mindsets).length,
         preferences: Object.keys(data.preferences).length,
         decisions: Object.keys(data.decisions).length,
@@ -675,6 +753,11 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           .filter((attachment) => attachment.promptId === id)
           .forEach((attachment) => {
             writes[`${VAULT_ROOT}/${user.uid}/promptAttachments/${attachment.id}`] = null;
+          });
+        Object.values(data.promptRelations)
+          .filter((relation) => relation.parentPromptId === id || relation.childPromptId === id)
+          .forEach((relation) => {
+            writes[`${VAULT_ROOT}/${user.uid}/promptRelations/${relation.id}`] = null;
           });
         await update(ref(database), writes);
         await recordActivity("record.deleted", "prompts", id, data.prompts[id]?.title || "Prompt");
@@ -752,6 +835,10 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       addPromptAttachments,
       removePromptAttachment,
       downloadPromptAttachment,
+      createPromptRelation,
+      updatePromptRelation,
+      removePromptRelation,
+      recordRelationshipMapDownload,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,
@@ -771,6 +858,10 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       addPromptAttachments,
       removePromptAttachment,
       downloadPromptAttachment,
+      createPromptRelation,
+      updatePromptRelation,
+      removePromptRelation,
+      recordRelationshipMapDownload,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,

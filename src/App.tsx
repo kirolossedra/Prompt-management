@@ -16,6 +16,7 @@ import { DecisionsPage } from "./pages/DecisionsPage";
 import { HierarchyPage } from "./pages/HierarchyPage";
 import { MindsetConstructionPage } from "./pages/MindsetConstructionPage";
 import { PromptWorkspacePage } from "./pages/PromptWorkspacePage";
+import { RelationshipMapPage } from "./pages/RelationshipMapPage";
 import { PromptsPage } from "./pages/PromptsPage";
 import { RoadmapPage } from "./pages/RoadmapPage";
 import { ScopedRecordsPage } from "./pages/ScopedRecordsPage";
@@ -35,6 +36,7 @@ function AuthenticatedRoutes() {
           <Route path="hierarchy" element={<HierarchyPage />} />
           <Route path="prompts" element={<PromptsPage />} />
           <Route path="prompts/:promptId" element={<PromptWorkspacePage />} />
+          <Route path="relationships" element={<RelationshipMapPage />} />
           <Route path="mindsets" element={<ScopedRecordsPage kind="mindsets" />} />
           <Route path="mindset-construction" element={<MindsetConstructionPage />} />
           <Route path="preferences" element={<ScopedRecordsPage kind="preferences" />} />

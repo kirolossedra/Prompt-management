@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Brain, BrainCircuit, Camera, FileCode2, Network, Plus, Search, Settings2, SlidersHorizontal, Trophy } from "lucide-react";
+import { Brain, BrainCircuit, Camera, FileCode2, Network, Plus, Search, Settings2, Share2, SlidersHorizontal, Trophy } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useNavigate } from "react-router";
 import { useVault } from "../../context/VaultContext";
@@ -11,6 +11,7 @@ const routes = [
   ["Achievements", "/achievements", Trophy],
   ["Vault explorer", "/hierarchy", Network],
   ["Prompt library", "/prompts", FileCode2],
+  ["Relationship map", "/relationships", Share2],
   ["Mindsets", "/mindsets", Brain],
   ["Mindset builder", "/mindset-construction", BrainCircuit],
   ["Preferences", "/preferences", SlidersHorizontal],
