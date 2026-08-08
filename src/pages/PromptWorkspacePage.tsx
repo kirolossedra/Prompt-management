@@ -1,32 +1,49 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   Archive,
   ArrowLeft,
   Check,
   ChevronDown,
   Copy,
+  Download,
   Eye,
+  File,
+  FileArchive,
   FileCode2,
+  FileImage,
+  FileText,
   Files,
   Focus,
   History,
+  Paperclip,
   PanelRightClose,
   PanelRightOpen,
   RotateCcw,
   Save,
   Trash2,
+  UploadCloud,
 } from "lucide-react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { useVault } from "../context/VaultContext";
 import { copyTextToClipboard } from "../lib/clipboard";
+import { attachmentKind, formatBytes, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENTS_PER_PROMPT, MAX_PROMPT_ATTACHMENT_BYTES } from "../lib/attachments";
 import { compactDiff, diffStats, lineDiff, sideBySideDiff } from "../lib/diff";
 import { activeRecords, cx, formatDate, promptVersionSnapshot, taskPath } from "../lib/utils";
-import type { PromptSnapshot } from "../types/domain";
+import type { PromptAttachment, PromptSnapshot } from "../types/domain";
 import { useEntityUi } from "../components/entities/EntityUiProvider";
 import { ActionMenu } from "../components/ui/ActionMenu";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
+import { Modal } from "../components/ui/Modal";
+
+function attachmentIcon(attachment: PromptAttachment) {
+  const kind = attachmentKind(attachment);
+  if (kind === "image") return <FileImage size={20} />;
+  if (kind === "pdf" || kind === "text") return <FileText size={20} />;
+  if (kind === "archive") return <FileArchive size={20} />;
+  return <File size={20} />;
+}
 
 function snapshotFromDraft(draft: Record<string, string>): PromptSnapshot {
   return {
@@ -46,10 +63,11 @@ export function PromptWorkspacePage() {
   const { promptId = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { data, updateRecord, copyPrompt } = useVault();
+  const { data, updateRecord, copyPrompt, addPromptAttachments, removePromptAttachment, downloadPromptAttachment } = useVault();
   const { requestArchive, requestDelete } = useEntityUi();
   const prompt = data.prompts[promptId];
   const versions = useMemo(() => activeRecords(data.promptVersions).filter((version) => version.promptId === promptId).sort((a, b) => (b.versionNumber || 0) - (a.versionNumber || 0)), [data.promptVersions, promptId]);
+  const attachments = useMemo(() => activeRecords(data.promptAttachments).filter((attachment) => attachment.promptId === promptId).sort((a, b) => b.createdAt - a.createdAt), [data.promptAttachments, promptId]);
   const tasks = activeRecords(data.tasks);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [savedSnapshot, setSavedSnapshot] = useState("");
@@ -60,7 +78,12 @@ export function PromptWorkspacePage() {
   const [compareB, setCompareB] = useState("");
   const [diffMode, setDiffMode] = useState<"unified" | "side">("unified");
   const [diffScope, setDiffScope] = useState<"changes" | "all">("changes");
-  const tab = searchParams.get("tab") === "history" ? "history" : "editor";
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [removeAttachmentId, setRemoveAttachmentId] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const requestedTab = searchParams.get("tab");
+  const tab = requestedTab === "history" ? "history" : requestedTab === "files" ? "files" : "editor";
 
   useEffect(() => {
     if (!prompt) return;
@@ -148,6 +171,40 @@ export function PromptWorkspacePage() {
     setSearchParams({ tab: "editor" });
   }
 
+  async function uploadFiles(list: FileList | File[]) {
+    if (!prompt) return;
+    const files = Array.from(list);
+    if (!files.length) return;
+    setUploading(true);
+    try {
+      const count = await addPromptAttachments(prompt.id, files);
+      toast.success(`${count} file${count === 1 ? "" : "s"} added to this prompt.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Files could not be added.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function downloadAttachment(attachmentId: string) {
+    try {
+      await downloadPromptAttachment(attachmentId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The file could not be downloaded.");
+    }
+  }
+
+  async function removeAttachment() {
+    if (!removeAttachmentId) return;
+    try {
+      await removePromptAttachment(removeAttachmentId);
+      toast.success("File removed from the prompt.");
+      setRemoveAttachmentId("");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The file could not be removed.");
+    }
+  }
+
   if (!prompt) {
     return <div className="empty-surface"><FileCode2 size={30} /><h1>Prompt not found</h1><p>It may have been archived or deleted.</p><Button onClick={() => navigate("/prompts")}>Back to prompts</Button></div>;
   }
@@ -161,6 +218,8 @@ export function PromptWorkspacePage() {
   const unifiedRows = diffScope === "changes" ? compactDiff(diff, 2) : diff.map((line) => ({ kind: "line" as const, line }));
   const sideRows = sideBySideDiff(diff);
   const currentVersion = versions[0]?.versionNumber || versions.length;
+  const attachmentBytes = attachments.reduce((sum, attachment) => sum + Number(attachment.sizeBytes || 0), 0);
+  const attachmentToRemove = data.promptAttachments[removeAttachmentId];
 
   return (
     <div className={cx("prompt-workspace", focusMode && "prompt-workspace--focus", !inspectorOpen && "prompt-workspace--inspector-closed")}>
@@ -182,7 +241,7 @@ export function PromptWorkspacePage() {
         </div>
       </header>
 
-      <div className="prompt-tabs"><button className={tab === "editor" ? "active" : ""} onClick={() => setSearchParams({})}><FileCode2 size={15} /> Editor</button><button className={tab === "history" ? "active" : ""} onClick={() => setSearchParams({ tab: "history" })}><History size={15} /> History <span>{versions.length}</span></button></div>
+      <div className="prompt-tabs"><button className={tab === "editor" ? "active" : ""} onClick={() => setSearchParams({})}><FileCode2 size={15} /> Editor</button><button className={tab === "history" ? "active" : ""} onClick={() => setSearchParams({ tab: "history" })}><History size={15} /> History <span>{versions.length}</span></button><button className={tab === "files" ? "active" : ""} onClick={() => setSearchParams({ tab: "files" })}><Paperclip size={15} /> Files <span>{attachments.length}</span></button></div>
 
       {tab === "editor" ? (
         <form className="prompt-editor-layout" onSubmit={save}>
@@ -196,6 +255,37 @@ export function PromptWorkspacePage() {
             <details className="inspector-details"><summary>Manual future-AI placeholders <ChevronDown size={14} /></summary><label>Agentic summary<textarea rows={3} value={draft.manualAgenticSummary || ""} onChange={(event) => setDraft((current) => ({ ...current, manualAgenticSummary: event.target.value }))} /></label><label>Suggested improvement<textarea rows={3} value={draft.manualSuggestedImprovement || ""} onChange={(event) => setDraft((current) => ({ ...current, manualSuggestedImprovement: event.target.value }))} /></label><label>AI evaluation<textarea rows={3} value={draft.manualAiEvaluation || ""} onChange={(event) => setDraft((current) => ({ ...current, manualAiEvaluation: event.target.value }))} /></label><label>Generated context<textarea rows={5} value={draft.manualGeneratedContext || ""} onChange={(event) => setDraft((current) => ({ ...current, manualGeneratedContext: event.target.value }))} /></label></details>
           </aside> : null}
         </form>
+      ) : tab === "files" ? (
+        <div className="attachment-workspace">
+          <section className="attachment-heading">
+            <div><span className="eyebrow">Prompt resources</span><h2>Files</h2><p>Keep small reference files directly with this prompt. Files are stored in Firebase as Base64 and can be downloaded later.</p></div>
+            <div className="attachment-usage"><strong>{attachments.length} / {MAX_ATTACHMENTS_PER_PROMPT}</strong><span>{formatBytes(attachmentBytes)} / {formatBytes(MAX_PROMPT_ATTACHMENT_BYTES)}</span></div>
+          </section>
+
+          <section
+            className={cx("attachment-dropzone", dragActive && "attachment-dropzone--active")}
+            onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }}
+            onDragOver={(event) => { event.preventDefault(); setDragActive(true); }}
+            onDragLeave={(event) => { event.preventDefault(); if (event.currentTarget === event.target) setDragActive(false); }}
+            onDrop={(event) => { event.preventDefault(); setDragActive(false); void uploadFiles(event.dataTransfer.files); }}
+          >
+            <input ref={fileInputRef} className="visually-hidden" type="file" multiple onChange={(event) => { if (event.currentTarget.files) void uploadFiles(event.currentTarget.files); event.currentTarget.value = ""; }} />
+            <span className="attachment-dropzone__icon"><UploadCloud size={26} /></span>
+            <div><h3>Drop files here</h3><p>Or choose multiple files from your device.</p><small>Up to {formatBytes(MAX_ATTACHMENT_BYTES)} per file · {MAX_ATTACHMENTS_PER_PROMPT} files · {formatBytes(MAX_PROMPT_ATTACHMENT_BYTES)} total per prompt</small></div>
+            <Button type="button" variant="secondary" loading={uploading} icon={<Paperclip size={16} />} onClick={() => fileInputRef.current?.click()}>Choose files</Button>
+          </section>
+
+          <section className="attachment-list-section">
+            <div className="section-heading"><div><span className="eyebrow">Attached to this prompt</span><h2>{attachments.length ? `${attachments.length} file${attachments.length === 1 ? "" : "s"}` : "No files yet"}</h2></div></div>
+            {attachments.length ? <div className="attachment-list">{attachments.map((attachment) => (
+              <article className="attachment-row" key={attachment.id}>
+                <span className="attachment-row__icon">{attachmentIcon(attachment)}</span>
+                <div className="attachment-row__copy"><strong title={attachment.fileName}>{attachment.fileName}</strong><span>{formatBytes(attachment.sizeBytes)} · {attachment.mimeType || "Unknown file type"} · Added {formatDate(attachment.createdAt)}</span></div>
+                <div className="attachment-row__actions"><Button size="sm" variant="ghost" icon={<Download size={15} />} onClick={() => void downloadAttachment(attachment.id)}>Download</Button><Button size="sm" variant="ghost" className="attachment-remove-button" icon={<Trash2 size={15} />} onClick={() => setRemoveAttachmentId(attachment.id)}>Remove</Button></div>
+              </article>
+            ))}</div> : <div className="empty-surface empty-surface--compact"><Paperclip size={28} /><h3>No files attached</h3><p>Add reference documents, images, exports, or other small files that belong with this prompt.</p><Button variant="secondary" icon={<UploadCloud size={16} />} onClick={() => fileInputRef.current?.click()}>Add files</Button></div>}
+          </section>
+        </div>
       ) : (
         <div className="history-workspace">
           <aside className="version-timeline">
@@ -265,7 +355,11 @@ export function PromptWorkspacePage() {
         </div>
       )}
 
-      <div className="mobile-prompt-actions"><button onClick={() => setSearchParams(tab === "history" ? {} : { tab: "history" })}>{tab === "history" ? <FileCode2 size={18} /> : <History size={18} />}<span>{tab === "history" ? "Editor" : "History"}</span></button><button onClick={() => void copyCurrentPromptText()}><Copy size={18} /><span>Copy</span></button><button onClick={() => setInspectorOpen((value) => !value)}><PanelRightOpen size={18} /><span>Details</span></button><Button variant="primary" loading={saving} disabled={!dirty} icon={<Save size={17} />} onClick={() => void save()}>Save</Button></div>
+      <div className="mobile-prompt-actions">
+        {tab === "files" ? <><button onClick={() => setSearchParams({})}><FileCode2 size={18} /><span>Editor</span></button><button onClick={() => setSearchParams({ tab: "history" })}><History size={18} /><span>History</span></button><button onClick={() => fileInputRef.current?.click()}><UploadCloud size={18} /><span>Add file</span></button><button onClick={() => void copyCurrentPromptText()}><Copy size={18} /><span>Copy</span></button></> : <><button onClick={() => setSearchParams(tab === "history" ? {} : { tab: "history" })}>{tab === "history" ? <FileCode2 size={18} /> : <History size={18} />}<span>{tab === "history" ? "Editor" : "History"}</span></button><button onClick={() => setSearchParams({ tab: "files" })}><Paperclip size={18} /><span>Files</span></button><button onClick={() => void copyCurrentPromptText()}><Copy size={18} /><span>Copy</span></button>{tab === "editor" ? <Button variant="primary" loading={saving} disabled={!dirty} icon={<Save size={17} />} onClick={() => void save()}>Save</Button> : <button onClick={() => setInspectorOpen((value) => !value)}><PanelRightOpen size={18} /><span>Details</span></button>}</>}
+      </div>
+
+      <Modal open={Boolean(removeAttachmentId)} onClose={() => setRemoveAttachmentId("")} title="Remove file" description="This permanently removes the stored Base64 file from this prompt." size="sm" footer={<><Button variant="ghost" onClick={() => setRemoveAttachmentId("")}>Cancel</Button><Button variant="danger" icon={<Trash2 size={16} />} onClick={() => void removeAttachment()}>Remove file</Button></>}><div className="attachment-remove-confirm"><span className="attachment-row__icon">{attachmentToRemove ? attachmentIcon(attachmentToRemove) : <File size={20} />}</span><div><strong>{attachmentToRemove?.fileName || "File"}</strong><span>{attachmentToRemove ? formatBytes(attachmentToRemove.sizeBytes) : ""}</span></div></div></Modal>
     </div>
   );
 }

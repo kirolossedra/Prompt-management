@@ -34,7 +34,10 @@ export type ActivityAction =
   | "record.deleted"
   | "prompt.committed"
   | "global-version.released"
-  | "decision.changed";
+  | "decision.changed"
+  | "attachment.added"
+  | "attachment.removed"
+  | "attachment.downloaded";
 
 export interface ActivityDay {
   date: string;
@@ -130,6 +133,15 @@ export interface PromptSnapshot {
   manualGeneratedContext: string;
 }
 
+
+export interface PromptAttachment extends BaseRecord {
+  promptId: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  base64: string;
+}
+
 export interface PromptVersion extends BaseRecord {
   promptId: string;
   versionLabel: string;
@@ -183,6 +195,7 @@ export interface GlobalVersionSnapshot {
   tasks: Record<string, Task>;
   prompts: Record<string, Prompt>;
   promptVersions: Record<string, PromptVersion>;
+  promptAttachments?: Record<string, PromptAttachment>;
   mindsets: Record<string, Mindset>;
   preferences: Record<string, Preference>;
   localCommits: Record<string, LocalCommit>;
@@ -217,6 +230,7 @@ export interface VaultCollections {
   tasks: Record<string, Task>;
   prompts: Record<string, Prompt>;
   promptVersions: Record<string, PromptVersion>;
+  promptAttachments: Record<string, PromptAttachment>;
   mindsets: Record<string, Mindset>;
   preferences: Record<string, Preference>;
   localCommits: Record<string, LocalCommit>;

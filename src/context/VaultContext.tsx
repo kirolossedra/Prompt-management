@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { database, VAULT_ROOT } from "../lib/firebase";
 import { EMPTY_COLLECTIONS } from "../lib/constants";
 import { achievementById, evaluateAchievements } from "../lib/achievements";
+import { downloadAttachmentFile, readFileAsBase64, validateAttachmentBatch } from "../lib/attachments";
 import {
   archiveBlockers,
   cleanText,
@@ -36,6 +37,7 @@ import type {
   Mindset,
   Preference,
   Prompt,
+  PromptAttachment,
   PromptSnapshot,
   PromptVersion,
   RecordInput,
@@ -61,6 +63,9 @@ interface VaultContextValue {
   deleteRecord: (collection: CollectionName, id: string) => Promise<void>;
   restoreRecord: (collection: CollectionName, id: string) => Promise<void>;
   copyPrompt: (promptId: string) => Promise<string>;
+  addPromptAttachments: (promptId: string, files: File[]) => Promise<number>;
+  removePromptAttachment: (attachmentId: string) => Promise<void>;
+  downloadPromptAttachment: (attachmentId: string) => Promise<void>;
   createGlobalVersion: (title: string, summary: string) => Promise<string>;
   saveProfile: (patch: Partial<WorkspaceProfile>) => Promise<void>;
   exportWorkspace: () => void;
@@ -68,7 +73,7 @@ interface VaultContextValue {
 
 const VaultContext = createContext<VaultContextValue | null>(null);
 
-function normalizeCollection<T extends VaultRecord>(value: unknown): Record<string, T> {
+function normalizeCollection<T extends { id: string }>(value: unknown): Record<string, T> {
   if (!value || typeof value !== "object") return {};
   return Object.fromEntries(
     Object.entries(value as Record<string, Omit<T, "id">>).map(([id, record]) => [
@@ -257,6 +262,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           tasks: normalizeCollection<Task>(value.tasks),
           prompts: normalizeCollection<Prompt>(value.prompts),
           promptVersions: normalizeCollection<PromptVersion>(value.promptVersions),
+          promptAttachments: normalizeCollection<PromptAttachment>(value.promptAttachments),
           mindsets: normalizeCollection<Mindset>(value.mindsets),
           preferences: normalizeCollection<Preference>(value.preferences),
           localCommits: normalizeCollection<LocalCommit>(value.localCommits),
@@ -468,7 +474,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         title = `${source.title} (Copy ${copyNumber})`;
         copyNumber += 1;
       }
-      return createRecord<Prompt>("prompts", {
+      const copiedPromptId = await createRecord<Prompt>("prompts", {
         title,
         description: source.description,
         purpose: source.purpose,
@@ -479,8 +485,96 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         manualAiEvaluation: source.manualAiEvaluation,
         manualGeneratedContext: source.manualGeneratedContext,
       });
+
+      if (user) {
+        const sourceAttachments = Object.values(data.promptAttachments).filter((attachment) => attachment.promptId === promptId);
+        if (sourceAttachments.length) {
+          const now = Date.now();
+          const stamp = userStamp(user);
+          const writes: Record<string, unknown> = {};
+          sourceAttachments.forEach((attachment) => {
+            const attachmentRef = push(ref(database, `${VAULT_ROOT}/${user.uid}/promptAttachments`));
+            if (!attachmentRef.key) return;
+            writes[`${VAULT_ROOT}/${user.uid}/promptAttachments/${attachmentRef.key}`] = {
+              ...attachment,
+              id: attachmentRef.key,
+              promptId: copiedPromptId,
+              createdAt: now,
+              updatedAt: now,
+              createdBy: stamp,
+              updatedBy: stamp,
+              archivedAt: null,
+              archivedBy: null,
+            };
+          });
+          if (Object.keys(writes).length) await update(ref(database), writes);
+        }
+      }
+
+      return copiedPromptId;
     },
-    [createRecord, data.prompts],
+    [createRecord, data.promptAttachments, data.prompts, user],
+  );
+
+  const addPromptAttachments = useCallback(
+    async (promptId: string, files: File[]) => {
+      if (!user) throw new Error("A signed-in user is required.");
+      const prompt = data.prompts[promptId];
+      if (!prompt) throw new Error("The prompt could not be found.");
+      const existing = Object.values(data.promptAttachments).filter((attachment) => attachment.promptId === promptId);
+      const validation = validateAttachmentBatch(existing, files);
+      if (!validation.ok) throw new Error(validation.message);
+
+      const now = Date.now();
+      const stamp = userStamp(user);
+      const writes: Record<string, unknown> = {};
+      for (const file of files) {
+        const attachmentRef = push(ref(database, `${VAULT_ROOT}/${user.uid}/promptAttachments`));
+        if (!attachmentRef.key) throw new Error("Firebase could not allocate a file identifier.");
+        const base64 = await readFileAsBase64(file);
+        writes[`${VAULT_ROOT}/${user.uid}/promptAttachments/${attachmentRef.key}`] = {
+          id: attachmentRef.key,
+          promptId,
+          fileName: file.name.slice(0, 240),
+          mimeType: file.type || "application/octet-stream",
+          sizeBytes: file.size,
+          base64,
+          createdAt: now,
+          updatedAt: now,
+          createdBy: stamp,
+          updatedBy: stamp,
+          archivedAt: null,
+          archivedBy: null,
+        };
+      }
+      await update(ref(database), writes);
+      await recordActivity("attachment.added", "promptAttachments", promptId, `${files.length} file${files.length === 1 ? "" : "s"} · ${prompt.title}`);
+      return files.length;
+    },
+    [data.promptAttachments, data.prompts, recordActivity, user],
+  );
+
+  const removePromptAttachment = useCallback(
+    async (attachmentId: string) => {
+      if (!user) throw new Error("A signed-in user is required.");
+      const attachment = data.promptAttachments[attachmentId];
+      if (!attachment) throw new Error("The file could not be found.");
+      await update(ref(database), {
+        [`${VAULT_ROOT}/${user.uid}/promptAttachments/${attachmentId}`]: null,
+      });
+      await recordActivity("attachment.removed", "promptAttachments", attachmentId, attachment.fileName);
+    },
+    [data.promptAttachments, recordActivity, user],
+  );
+
+  const downloadPromptAttachment = useCallback(
+    async (attachmentId: string) => {
+      const attachment = data.promptAttachments[attachmentId];
+      if (!attachment) throw new Error("The file could not be found.");
+      downloadAttachmentFile(attachment);
+      await recordActivity("attachment.downloaded", "promptAttachments", attachmentId, attachment.fileName);
+    },
+    [data.promptAttachments, recordActivity],
   );
 
   const createGlobalVersion = useCallback(
@@ -503,6 +597,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         tasks: data.tasks,
         prompts: data.prompts,
         promptVersions: data.promptVersions,
+        promptAttachments: data.promptAttachments,
         mindsets: data.mindsets,
         preferences: data.preferences,
         localCommits: data.localCommits,
@@ -513,6 +608,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         tasks: Object.keys(data.tasks).length,
         prompts: Object.keys(data.prompts).length,
         promptVersions: Object.keys(data.promptVersions).length,
+        promptAttachments: Object.keys(data.promptAttachments).length,
         mindsets: Object.keys(data.mindsets).length,
         preferences: Object.keys(data.preferences).length,
         decisions: Object.keys(data.decisions).length,
@@ -574,6 +670,11 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           .filter((version) => version.promptId === id)
           .forEach((version) => {
             writes[`${VAULT_ROOT}/${user.uid}/promptVersions/${version.id}`] = null;
+          });
+        Object.values(data.promptAttachments)
+          .filter((attachment) => attachment.promptId === id)
+          .forEach((attachment) => {
+            writes[`${VAULT_ROOT}/${user.uid}/promptAttachments/${attachment.id}`] = null;
           });
         await update(ref(database), writes);
         await recordActivity("record.deleted", "prompts", id, data.prompts[id]?.title || "Prompt");
@@ -648,6 +749,9 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       deleteRecord,
       restoreRecord,
       copyPrompt,
+      addPromptAttachments,
+      removePromptAttachment,
+      downloadPromptAttachment,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,
@@ -664,6 +768,9 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       deleteRecord,
       restoreRecord,
       copyPrompt,
+      addPromptAttachments,
+      removePromptAttachment,
+      downloadPromptAttachment,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,
