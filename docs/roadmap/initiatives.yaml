@@ -1,0 +1,65 @@
+schema_version: 1
+snapshot_commit: 3b61d7050f905a5c591971f6e8ecbdc8588870ac
+initiatives:
+- id: product-experience-identity
+  name: Product Experience & Identity
+  strategic_goal: Make EurekaVault coherent, discoverable and maintainable as a product
+    rather than only a fast-evolving codebase.
+  status: active
+  milestones:
+  - documentation-modernization
+  - productization-ux-hardening
+  issues:
+  - 1
+  - 8
+  - 9
+  - 10
+  estimated_completion:
+    value: '2026-09-06'
+    type: estimated
+    confidence: low
+- id: prompt-intelligence-explainability
+  name: Prompt Intelligence & Explainability
+  strategic_goal: Help the owner understand, configure and interpret Prompt behavior/evolution
+    with explicit AI assistance.
+  status: planned
+  milestones:
+  - configurable-ai-version-intelligence
+  - vault-intelligence-contextual-assistance
+  issues:
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  estimated_completion:
+    value: '2026-11-01'
+    type: estimated
+    confidence: low
+- id: executable-methodology
+  name: Executable Methodology
+  strategic_goal: Preserve not only individual Prompts but reusable multi-stage human-AI
+    methodology as version-controlled executable graphs.
+  status: planned
+  milestones:
+  - prompt-blocks-mvp
+  issues:
+  - 7
+  estimated_completion:
+    value: '2026-12-20'
+    type: estimated
+    confidence: low
+- id: decision-gated-platform-expansion
+  name: Decision-Gated Platform Expansion
+  strategic_goal: Resolve product semantics before implementing markup parsing, collaboration,
+    inheritance/precedence rules, or destructive workspace lifecycle operations.
+  status: unscheduled
+  milestones: []
+  issues: []
+  decision_gates:
+  - Markup format
+  - Collaboration model
+  - Mindset inheritance/conflict
+  - Preference precedence
+  - Account/workspace deletion
+  estimated_completion: null

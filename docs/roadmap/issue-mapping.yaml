@@ -1,0 +1,167 @@
+schema_version: 1
+snapshot_commit: 3b61d7050f905a5c591971f6e8ecbdc8588870ac
+note: All ten GitHub Issues were open at the snapshot; no closed issues were found. Priority/complexity/milestone mappings
+  below are analytical proposals and do not modify GitHub.
+issues:
+- number: 1
+  title: Improve the documentations, it should be updated and reflect the latest status, and also have the roadmap and timelines,
+    what endeavours (major blocks) started and what not yet
+  state: open
+  implementation_status: in_progress
+  type: Documentation / Product Planning
+  priority: P1
+  complexity: Medium
+  milestone: productization-ux-hardening
+  dependencies: []
+  stale: false
+  partial_implementation: Commit 5b9e61d added comprehensive docs, but docs/roadmap did not yet exist and root README remained
+    stale at snapshot.
+  duplicate: false
+  needs_split: false
+  provenance: repository_fact + analysis
+- number: 2
+  title: Version comparison using AI
+  state: open
+  implementation_status: not_started
+  type: Feature / AI
+  priority: P1
+  complexity: Medium
+  milestone: configurable-ai-version-intelligence
+  dependencies:
+  - Existing deterministic Prompt version history and Git-style diff (completed)
+  stale: false
+  partial_implementation: Deterministic line diff exists, but no AI comparison implementation was found.
+  duplicate: false
+  needs_split: false
+  provenance: repository_fact + analysis
+- number: 3
+  title: base prompts modification possibility instead of having it fixed in the database
+  state: open
+  implementation_status: not_started
+  type: Architecture / Feature
+  priority: P1
+  complexity: Medium-Large
+  milestone: configurable-ai-version-intelligence
+  dependencies:
+  - Existing AI feature boundary (completed)
+  stale: false
+  partial_implementation: AI system instructions are currently hard-coded in Netlify Function source.
+  duplicate: false
+  needs_split: true
+  split_reason: Separate storage/versioning model, editing UX, fallback/default semantics, and migration of each existing
+    AI function.
+- number: 4
+  title: There should be a helper AI that inspects the underlying arhcitecture and answer basic questions
+  state: open
+  implementation_status: not_started
+  type: Feature / AI
+  priority: P2
+  complexity: Medium-Large
+  milestone: vault-intelligence-contextual-assistance
+  dependencies:
+  - Implementation-led documentation exists (completed)
+  stale: false
+  partial_implementation: No architecture-Q&A route/function found. The new docs provide a potential authoritative knowledge
+    source.
+  duplicate: false
+  needs_split: true
+  split_reason: Define knowledge source/bounds separately from assistant UI and server-side retrieval/execution.
+- number: 5
+  title: Add commit message for every commit. for previous commits make AI generate a constrained commit version for it
+  state: open
+  implementation_status: not_started
+  type: Enhancement / AI / Versioning
+  priority: P2
+  complexity: Medium
+  milestone: configurable-ai-version-intelligence
+  dependencies:
+  - Prompt version history (completed)
+  - 'Recommended reuse of AI version comparison #2'
+  stale: false
+  partial_implementation: PromptVersion already stores changeDescription, but no AI backfill/generation workflow was found.
+  duplicate: false
+  needs_split: false
+  needs_refinement: true
+  refinement_note: Clarify whether “commit” means Prompt-local versions, legacy localCommits, Global Versions, or Git commits.
+    Product context suggests Prompt/version history but repository evidence does not resolve the wording.
+- number: 6
+  title: when in vault explorer hover to display the full name and a brief summary AI generated about this prompt.
+  state: open
+  implementation_status: not_started
+  type: UX / AI
+  priority: P2
+  complexity: Medium
+  milestone: vault-intelligence-contextual-assistance
+  dependencies:
+  - Summary generation/freshness/caching design
+  stale: false
+  partial_implementation: No hover AI-summary implementation found.
+  duplicate: false
+  needs_split: false
+- number: 7
+  title: Prompt Blocks
+  state: open
+  implementation_status: not_started
+  type: Epic / Feature / Architecture
+  priority: P1-Strategic
+  complexity: Epic / Very Large
+  milestone: prompt-blocks-mvp
+  dependencies:
+  - Prompt versioning (completed)
+  - Authenticated Gemini boundary (completed)
+  - New workflow persistence/runtime model (not started)
+  stale: false
+  partial_implementation: No Prompt Blocks/workflow code found. Existing Prompt versioning, relationships and AI functions
+    are foundations, not partial Prompt Blocks implementation.
+  duplicate: false
+  needs_split: true
+  split_reason: 'Issue contains data model, visual builder, execution engine, versioning, runtime/debugging, reproducibility
+    and future advanced routing; these should become child issues under #7.'
+- number: 8
+  title: when you click on new prompt it lingers and it is so shitty needs immediate fix
+  state: open
+  implementation_status: bug_reported_root_cause_unverified
+  type: Bug / UX
+  priority: P0
+  complexity: Small-Medium until reproduced
+  milestone: productization-ux-hardening
+  dependencies: []
+  stale: false
+  partial_implementation: New Prompt uses generic EntityDialog and submit calls onClose after successful create, so the reported
+    lingering behavior is not explained by an obvious missing close call. Reproduction is required.
+  duplicate: false
+  needs_split: false
+- number: 9
+  title: Rebranding the Product as EurekaVault
+  state: open
+  implementation_status: in_progress
+  type: Product / UX / Branding
+  priority: P1
+  complexity: Medium
+  milestone: productization-ux-hardening
+  dependencies: []
+  stale: false
+  partial_implementation: 'HEAD commit 3b61d705 is explicitly “issue #9 part1”; visible strings/package/server prompts are
+    partly renamed, while requested Greek identity/slogan/Archimedes logo are not evidenced complete and sidebar brand mark
+    remains IV.'
+  duplicate: false
+  needs_split: true
+  split_reason: Separate product naming sweep, visual identity/logo, landing/auth experience, and acceptance sweep for remaining
+    legacy identity.
+- number: 10
+  title: Frontend Overhaul
+  state: open
+  implementation_status: not_started_needs_refinement
+  type: UX / Enhancement
+  priority: P1
+  complexity: Medium-Large (unknown until refined)
+  milestone: productization-ux-hardening
+  dependencies:
+  - 'Recommended: settle rebrand visual identity #9 first'
+  stale: false
+  partial_implementation: Existing app already has Motion animations and light/dark/system themes. Issue was created after
+    current HEAD, so its requested delta is not implemented and needs acceptance criteria.
+  duplicate: false
+  needs_split: true
+  split_reason: “Animations, themes” is too broad to estimate or verify; define target screens, motion principles, theme changes
+    and regression criteria.

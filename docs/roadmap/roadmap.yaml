@@ -1,0 +1,85 @@
+schema_version: 1
+product: EurekaVault
+repository: kirolossedra/Prompt-management
+snapshot:
+  branch: main
+  commit: 3b61d7050f905a5c591971f6e8ecbdc8588870ac
+  commit_short: 3b61d705
+  commit_message: 'Eureka-Vault Name Rebrand issue #9 part1'
+  analysis_cutoff: '2026-08-18T12:39:00-04:00'
+  provenance: historical_fact
+current_phase:
+  id: phase-4-productization-intelligence-expansion
+  name: Productization & Intelligence Expansion
+  status: active
+  basis: inferred_from_latest_commits_and_open_issues
+  confidence: medium
+current_milestone: productization-ux-hardening
+next_milestones:
+- configurable-ai-version-intelligence
+- vault-intelligence-contextual-assistance
+- prompt-blocks-mvp
+forecast_policy:
+  historical_dates: repository_fact
+  future_dates: estimated_ranges
+  reason: Only three calendar Agile weeks of history exist; one was inactive and development
+    is highly bursty.
+  issue_throughput_history: insufficient_for_reliable_closed_issue_velocity_because_all_current_issues_were_created_2026-08-18_and_none_are_closed
+unscheduled_confirmed_decision_gates:
+- name: Markup-defined hierarchy parsing
+  evidence: docs/DECISION_LOG.md + src/pages/RoadmapPage.tsx
+  blocker: Exact markup format unresolved
+  target: null
+- name: Collaboration
+  evidence: docs/DECISION_LOG.md + src/pages/RoadmapPage.tsx
+  blocker: Ownership/roles/permissions/synchronization/conflict model unresolved
+  target: null
+- name: Mindset inheritance/conflict semantics
+  evidence: docs/DECISION_LOG.md
+  blocker: Product semantics unresolved
+  target: null
+- name: Preference precedence
+  evidence: docs/DECISION_LOG.md
+  blocker: Merge/override precedence unresolved
+  target: null
+- name: Account/workspace deletion policy
+  evidence: docs/DECISION_LOG.md
+  blocker: Full deletion workflow/policy unresolved
+  target: null
+historical_milestones:
+- id: react-vault-foundation
+  name: React Vault Foundation
+  start: '2026-08-06'
+  completed: '2026-08-06'
+  provenance: repository_fact
+  confidence: high
+- id: versioned-prompt-workspace
+  name: Versioned Prompt Workspace & UX
+  start: '2026-08-07'
+  completed: '2026-08-08'
+  provenance: repository_fact
+  confidence: high
+- id: knowledge-graph-engagement
+  name: Prompt Knowledge Graph & Engagement
+  start: '2026-08-08'
+  completed: '2026-08-08'
+  provenance: repository_fact
+  confidence: high
+- id: ai-prompt-intelligence
+  name: AI Prompt Intelligence
+  start: '2026-08-08'
+  completed: '2026-08-08'
+  provenance: repository_fact
+  confidence: high
+- id: adaptive-retrieval
+  name: Adaptive Retrieval
+  start: '2026-08-18'
+  completed: '2026-08-18'
+  provenance: repository_fact
+  confidence: high
+- id: documentation-modernization
+  name: Documentation Modernization
+  start: '2026-08-18'
+  completed: '2026-08-18'
+  provenance: repository_fact
+  confidence: high
