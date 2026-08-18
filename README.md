@@ -124,6 +124,7 @@ Markup parsing and collaboration remain confirmed long-term decision gates, but 
 
 ## Timeline
 
+<!-- ROADMAP-GANTT:START -->
 ```mermaid
 gantt
     title EurekaVault Product Roadmap
@@ -131,21 +132,22 @@ gantt
     axisFormat %b %d
 
     section Completed
-    React Vault Foundation                 :done, fnd, 2026-08-06, 1d
-    Versioned Prompt Workspace             :done, ver, 2026-08-07, 2d
-    Knowledge Graph & Engagement           :done, kg, 2026-08-08, 1d
-    AI Prompt Intelligence                 :done, ai, 2026-08-08, 1d
-    Adaptive Retrieval                     :done, adapt, 2026-08-18, 1d
-    Documentation Modernization            :done, docs, 2026-08-18, 1d
+    React Vault Foundation                      :done, react-vault-foundation, 2026-08-06, 1d
+    Versioned Prompt Workspace                  :done, versioned-prompt-workspace, 2026-08-07, 2026-08-08
+    Prompt Knowledge Graph & Engagement         :done, prompt-knowledge-graph-engagement, 2026-08-08, 1d
+    AI Prompt Intelligence                      :done, ai-prompt-intelligence, 2026-08-08, 1d
+    Adaptive Retrieval                          :done, adaptive-retrieval, 2026-08-18, 1d
+    Documentation Modernization                 :done, documentation-modernization, 2026-08-18, 1d
 
     section Current - forecast
-    Productization & UX Hardening          :active, prod, 2026-08-18, 2026-09-06
+    EurekaVault Productization & UX Hardening   :active, productization-ux-hardening, 2026-08-18, 2026-09-06
 
     section Planned - forecast
-    Configurable AI & Version Intelligence :cai, 2026-09-07, 2026-10-11
-    Vault Intelligence & Assistance        :via, 2026-10-12, 2026-11-01
-    Prompt Blocks MVP                      :pb, 2026-11-02, 2026-12-20
+    Configurable AI & Version Intelligence      :configurable-ai-version-intelligence, 2026-09-07, 2026-10-11
+    Vault Intelligence & Contextual Assistance  :vault-intelligence-contextual-assistance, 2026-10-12, 2026-11-01
+    Prompt Blocks MVP                           :prompt-blocks-mvp, 2026-11-02, 2026-12-20
 ```
+<!-- ROADMAP-GANTT:END -->
 
 ## Milestone Progress
 

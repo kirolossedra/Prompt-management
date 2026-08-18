@@ -60,3 +60,23 @@ Product Phase
 ## Monthly review
 
 Use the seven-step process in `product-audit.md`: review delivery → current milestone → velocity → reforecast → groom backlog → update structured sources → refresh README.
+## Generated Gantt chart
+
+The roadmap Gantt chart is generated from `milestones.yaml`; do not maintain the Mermaid task list independently.
+
+Run from the repository root:
+
+```bash
+npm run roadmap:gantt
+```
+
+The generator:
+
+1. reads milestone name, status, start date, target date, and provenance from `docs/roadmap/milestones.yaml`;
+2. writes `docs/roadmap/generated-gantt.md`;
+3. replaces only the content between `ROADMAP-GANTT` markers in the root `README.md`;
+4. classifies `completed` milestones under **Completed**, `active` milestones under **Current - forecast**, and `planned` milestones under **Planned - forecast**;
+5. preserves historical dates as historical facts while keeping forecast milestones visibly separated.
+
+`milestones.yaml` now contains both historical and future milestones specifically so this visualization has one structured source of truth.
+

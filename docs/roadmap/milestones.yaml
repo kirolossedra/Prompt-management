@@ -1,13 +1,150 @@
 schema_version: 1
 snapshot_commit: 3b61d7050f905a5c591971f6e8ecbdc8588870ac
 milestones:
+- id: react-vault-foundation
+  name: React Vault Foundation
+  status: completed
+  status_basis: repository_evidence
+  objective: Establish the React/TypeScript/Vite application foundation, Firebase authentication, owner-private
+    persistence, and core CRUD lifecycle.
+  issues: []
+  dependencies: []
+  start_date:
+    value: '2026-08-06'
+    type: historical_fact
+    confidence: high
+  target_date:
+    value: '2026-08-06'
+    type: historical_fact
+    confidence: high
+  estimated_duration: 1 day
+  progress:
+    value: 100
+    type: repository_evidence
+    confidence: high
+    basis: Implemented in the initial React/foundation and CRUD commits on 2026-08-06.
+- id: versioned-prompt-workspace
+  name: Versioned Prompt Workspace
+  status: completed
+  status_basis: repository_evidence
+  objective: Establish Prompt copy/versioning, deterministic Mindset Construction, the productized workspace
+    shell, and Git-style version comparison.
+  issues: []
+  dependencies:
+  - react-vault-foundation
+  start_date:
+    value: '2026-08-07'
+    type: historical_fact
+    confidence: high
+  target_date:
+    value: '2026-08-08'
+    type: historical_fact
+    confidence: high
+  estimated_duration: 2 days
+  progress:
+    value: 100
+    type: repository_evidence
+    confidence: high
+    basis: Prompt copy/versioning and GUI work landed 2026-08-07; Git-style line diff landed 2026-08-08.
+- id: prompt-knowledge-graph-engagement
+  name: Prompt Knowledge Graph & Engagement
+  status: completed
+  status_basis: repository_evidence
+  objective: Expand the vault with attachments, Prompt lineage relationships/map, activity tracking, and
+    achievements.
+  issues: []
+  dependencies:
+  - versioned-prompt-workspace
+  start_date:
+    value: '2026-08-08'
+    type: historical_fact
+    confidence: high
+  target_date:
+    value: '2026-08-08'
+    type: historical_fact
+    confidence: high
+  estimated_duration: 1 day
+  progress:
+    value: 100
+    type: repository_evidence
+    confidence: high
+    basis: Achievements, files, and Prompt relationships were all introduced on 2026-08-08.
+- id: ai-prompt-intelligence
+  name: AI Prompt Intelligence
+  status: completed
+  status_basis: repository_evidence
+  objective: Introduce authenticated Gemini-backed semantic retrieval, Prompt Repurposing, Prompt Mixing,
+    and custom Mixer sources.
+  issues: []
+  dependencies:
+  - react-vault-foundation
+  start_date:
+    value: '2026-08-08'
+    type: historical_fact
+    confidence: high
+  target_date:
+    value: '2026-08-08'
+    type: historical_fact
+    confidence: high
+  estimated_duration: 1 day
+  progress:
+    value: 100
+    type: repository_evidence
+    confidence: high
+    basis: Finder, Repurposer, Mixer, and custom Mixer inputs landed on 2026-08-08.
+- id: adaptive-retrieval
+  name: Adaptive Retrieval
+  status: completed
+  status_basis: repository_evidence
+  objective: Allow user-confirmed Finder selections to become bounded few-shot evidence for future semantic
+    retrieval.
+  issues: []
+  dependencies:
+  - ai-prompt-intelligence
+  start_date:
+    value: '2026-08-18'
+    type: historical_fact
+    confidence: high
+  target_date:
+    value: '2026-08-18'
+    type: historical_fact
+    confidence: high
+  estimated_duration: 1 day
+  progress:
+    value: 100
+    type: repository_evidence
+    confidence: high
+    basis: Implemented by commit 6818b808 on 2026-08-18.
+- id: documentation-modernization
+  name: Documentation Modernization
+  status: completed
+  status_basis: repository_evidence
+  objective: Replace stale implementation documentation with a comprehensive implementation-led documentation
+    set.
+  issues:
+  - 1
+  dependencies: []
+  start_date:
+    value: '2026-08-18'
+    type: historical_fact
+    confidence: high
+  target_date:
+    value: '2026-08-18'
+    type: historical_fact
+    confidence: high
+  estimated_duration: 1 day
+  progress:
+    value: 100
+    type: repository_evidence
+    confidence: high
+    basis: 'The documentation-upgrade commit added the comprehensive docs set on 2026-08-18; Issue #1
+      remains only partially satisfied because roadmap/planning work is separate.'
 - id: productization-ux-hardening
   name: EurekaVault Productization & UX Hardening
   status: active
   status_basis: repository_inference
-  objective: Complete the public/product identity transition, finish maintainable
-    planning documentation, resolve the immediate Prompt creation UX defect, and harden/refine
-    the frontend experience.
+  objective: Complete the public/product identity transition, finish maintainable planning documentation,
+    resolve the immediate Prompt creation UX defect, and harden/refine the frontend experience.
   issues:
   - 1
   - 8
@@ -29,22 +166,21 @@ milestones:
     value: 30
     type: estimated
     confidence: low-medium
-    basis: '#1 partially addressed by documentation-upgrade; #9 has explicit part1
-      commit; #8 unresolved; #10 created after current HEAD and unimplemented'
+    basis: '#1 partially addressed by documentation-upgrade; #9 has explicit part1 commit; #8 unresolved;
+      #10 created after current HEAD and unimplemented'
   definition_of_done:
   - Roadmap sources exist under docs/roadmap and root README points to them.
   - Public README no longer contradicts implemented hierarchy/versioning/AI behavior.
   - 'Issue #8 is reproduced, root-caused, fixed, and regression-checked.'
-  - 'Issue #9 identity requirements accepted for this milestone are complete, not
-    only textual part1 replacement.'
-  - 'Issue #10 has explicit acceptance criteria and the agreed animation/theme work
-    is implemented without regression.'
+  - 'Issue #9 identity requirements accepted for this milestone are complete, not only textual part1 replacement.'
+  - 'Issue #10 has explicit acceptance criteria and the agreed animation/theme work is implemented without
+    regression.'
 - id: configurable-ai-version-intelligence
   name: Configurable AI & Version Intelligence
   status: planned
   status_basis: open_issues
-  objective: Turn hard-coded AI building prompts into user-controlled versioned assets
-    and add AI interpretation to existing Prompt-version history.
+  objective: Turn hard-coded AI building prompts into user-controlled versioned assets and add AI interpretation
+    to existing Prompt-version history.
   issues:
   - 2
   - 3
@@ -69,20 +205,17 @@ milestones:
     confidence: high
     basis: 'No implementation corresponding to Issues #2/#3/#5 was found at snapshot.'
   definition_of_done:
-  - Base/system prompts used by AI features can be owner-customized without source-code
-    edits.
+  - Base/system prompts used by AI features can be owner-customized without source-code edits.
   - Base-prompt configuration has revision history and safe defaults/fallback behavior.
-  - AI version comparison augments, but does not replace, deterministic Git-style
-    diff.
-  - AI-generated change/commit narrative semantics are explicitly defined and reproducible
-    enough to audit.
+  - AI version comparison augments, but does not replace, deterministic Git-style diff.
+  - AI-generated change/commit narrative semantics are explicitly defined and reproducible enough to audit.
   - AI failures do not damage Prompt/version history.
 - id: vault-intelligence-contextual-assistance
   name: Vault Intelligence & Contextual Assistance
   status: planned
   status_basis: open_issues
-  objective: Add AI that can explain EurekaVault architecture/current behavior and
-    surface concise contextual Prompt intelligence in the explorer.
+  objective: Add AI that can explain EurekaVault architecture/current behavior and surface concise contextual
+    Prompt intelligence in the explorer.
   issues:
   - 4
   - 6
@@ -107,20 +240,19 @@ milestones:
     confidence: high
     basis: No helper-AI or explorer AI-summary implementation found.
   definition_of_done:
-  - Architecture helper answers only from an authoritative, bounded representation
-    of current product architecture/data semantics.
-  - The helper clearly distinguishes stored Prompts, Mindsets, Preferences, versions,
-    relationships and AI payload boundaries.
-  - Explorer hover/detail summaries have defined generation, freshness and caching
-    behavior.
+  - Architecture helper answers only from an authoritative, bounded representation of current product
+    architecture/data semantics.
+  - The helper clearly distinguishes stored Prompts, Mindsets, Preferences, versions, relationships and
+    AI payload boundaries.
+  - Explorer hover/detail summaries have defined generation, freshness and caching behavior.
   - No hidden whole-vault payload is sent to Gemini merely to render a hover summary.
   - Failure states degrade gracefully to existing non-AI UI.
 - id: prompt-blocks-mvp
   name: Prompt Blocks MVP
   status: planned
   status_basis: issue_7_confirmed_scope
-  objective: Create the first reusable, persisted and version-controlled executable
-    methodology graph using named variables and deterministic DAG-style AI transformations.
+  objective: Create the first reusable, persisted and version-controlled executable methodology graph
+    using named variables and deterministic DAG-style AI transformations.
   issues:
   - 7
   dependencies:
@@ -136,8 +268,7 @@ milestones:
     confidence: low
     window_start: '2026-11-02'
     window_end: '2026-12-20'
-  estimated_duration: '6-7+ weeks; Issue #7 must be decomposed before a trustworthy
-    target can exist'
+  estimated_duration: '6-7+ weeks; Issue #7 must be decomposed before a trustworthy target can exist'
   progress:
     value: 0
     type: repository_evidence
@@ -145,15 +276,12 @@ milestones:
     basis: Code search found no Prompt Blocks/workflow implementation at snapshot.
   definition_of_done:
   - Workflow artifact/domain model is persisted and supports CRUD plus archive/restore.
-  - Named variables and Prompt dependencies can be composed as readable DAGs such
-    as X + Y → Z.
-  - Visual builder supports create/move/configure/connect/disconnect/duplicate/delete
-    operations.
+  - Named variables and Prompt dependencies can be composed as readable DAGs such as X + Y → Z.
+  - Visual builder supports create/move/configure/connect/disconnect/duplicate/delete operations.
   - Existing Prompt references support current-version and pinned-version semantics.
   - Execution preview produces a deterministic dependency order before any AI call.
-  - Gemini execution uses authenticated server-side boundary and preserves intermediate
-    outputs/errors for inspection.
-  - Workflow history/versioning records methodology evolution and dependency versions
-    used for runs.
-  - Loops/conditional routing and typed non-text variables are explicitly outside
-    MVP unless separately approved.
+  - Gemini execution uses authenticated server-side boundary and preserves intermediate outputs/errors
+    for inspection.
+  - Workflow history/versioning records methodology evolution and dependency versions used for runs.
+  - Loops/conditional routing and typed non-text variables are explicitly outside MVP unless separately
+    approved.
