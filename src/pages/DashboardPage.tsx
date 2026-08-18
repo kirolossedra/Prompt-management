@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { useVault } from "../context/VaultContext";
 import { evaluateAchievements } from "../lib/achievements";
 import { activeRecords, formatRelativeTime, taskPath } from "../lib/utils";
+import { AlexandriaLighthouseMark, EurekaMark } from "../components/brand/EurekaIdentity";
 import { useEntityUi } from "../components/entities/EntityUiProvider";
 import { Button } from "../components/ui/Button";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -41,8 +42,22 @@ export function DashboardPage() {
 
   return (
     <div className="dashboard-page">
-      <header className="workspace-heading">
-        <div><span className="eyebrow">Personal knowledge system</span><h1>{profile?.workspaceName || "EurekaVault"}</h1><p>Preserve the prompts, methods, and versions that define how you work.</p></div>
+      <header className="workspace-heading dashboard-hero">
+        <div className="dashboard-hero__identity">
+          <EurekaMark className="eureka-mark--hero" label="EurekaVault epsilon mark" />
+          <div className="dashboard-hero__copy">
+            <span className="eyebrow">Personal knowledge system</span>
+            <h1>{profile?.workspaceName || "EurekaVault"}</h1>
+            <div className="alexandria-signature" aria-label="Greek and Alexandrian identity motif">
+              <AlexandriaLighthouseMark />
+              <span className="alexandria-signature__copy">
+                <strong lang="el">ΕΥΡΗΚΑ</strong>
+                <small lang="el">ΒΙΒΛΙΟΘΗΚΗ ΑΛΕΞΑΝΔΡΕΙΑΣ</small>
+              </span>
+            </div>
+            <p>Preserve the prompts, methods, and versions that define how you work.</p>
+          </div>
+        </div>
         <div className="dashboard-heading-actions">
           <Button variant="ghost" size="sm" icon={<Clock3 size={16} />} aria-haspopup="dialog" onClick={() => setActivityModal("continue")}>Continue</Button>
           <Button variant="ghost" size="sm" icon={<History size={16} />} aria-haspopup="dialog" onClick={() => setActivityModal("history")}>History</Button>

@@ -31,6 +31,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useVault } from "../../context/VaultContext";
 import { useTheme } from "../../hooks/useTheme";
 import { cx } from "../../lib/utils";
+import { EurekaMark } from "../brand/EurekaIdentity";
 import { CommandPalette } from "./CommandPalette";
 
 const coreNav = [
@@ -149,7 +150,7 @@ export function AppShell() {
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <button className="workspace-switcher workspace-switcher--rail" aria-label="Go to EurekaVault overview" onClick={() => navigate("/dashboard")}>
-                <span className="brand-mark">IV</span>
+                <EurekaMark className="eureka-mark--rail" />
               </button>
             </Tooltip.Trigger>
             <Tooltip.Portal><Tooltip.Content className="tooltip-content" side="right" sideOffset={10}>EurekaVault · {profile?.workspaceName || "Personal Vault"}</Tooltip.Content></Tooltip.Portal>
@@ -170,7 +171,7 @@ export function AppShell() {
             const expanded = openCategory === categoryLabel;
             const categoryActive = items.some(([, path]) => isRouteActive(location.pathname, path));
             return (
-              <div className="nav-wheel" key={categoryLabel}>
+              <div className="nav-wheel" data-category={categoryLabel.toLowerCase()} key={categoryLabel}>
                 <button
                   className={cx("nav-wheel__launcher", expanded && "expanded", categoryActive && "active")}
                   aria-expanded={expanded}
@@ -236,7 +237,7 @@ export function AppShell() {
       <div className="app-main">
         <header className="topbar">
           <div className="topbar__leading">
-            <button className="mobile-home-button" aria-label="Go to EurekaVault overview" onClick={() => navigate("/dashboard")}><span className="brand-mark">IV</span></button>
+            <button className="mobile-home-button" aria-label="Go to EurekaVault overview" onClick={() => navigate("/dashboard")}><EurekaMark className="eureka-mark--mobile" /></button>
             <div className="breadcrumbs" aria-label="Breadcrumb">
               {breadcrumb.map((part, index) => <span key={`${part}-${index}`} className={index === breadcrumb.length - 1 ? "current" : ""}>{part}</span>)}
             </div>
@@ -279,6 +280,7 @@ export function AppShell() {
           return (
             <button
               key={categoryLabel}
+              data-category={categoryLabel.toLowerCase()}
               className={cx("mobile-category-launcher", expanded && "expanded", categoryActive && "active")}
               aria-expanded={expanded}
               aria-label={`${expanded ? "Close" : "Open"} ${categoryLabel} navigation wheel`}
@@ -295,6 +297,7 @@ export function AppShell() {
         {openCategory ? navigationCategories.map(([categoryLabel, CategoryIcon, items]) => openCategory === categoryLabel ? (
           <motion.div
             className="mobile-category-wheel"
+            data-category={categoryLabel.toLowerCase()}
             key={categoryLabel}
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
