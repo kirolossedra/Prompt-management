@@ -8,11 +8,9 @@ import {
   Camera,
   ChevronDown,
   FileCode2,
-  Home,
   LayoutDashboard,
   Layers3,
   LogOut,
-  Menu,
   Moon,
   Network,
   Orbit,
@@ -24,7 +22,6 @@ import {
   SlidersHorizontal,
   Sun,
   Trophy,
-  X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
@@ -34,7 +31,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useVault } from "../../context/VaultContext";
 import { useTheme } from "../../hooks/useTheme";
 import { cx } from "../../lib/utils";
-import { Button } from "../ui/Button";
 import { CommandPalette } from "./CommandPalette";
 
 const coreNav = [
@@ -75,13 +71,6 @@ const navigationCategories = [
   ["System", Settings2, systemNav],
 ] as const;
 
-const mobilePrimary = [
-  ["Home", "/dashboard", Home],
-  ["Vault", "/hierarchy", Network],
-  ["Prompts", "/prompts", FileCode2],
-  ["Versions", "/versions", Camera],
-] as const;
-
 function initials(value: string) {
   const parts = value.trim().split(/\s+/).filter(Boolean);
   return (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : value.slice(0, 2)).toUpperCase();
@@ -102,19 +91,27 @@ function wheelOffset(index: number, count: number) {
   };
 }
 
+function mobileWheelOffset(index: number, count: number) {
+  const angle = count === 1 ? -90 : -90 + (360 * index) / count;
+  const radians = (angle * Math.PI) / 180;
+  const radius = 116;
+  return {
+    x: Math.cos(radians) * radius,
+    y: Math.sin(radians) * radius,
+  };
+}
+
 export function AppShell() {
   const { user, signOut, resendVerification } = useAuth();
   const { data, profile, connection } = useVault();
   const { mode, setMode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   useEffect(() => {
     setOpenCategory(null);
-    setMobileOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -142,9 +139,6 @@ export function AppShell() {
     await signOut();
     toast.success("Signed out.");
   }
-
-  const mobileMoreActive = !mobilePrimary.some(([, path]) => isRouteActive(location.pathname, path));
-  const isPromptWorkspace = /^\/prompts\/[^/]+/.test(location.pathname);
 
   return (
     <div className="app-shell">
@@ -239,26 +233,10 @@ export function AppShell() {
         {openCategory ? <motion.button className="nav-wheel-scrim" aria-label="Close navigation category" onClick={() => setOpenCategory(null)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} /> : null}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {mobileOpen ? (
-          <motion.div className="mobile-navigation-layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <button className="mobile-navigation-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />
-            <motion.aside className="mobile-navigation-sheet" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", stiffness: 430, damping: 38 }}>
-              <div className="sheet-handle" />
-              <header className="mobile-sheet-header"><div><span>Personal workspace</span><strong>{profile?.workspaceName || "EurekaVault"}</strong></div><Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Close"><X size={19} /></Button></header>
-              <div className="mobile-navigation-groups">
-                {navigationCategories.map(([label, _CategoryIcon, items]) => <section key={label}><span>{label}</span>{items.map(([itemLabel, path, Icon]) => <NavLink key={path} to={path} onClick={() => setMobileOpen(false)} className={({ isActive }) => cx("mobile-menu-link", isActive && "active")}><Icon size={19} /><strong>{itemLabel}</strong></NavLink>)}</section>)}
-              </div>
-              <button className="mobile-signout" onClick={logout}><LogOut size={17} /> Sign out</button>
-            </motion.aside>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
       <div className="app-main">
         <header className="topbar">
           <div className="topbar__leading">
-            <button className="mobile-menu" aria-label="Open navigation" onClick={() => setMobileOpen(true)}><Menu size={20} /></button>
+            <button className="mobile-home-button" aria-label="Go to EurekaVault overview" onClick={() => navigate("/dashboard")}><span className="brand-mark">IV</span></button>
             <div className="breadcrumbs" aria-label="Breadcrumb">
               {breadcrumb.map((part, index) => <span key={`${part}-${index}`} className={index === breadcrumb.length - 1 ? "current" : ""}>{part}</span>)}
             </div>
@@ -294,10 +272,62 @@ export function AppShell() {
         </AnimatePresence>
       </div>
 
-      {!isPromptWorkspace ? <nav className="mobile-dock" aria-label="Primary mobile navigation">
-        {mobilePrimary.map(([label, path, Icon]) => <NavLink key={path} to={path} className={({ isActive }) => cx("mobile-dock-link", isActive && "active")}><Icon size={21} /><span>{label}</span></NavLink>)}
-        <button className={cx("mobile-dock-link", mobileMoreActive && "active")} onClick={() => setMobileOpen(true)}><Menu size={21} /><span>More</span></button>
-      </nav> : null}
+      <nav className="mobile-category-dock" aria-label="Persistent mobile navigation categories">
+        {navigationCategories.map(([categoryLabel, CategoryIcon, items]) => {
+          const expanded = openCategory === categoryLabel;
+          const categoryActive = items.some(([, path]) => isRouteActive(location.pathname, path));
+          return (
+            <button
+              key={categoryLabel}
+              className={cx("mobile-category-launcher", expanded && "expanded", categoryActive && "active")}
+              aria-expanded={expanded}
+              aria-label={`${expanded ? "Close" : "Open"} ${categoryLabel} navigation wheel`}
+              onClick={() => setOpenCategory((current) => current === categoryLabel ? null : categoryLabel)}
+            >
+              <CategoryIcon size={20} strokeWidth={1.8} />
+              <span>{categoryLabel}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      <AnimatePresence>
+        {openCategory ? navigationCategories.map(([categoryLabel, CategoryIcon, items]) => openCategory === categoryLabel ? (
+          <motion.div
+            className="mobile-category-wheel"
+            key={categoryLabel}
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={{ duration: 0.16 }}
+            aria-label={`${categoryLabel} navigation`}
+          >
+            <div className="mobile-category-wheel__ring" aria-hidden />
+            <div className="mobile-category-wheel__hub">
+              <CategoryIcon size={27} strokeWidth={1.7} />
+              <strong>{categoryLabel}</strong>
+            </div>
+            {items.map(([label, path, Icon], index) => {
+              const offset = mobileWheelOffset(index, items.length);
+              return (
+                <motion.div
+                  className="mobile-category-wheel__satellite"
+                  key={path}
+                  initial={{ opacity: 0, x: 0, y: 0, scale: 0.65 }}
+                  animate={{ opacity: 1, x: offset.x, y: offset.y, scale: 1 }}
+                  exit={{ opacity: 0, x: 0, y: 0, scale: 0.65 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 29, delay: index * 0.025 }}
+                >
+                  <NavLink to={path} className={({ isActive }) => cx("mobile-category-wheel__item", isActive && "active")} aria-label={label}>
+                    <Icon size={22} strokeWidth={1.8} />
+                    <span>{label}</span>
+                  </NavLink>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        ) : null) : null}
+      </AnimatePresence>
     </div>
   );
 }
