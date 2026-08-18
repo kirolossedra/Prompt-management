@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Archive,
   ArchiveRestore,
@@ -15,8 +15,7 @@ import {
   Menu,
   Moon,
   Network,
-  PanelLeftClose,
-  PanelLeftOpen,
+  Orbit,
   Search,
   Share2,
   Sparkles,
@@ -34,37 +33,46 @@ import { Tooltip } from "radix-ui";
 import { useAuth } from "../../context/AuthContext";
 import { useVault } from "../../context/VaultContext";
 import { useTheme } from "../../hooks/useTheme";
-import { activeRecords, cx } from "../../lib/utils";
-import type { VaultRecord } from "../../types/domain";
+import { cx } from "../../lib/utils";
 import { Button } from "../ui/Button";
 import { CommandPalette } from "./CommandPalette";
 
-const workspaceNav = [
-  ["Overview", "/dashboard", LayoutDashboard, ""],
-  ["Achievements", "/achievements", Trophy, ""],
-  ["Vault", "/hierarchy", Network, "endeavors"],
-  ["Prompts", "/prompts", FileCode2, "prompts"],
-  ["Relationships", "/relationships", Share2, ""],
-  ["Mindsets", "/mindsets", Brain, "mindsets"],
-  ["Mindset builder", "/mindset-construction", BrainCircuit, ""],
-  ["Preferences", "/preferences", SlidersHorizontal, "preferences"],
+const coreNav = [
+  ["Overview", "/dashboard", LayoutDashboard],
+  ["Achievements", "/achievements", Trophy],
+  ["Vault", "/hierarchy", Network],
+  ["Prompts", "/prompts", FileCode2],
+] as const;
+
+const knowledgeNav = [
+  ["Relationships", "/relationships", Share2],
+  ["Mindsets", "/mindsets", Brain],
+  ["Mindset builder", "/mindset-construction", BrainCircuit],
+  ["Preferences", "/preferences", SlidersHorizontal],
 ] as const;
 
 const aiNav = [
-  ["Find Prompt", "/ai/find-prompt", Sparkles, ""],
-  ["Prompt Mixer", "/ai/prompt-mixer", Layers3, ""],
-  ["Repurpose Prompt", "/ai/repurpose-prompt", WandSparkles, ""],
+  ["Find Prompt", "/ai/find-prompt", Sparkles],
+  ["Prompt Mixer", "/ai/prompt-mixer", Layers3],
+  ["Repurpose Prompt", "/ai/repurpose-prompt", WandSparkles],
 ] as const;
 
 const historyNav = [
-  ["Global Versions", "/versions", Camera, "globalCommits"],
-  ["Decisions", "/decisions", BriefcaseBusiness, "decisions"],
-  ["Archive", "/archive", Archive, ""],
+  ["Global Versions", "/versions", Camera],
+  ["Decisions", "/decisions", BriefcaseBusiness],
+  ["Archive", "/archive", Archive],
 ] as const;
 
 const systemNav = [
-  ["Roadmap gates", "/roadmap", ArchiveRestore, ""],
-  ["Settings", "/settings", Settings2, ""],
+  ["Roadmap gates", "/roadmap", ArchiveRestore],
+  ["Settings", "/settings", Settings2],
+] as const;
+
+const navigationCategories = [
+  ["AI", Sparkles, aiNav],
+  ["Knowledge", Orbit, knowledgeNav],
+  ["History", Camera, historyNav],
+  ["System", Settings2, systemNav],
 ] as const;
 
 const mobilePrimary = [
@@ -79,6 +87,21 @@ function initials(value: string) {
   return (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : value.slice(0, 2)).toUpperCase();
 }
 
+function isRouteActive(pathname: string, path: string) {
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
+function wheelOffset(index: number, count: number) {
+  const spread = count === 2 ? 54 : count === 3 ? 82 : 108;
+  const angle = count === 1 ? 0 : -spread / 2 + (spread * index) / (count - 1);
+  const radians = (angle * Math.PI) / 180;
+  const radius = count === 4 ? 142 : 136;
+  return {
+    x: Math.cos(radians) * radius,
+    y: Math.sin(radians) * radius,
+  };
+}
+
 export function AppShell() {
   const { user, signOut, resendVerification } = useAuth();
   const { data, profile, connection } = useVault();
@@ -87,29 +110,20 @@ export function AppShell() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
-  const [sidebarHidden, setSidebarHidden] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(() => Number(localStorage.getItem("iv-sidebar-width") || 260));
-  const dragging = useRef(false);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    const onMove = (event: PointerEvent) => {
-      if (!dragging.current) return;
-      const next = Math.max(220, Math.min(360, event.clientX));
-      setSidebarWidth(next);
+    setOpenCategory(null);
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenCategory(null);
     };
-    const onUp = () => {
-      if (!dragging.current) return;
-      dragging.current = false;
-      document.body.classList.remove("resizing-sidebar");
-      localStorage.setItem("iv-sidebar-width", String(sidebarWidth));
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-  }, [sidebarWidth]);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const breadcrumb = useMemo(() => {
     const promptMatch = location.pathname.match(/^\/prompts\/([^/]+)/);
@@ -119,84 +133,111 @@ export function AppShell() {
       const endeavor = task ? data.endeavors[task.endeavorId] : undefined;
       return [endeavor?.name, task?.name, prompt?.title].filter(Boolean) as string[];
     }
-    const entries = [...workspaceNav, ...aiNav, ...historyNav, ...systemNav];
-    const current = entries.find(([, path]) => location.pathname === path || location.pathname.startsWith(`${path}/`));
+    const entries = [...coreNav, ...knowledgeNav, ...aiNav, ...historyNav, ...systemNav];
+    const current = entries.find(([, path]) => isRouteActive(location.pathname, path));
     return [profile?.workspaceName || "Personal Vault", current?.[0] || "EurekaVault"];
   }, [data.endeavors, data.prompts, data.tasks, location.pathname, profile?.workspaceName]);
-
-  const groups = [
-    ["Workspace", workspaceNav],
-    ["AI", aiNav],
-    ["History", historyNav],
-    ["System", systemNav],
-  ] as const;
 
   async function logout() {
     await signOut();
     toast.success("Signed out.");
   }
 
-  const mobileMoreActive = !mobilePrimary.some(([, path]) => location.pathname === path || location.pathname.startsWith(`${path}/`));
+  const mobileMoreActive = !mobilePrimary.some(([, path]) => isRouteActive(location.pathname, path));
   const isPromptWorkspace = /^\/prompts\/[^/]+/.test(location.pathname);
 
   return (
-    <div className={cx("app-shell", sidebarHidden && "sidebar-hidden")} style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
+    <div className="app-shell">
       <a className="skip-link" href="#main-content">Skip to content</a>
 
-      <aside className="sidebar" aria-label="Workspace navigation">
-        <div className="sidebar__brand-row">
-          <button className="workspace-switcher" onClick={() => navigate("/dashboard")}>
-            <span className="brand-mark">IV</span>
-            <span className="workspace-switcher__copy"><strong>EurekaVault</strong><small>{profile?.workspaceName || "Personal Vault"}</small></span>
-            <ChevronDown size={14} />
-          </button>
+      <aside className="sidebar sidebar--category-rail" aria-label="Workspace navigation">
+        <div className="sidebar__brand-row sidebar__brand-row--rail">
           <Tooltip.Root>
-            <Tooltip.Trigger asChild><button className="icon-button sidebar-hide" aria-label="Hide sidebar" onClick={() => setSidebarHidden(true)}><PanelLeftClose size={17} /></button></Tooltip.Trigger>
-            <Tooltip.Portal><Tooltip.Content className="tooltip-content" side="right" sideOffset={8}>Hide sidebar</Tooltip.Content></Tooltip.Portal>
+            <Tooltip.Trigger asChild>
+              <button className="workspace-switcher workspace-switcher--rail" aria-label="Go to EurekaVault overview" onClick={() => navigate("/dashboard")}>
+                <span className="brand-mark">IV</span>
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Portal><Tooltip.Content className="tooltip-content" side="right" sideOffset={10}>EurekaVault · {profile?.workspaceName || "Personal Vault"}</Tooltip.Content></Tooltip.Portal>
           </Tooltip.Root>
         </div>
 
-        <div className="sidebar__status"><span className={cx("connection-dot", `connection-dot--${connection}`)} /><span>{connection === "connected" ? "Synced with Firebase" : connection}</span></div>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <div className="sidebar__status sidebar__status--rail" aria-label={connection === "connected" ? "Synced with Firebase" : connection}>
+              <span className={cx("connection-dot", `connection-dot--${connection}`)} />
+            </div>
+          </Tooltip.Trigger>
+          <Tooltip.Portal><Tooltip.Content className="tooltip-content" side="right" sideOffset={10}>{connection === "connected" ? "Synced with Firebase" : connection}</Tooltip.Content></Tooltip.Portal>
+        </Tooltip.Root>
 
-        <nav className="nav-groups">
-          {groups.map(([groupLabel, items]) => (
-            <section className="nav-group" key={groupLabel}>
-              <span className="nav-group__label">{groupLabel}</span>
-              {items.map(([label, path, Icon, collection]) => (
-                <NavLink key={path} to={path} className={({ isActive }) => cx("nav-link", isActive && "active") }>
-                  <Icon size={17} strokeWidth={1.8} />
-                  <span>{label}</span>
-                  {collection ? <small>{activeRecords(data[collection] as Record<string, VaultRecord>).length}</small> : null}
-                </NavLink>
-              ))}
-            </section>
-          ))}
+        <nav className="category-rail" aria-label="Navigation categories">
+          {navigationCategories.map(([categoryLabel, CategoryIcon, items]) => {
+            const expanded = openCategory === categoryLabel;
+            const categoryActive = items.some(([, path]) => isRouteActive(location.pathname, path));
+            return (
+              <div className="nav-wheel" key={categoryLabel}>
+                <button
+                  className={cx("nav-wheel__launcher", expanded && "expanded", categoryActive && "active")}
+                  aria-expanded={expanded}
+                  aria-label={`${expanded ? "Close" : "Open"} ${categoryLabel} navigation`}
+                  onClick={() => setOpenCategory((current) => current === categoryLabel ? null : categoryLabel)}
+                >
+                  <CategoryIcon size={21} strokeWidth={1.75} />
+                  <span>{categoryLabel}</span>
+                </button>
+
+                <AnimatePresence>
+                  {expanded ? (
+                    <motion.div className="nav-wheel__orbit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <div className="nav-wheel__ring" aria-hidden />
+                      {items.map(([label, path, Icon], index) => {
+                        const offset = wheelOffset(index, items.length);
+                        return (
+                          <motion.div
+                            className="nav-wheel__satellite"
+                            key={path}
+                            initial={{ opacity: 0, x: 0, y: 0, scale: 0.72 }}
+                            animate={{ opacity: 1, x: offset.x, y: offset.y, scale: 1 }}
+                            exit={{ opacity: 0, x: 0, y: 0, scale: 0.72 }}
+                            transition={{ type: "spring", stiffness: 420, damping: 31, delay: index * 0.025 }}
+                          >
+                            <NavLink to={path} className={({ isActive }) => cx("nav-wheel__item", isActive && "active")} aria-label={label}>
+                              <Icon size={20} strokeWidth={1.8} />
+                              <span>{label}</span>
+                            </NavLink>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </nav>
 
-        <div className="sidebar__footer">
-          <div className="theme-switcher" aria-label="Theme">
-            <button aria-label="Light theme" className={mode === "light" ? "active" : ""} onClick={() => setMode("light")}><Sun size={15} /></button>
-            <button aria-label="System theme" className={mode === "system" ? "active" : ""} onClick={() => setMode("system")}>Auto</button>
-            <button aria-label="Dark theme" className={mode === "dark" ? "active" : ""} onClick={() => setMode("dark")}><Moon size={15} /></button>
+        <div className="sidebar__footer sidebar__footer--rail">
+          <div className="theme-switcher theme-switcher--rail" aria-label="Theme">
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild><button aria-label="Light theme" className={mode === "light" ? "active" : ""} onClick={() => setMode("light")}><Sun size={15} /></button></Tooltip.Trigger>
+              <Tooltip.Portal><Tooltip.Content className="tooltip-content" side="right" sideOffset={9}>Light</Tooltip.Content></Tooltip.Portal>
+            </Tooltip.Root>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild><button aria-label="Dark theme" className={mode === "dark" ? "active" : ""} onClick={() => setMode("dark")}><Moon size={15} /></button></Tooltip.Trigger>
+              <Tooltip.Portal><Tooltip.Content className="tooltip-content" side="right" sideOffset={9}>Dark</Tooltip.Content></Tooltip.Portal>
+            </Tooltip.Root>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild><button aria-label="System theme" className={mode === "system" ? "active" : ""} onClick={() => setMode("system")}>A</button></Tooltip.Trigger>
+              <Tooltip.Portal><Tooltip.Content className="tooltip-content" side="right" sideOffset={9}>Auto</Tooltip.Content></Tooltip.Portal>
+            </Tooltip.Root>
           </div>
         </div>
-        <button
-          className="sidebar-resizer"
-          aria-label="Resize sidebar"
-          onPointerDown={(event) => {
-            event.preventDefault();
-            dragging.current = true;
-            document.body.classList.add("resizing-sidebar");
-          }}
-        />
       </aside>
 
-      {sidebarHidden ? (
-        <Tooltip.Root>
-          <Tooltip.Trigger asChild><button className="sidebar-reveal" aria-label="Show sidebar" onClick={() => setSidebarHidden(false)}><PanelLeftOpen size={18} /></button></Tooltip.Trigger>
-          <Tooltip.Portal><Tooltip.Content className="tooltip-content" side="right" sideOffset={8}>Show sidebar</Tooltip.Content></Tooltip.Portal>
-        </Tooltip.Root>
-      ) : null}
+      <AnimatePresence>
+        {openCategory ? <motion.button className="nav-wheel-scrim" aria-label="Close navigation category" onClick={() => setOpenCategory(null)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} /> : null}
+      </AnimatePresence>
 
       <AnimatePresence>
         {mobileOpen ? (
@@ -206,7 +247,7 @@ export function AppShell() {
               <div className="sheet-handle" />
               <header className="mobile-sheet-header"><div><span>Personal workspace</span><strong>{profile?.workspaceName || "EurekaVault"}</strong></div><Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Close"><X size={19} /></Button></header>
               <div className="mobile-navigation-groups">
-                {groups.map(([label, items]) => <section key={label}><span>{label}</span>{items.map((item) => { const [itemLabel, path, Icon] = item; return <NavLink key={path} to={path} onClick={() => setMobileOpen(false)} className={({ isActive }) => cx("mobile-menu-link", isActive && "active")}><Icon size={19} /><strong>{itemLabel}</strong></NavLink>; })}</section>)}
+                {navigationCategories.map(([label, _CategoryIcon, items]) => <section key={label}><span>{label}</span>{items.map(([itemLabel, path, Icon]) => <NavLink key={path} to={path} onClick={() => setMobileOpen(false)} className={({ isActive }) => cx("mobile-menu-link", isActive && "active")}><Icon size={19} /><strong>{itemLabel}</strong></NavLink>)}</section>)}
               </div>
               <button className="mobile-signout" onClick={logout}><LogOut size={17} /> Sign out</button>
             </motion.aside>
