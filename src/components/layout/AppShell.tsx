@@ -121,7 +121,7 @@ export function AppShell() {
     }
     const entries = [...workspaceNav, ...aiNav, ...historyNav, ...systemNav];
     const current = entries.find(([, path]) => location.pathname === path || location.pathname.startsWith(`${path}/`));
-    return [profile?.workspaceName || "Personal Vault", current?.[0] || "IntellectVault"];
+    return [profile?.workspaceName || "Personal Vault", current?.[0] || "EurekaVault"];
   }, [data.endeavors, data.prompts, data.tasks, location.pathname, profile?.workspaceName]);
 
   const groups = [
@@ -147,7 +147,7 @@ export function AppShell() {
         <div className="sidebar__brand-row">
           <button className="workspace-switcher" onClick={() => navigate("/dashboard")}>
             <span className="brand-mark">IV</span>
-            <span className="workspace-switcher__copy"><strong>IntellectVault</strong><small>{profile?.workspaceName || "Personal Vault"}</small></span>
+            <span className="workspace-switcher__copy"><strong>EurekaVault</strong><small>{profile?.workspaceName || "Personal Vault"}</small></span>
             <ChevronDown size={14} />
           </button>
           <Tooltip.Root>
@@ -204,7 +204,7 @@ export function AppShell() {
             <button className="mobile-navigation-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />
             <motion.aside className="mobile-navigation-sheet" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", stiffness: 430, damping: 38 }}>
               <div className="sheet-handle" />
-              <header className="mobile-sheet-header"><div><span>Personal workspace</span><strong>{profile?.workspaceName || "IntellectVault"}</strong></div><Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Close"><X size={19} /></Button></header>
+              <header className="mobile-sheet-header"><div><span>Personal workspace</span><strong>{profile?.workspaceName || "EurekaVault"}</strong></div><Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Close"><X size={19} /></Button></header>
               <div className="mobile-navigation-groups">
                 {groups.map(([label, items]) => <section key={label}><span>{label}</span>{items.map((item) => { const [itemLabel, path, Icon] = item; return <NavLink key={path} to={path} onClick={() => setMobileOpen(false)} className={({ isActive }) => cx("mobile-menu-link", isActive && "active")}><Icon size={19} /><strong>{itemLabel}</strong></NavLink>; })}</section>)}
               </div>

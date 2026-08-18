@@ -28,7 +28,7 @@ export function DashboardPage() {
   return (
     <div className="dashboard-page">
       <header className="workspace-heading">
-        <div><span className="eyebrow">Personal knowledge system</span><h1>{profile?.workspaceName || "IntellectVault"}</h1><p>Preserve the prompts, methods, and versions that define how you work.</p></div>
+        <div><span className="eyebrow">Personal knowledge system</span><h1>{profile?.workspaceName || "EurekaVault"}</h1><p>Preserve the prompts, methods, and versions that define how you work.</p></div>
         <Button variant="primary" icon={<Plus size={17} />} onClick={() => openCreate("prompts")}>New prompt</Button>
       </header>
 

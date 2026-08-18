@@ -170,7 +170,7 @@ export function AiPromptFinderPage() {
         </section>
       ) : null}
 
-      {error ? <div className="ai-finder-error"><strong>Prompt Finder unavailable</strong><p>{error}</p><span>Your normal IntellectVault features are unaffected.</span></div> : null}
+      {error ? <div className="ai-finder-error"><strong>Prompt Finder unavailable</strong><p>{error}</p><span>Your normal EurekaVault features are unaffected.</span></div> : null}
 
       {result ? (
         <section className="ai-finder-results" aria-live="polite">

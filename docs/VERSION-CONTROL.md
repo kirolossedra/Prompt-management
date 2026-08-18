@@ -2,7 +2,7 @@
 
 ## 1. Two distinct version layers
 
-IntellectVault currently has two different version concepts:
+EurekaVault currently has two different version concepts:
 
 1. **Prompt Version** - automatic history of one Prompt.
 2. **Global Version** - a deliberate snapshot baseline of the entire vault.

@@ -38,7 +38,7 @@ The browser application uses:
 - Firebase Authentication
 - Firebase Realtime Database
 
-The IntellectVault root is `intellectVault/users/{{uid}}` and must be protected with the supplied owner-only rule.
+The EurekaVault root is `intellectVault/users/{{uid}}` and must be protected with the supplied owner-only rule.
 
 ## 5. Client Firebase environment variables
 

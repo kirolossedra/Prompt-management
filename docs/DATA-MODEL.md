@@ -2,7 +2,7 @@
 
 ## 1. Root and ownership
 
-All IntellectVault user data is scoped beneath:
+All EurekaVault user data is scoped beneath:
 
 ```text
 intellectVault/users/{firebaseUid}/

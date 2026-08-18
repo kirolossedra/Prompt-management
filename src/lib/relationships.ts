@@ -559,17 +559,17 @@ export function buildRelationshipMapSvg(data: VaultCollections): string {
       <text x="${node.x + 18}" y="${node.y + 44}" font-family="Inter, Arial, sans-serif" font-size="9.5" fill="#64748b">${escapeXml(truncate(node.taskName, 44))}</text>
     </g>`).join("");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="IntellectVault prompt inspiration relationship map">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="EurekaVault prompt inspiration relationship map">
   <rect width="100%" height="100%" fill="#ffffff"/>
   <defs><marker id="iv-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/></marker></defs>
-  <text x="40" y="24" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#475569">INTELLECTVAULT · PROMPT INSPIRATION MAP</text>
+  <text x="40" y="24" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#475569">EUREKAVAULT · PROMPT INSPIRATION MAP</text>
   ${groupMarkup}
   ${edgeMarkup}
   ${nodeMarkup}
 </svg>`;
 }
 
-export function downloadRelationshipMapSvg(data: VaultCollections, fileName = "intellectvault-prompt-relationships.svg") {
+export function downloadRelationshipMapSvg(data: VaultCollections, fileName = "eurekavault-prompt-relationships.svg") {
   const svg = buildRelationshipMapSvg(data);
   const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -580,7 +580,7 @@ export function downloadRelationshipMapSvg(data: VaultCollections, fileName = "i
   URL.revokeObjectURL(url);
 }
 
-export async function downloadRelationshipMapPng(data: VaultCollections, fileName = "intellectvault-prompt-relationships.png") {
+export async function downloadRelationshipMapPng(data: VaultCollections, fileName = "eurekavault-prompt-relationships.png") {
   const svg = buildRelationshipMapSvg(data);
   const layout = buildRelationshipGraphLayout(data);
   const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });

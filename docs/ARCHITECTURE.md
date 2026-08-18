@@ -6,7 +6,7 @@ This document describes the implementation at commit `6818b808dc51cf72d3698e61a6
 
 ## 2. High-level architecture
 
-IntellectVault is a browser application with three principal runtime boundaries:
+EurekaVault is a browser application with three principal runtime boundaries:
 
 ```text
 Browser
@@ -81,7 +81,7 @@ Workspace initialization creates a profile and seeded Decision records under the
 
 ## 5. Persistence boundary
 
-The IntellectVault Firebase root is:
+The EurekaVault Firebase root is:
 
 ```text
 intellectVault/users/{uid}/
@@ -112,7 +112,7 @@ Records are stored as maps keyed by Firebase push IDs unless a structure has a n
 
 ### Owner isolation
 
-`database.rules.json` enforces, for the IntellectVault subtree:
+`database.rules.json` enforces, for the EurekaVault subtree:
 
 ```text
 read  allowed only when auth.uid == $uid

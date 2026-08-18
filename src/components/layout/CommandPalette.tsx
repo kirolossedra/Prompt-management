@@ -69,7 +69,7 @@ export function CommandPalette() {
         <Dialog.Portal>
           <Dialog.Overlay className="command-scrim" />
           <Dialog.Content className="command-palette" onOpenAutoFocus={(event) => { event.preventDefault(); inputRef.current?.focus(); }}>
-            <Dialog.Title className="sr-only">Search IntellectVault</Dialog.Title>
+            <Dialog.Title className="sr-only">Search EurekaVault</Dialog.Title>
             <div className="command-input"><Search size={19} /><input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search every prompt by title, purpose, description, or content…" onKeyDown={(event) => {
               if (event.key === "ArrowDown") { event.preventDefault(); setActiveIndex((value) => Math.min(results.length - 1, value + 1)); }
               if (event.key === "ArrowUp") { event.preventDefault(); setActiveIndex((value) => Math.max(0, value - 1)); }

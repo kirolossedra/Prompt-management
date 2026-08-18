@@ -14,7 +14,7 @@
 \sloppy
 \newcommand{\codepath}[1]{\texttt{\detokenize{#1}}}
 \newcommand{\status}[1]{\textbf{#1}}
-\title{IntellectVault Comprehensive Implementation Reference}
+\title{EurekaVault Comprehensive Implementation Reference}
 \author{Implementation-derived documentation}
 \date{Repository snapshot: 18 August 2026}
 \begin{document}
@@ -22,12 +22,12 @@
 \tableofcontents
 \newpage
 \section{Document Basis and Scope}
-This reference documents the IntellectVault implementation inspected at Git commit \codepath{6818b808dc51cf72d3698e61a6bfbfa059108f46}. It is intentionally implementation-led. Current TypeScript code, Firebase rules, Netlify Functions and Git history are treated as authoritative for current functionality. Older repository prose is retained as historical evidence only when it disagrees with the implemented system.
+This reference documents the EurekaVault implementation inspected at Git commit \codepath{6818b808dc51cf72d3698e61a6bfbfa059108f46}. It is intentionally implementation-led. Current TypeScript code, Firebase rules, Netlify Functions and Git history are treated as authoritative for current functionality. Older repository prose is retained as historical evidence only when it disagrees with the implemented system.
 
 The goal of this document is completeness rather than presentation polish. It records what the system does, how the major pieces interact, what data is persisted, what is sent to AI services, the important limits/invariants, and when major functionality entered the repository.
 
 \subsection{Current product characterization}
-IntellectVault is a private Prompt knowledge and evolution workspace with hierarchical organization, automatic Prompt-local version history, Global Version baselines, attachments, Prompt lineage, Mindsets, Preferences, Decisions, engagement tracking, deterministic search, and a set of authenticated Gemini-powered retrieval/transformation/synthesis tools. The newest AI-side capability in the inspected repository is the user-confirmed Semantic Prompt Finder feedback loop added on 18 August 2026.
+EurekaVault is a private Prompt knowledge and evolution workspace with hierarchical organization, automatic Prompt-local version history, Global Version baselines, attachments, Prompt lineage, Mindsets, Preferences, Decisions, engagement tracking, deterministic search, and a set of authenticated Gemini-powered retrieval/transformation/synthesis tools. The newest AI-side capability in the inspected repository is the user-confirmed Semantic Prompt Finder feedback loop added on 18 August 2026.
 
 \subsection{Important documentation drift}
 The root README and in-application Roadmap still contain early Release 1 statements saying that AI calls are not implemented. Those statements are no longer true. The root README also mentions unlimited nested folders, while the current domain model contains no Folder entity. This reference documents the current direct hierarchy: Endeavor $\rightarrow$ Task $\rightarrow$ Prompt $\rightarrow$ Prompt Version.
@@ -85,7 +85,7 @@ Route & Purpose \\
 \section{Authentication and Workspace Ownership}
 Firebase Email/Password authentication supports sign-up, sign-in, sign-out, password reset, verification email and verification resend. New account creation also initializes the workspace profile and seeded Decisions under the new Firebase UID.
 
-The authoritative IntellectVault path is \codepath{intellectVault/users/{{uid}}}. Database rules require the authenticated UID to equal the path UID for reads and writes. The current architecture is therefore a private owner workspace, not a shared collaborative vault.
+The authoritative EurekaVault path is \codepath{intellectVault/users/{{uid}}}. Database rules require the authenticated UID to equal the path UID for reads and writes. The current architecture is therefore a private owner workspace, not a shared collaborative vault.
 
 The public Firebase web configuration is project identification rather than authorization. Authorization depends on the Firebase session and server-enforced Realtime Database rules.
 \section{Persisted Data Model}
@@ -186,7 +186,7 @@ Mindsets are scoped records with global, Endeavor, Task or Prompt scope. Prefere
 \subsection{Mindset Construction}
 The deterministic Mindset Builder is verified present by commit \codepath{417b29d} on 7 August 2026. The user searches/selects source Prompts, constructs an assembled persona/methodology draft, edits it and saves it as a normal Mindset. The builder explicitly states that no AI model is used. A constructed Mindset records source Prompt IDs and \codepath{constructionMethod = prompt-selection}.
 
-This distinction matters: derived text in IntellectVault is not automatically AI-generated. The Mindset Builder is deterministic while Finder, Repurposer and Mixer are Gemini-backed.
+This distinction matters: derived text in EurekaVault is not automatically AI-generated. The Mindset Builder is deterministic while Finder, Repurposer and Mixer are Gemini-backed.
 \section{Decision Log}
 Decisions store product/architecture questions and Open/Finalized state. Current provider normalization upgrades several early decision seeds: the old unlimited-folders decision becomes the direct hierarchy decision; the old manual Prompt-version policy becomes automatic Prompt history; and the old two-commit-level language becomes Prompt-local plus vault-global versioning.
 
@@ -270,7 +270,7 @@ If Gemini is unavailable, quota-limited or returns malformed output, the feature
 \section{Settings, Diagnostics and Data Portability}
 Settings supports workspace-name editing, displays the owner email, checks Realtime Database connection state, Firebase session, email-verification state and workspace profile presence, and can resend verification when necessary.
 
-The owner can export a local JSON snapshot of the current workspace. The page also displays the required IntellectVault Firebase rule as an operational reminder. Import/migration adapters are not implemented as a corresponding general restore workflow in the current inspected code.
+The owner can export a local JSON snapshot of the current workspace. The page also displays the required EurekaVault Firebase rule as an operational reminder. Import/migration adapters are not implemented as a corresponding general restore workflow in the current inspected code.
 \section{Deployment and Configuration}
 Netlify runs \codepath{npm run build}, publishes \codepath{dist}, uses Node 22.12.0 and redirects all browser routes to \codepath{/index.html} for SPA routing.
 

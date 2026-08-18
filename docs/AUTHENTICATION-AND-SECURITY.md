@@ -2,7 +2,7 @@
 
 ## 1. Authentication provider
 
-IntellectVault uses Firebase Authentication with Email/Password accounts.
+EurekaVault uses Firebase Authentication with Email/Password accounts.
 
 Supported account operations in `AuthContext`:
 
@@ -25,7 +25,7 @@ On sign-up, the application:
 
 ## 3. Owner-private Realtime Database subtree
 
-For IntellectVault records, `database.rules.json` requires:
+For EurekaVault records, `database.rules.json` requires:
 
 ```json
 "intellectVault": {
@@ -97,7 +97,7 @@ The current data model is owner-private rather than collaborative. There is no i
 ## 12. Security-sensitive operational requirements
 
 - Keep real Gemini keys in Netlify environment-variable configuration, never the repository.
-- Deploy the IntellectVault owner-only Realtime Database rule.
+- Deploy the EurekaVault owner-only Realtime Database rule.
 - Treat client-side checks as usability validation, not authorization.
 - Preserve server-side Firebase ID-token verification for every AI function.
 - If a conventional backend replaces Netlify Functions, move AI secret handling and token validation to that backend rather than into the browser.

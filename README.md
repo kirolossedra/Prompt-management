@@ -1,4 +1,4 @@
-# IntellectVault — React Release 1 Foundation
+# EurekaVault — React Release 1 Foundation
 
 A manual-first, version-controlled workspace for prompts, mindsets, preferences, tasks, and methodology evolution.
 

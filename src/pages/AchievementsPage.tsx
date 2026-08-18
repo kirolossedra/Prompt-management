@@ -99,7 +99,7 @@ export function AchievementsPage() {
 
       <section className="activity-method-note">
         <CalendarDays size={18} />
-        <div><strong>How activity is counted</strong><p>An active day is a distinct local calendar day on which you open IntellectVault. Meaningful create, edit, version, archive, restore, delete, decision, and Global Version actions are also recorded for future activity insights. Activity achievements are cumulative, not streak-based.</p></div>
+        <div><strong>How activity is counted</strong><p>An active day is a distinct local calendar day on which you open EurekaVault. Meaningful create, edit, version, archive, restore, delete, decision, and Global Version actions are also recorded for future activity insights. Activity achievements are cumulative, not streak-based.</p></div>
       </section>
     </div>
   );

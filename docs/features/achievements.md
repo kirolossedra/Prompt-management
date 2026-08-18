@@ -33,8 +33,8 @@ Current action vocabulary includes:
 
 ### Consistency
 
-- **1 Week of Activity** - use IntellectVault on 7 distinct calendar days; not required to be consecutive.
-- **30 Days of Activity** - use IntellectVault on 30 distinct calendar days; not required to be consecutive.
+- **1 Week of Activity** - use EurekaVault on 7 distinct calendar days; not required to be consecutive.
+- **30 Days of Activity** - use EurekaVault on 30 distinct calendar days; not required to be consecutive.
 
 ### Craft
 

@@ -222,10 +222,10 @@ export function AiPromptMixerPage() {
                     <option value="">Select Prompt…</option>
                     {activePrompts.map((prompt) => <option key={prompt.id} value={prompt.id}>{promptPath(data, prompt.id)}</option>)}
                   </select>
-                  {vaultSource ? <div className="ai-mixer-source-summary"><strong>{vaultSource.title}</strong><span>{taskPath(data, vaultSource.taskId)}</span><p>{vaultSource.purpose}</p><button type="button" onClick={() => navigate(`/prompts/${vaultSource.id}`)}>Open <ArrowRight size={13} /></button></div> : <div className="ai-mixer-source-empty">Load any active Prompt from IntellectVault into this window.</div>}
+                  {vaultSource ? <div className="ai-mixer-source-summary"><strong>{vaultSource.title}</strong><span>{taskPath(data, vaultSource.taskId)}</span><p>{vaultSource.purpose}</p><button type="button" onClick={() => navigate(`/prompts/${vaultSource.id}`)}>Open <ArrowRight size={13} /></button></div> : <div className="ai-mixer-source-empty">Load any active Prompt from EurekaVault into this window.</div>}
                 </> : <div className="ai-mixer-custom-source">
                   <label>Label <span>optional</span><input value={window.customTitle} onChange={(event) => updateWindow(index, (current) => ({ ...current, customTitle: event.target.value }))} placeholder={`Pasted Prompt ${index + 1}`} /></label>
-                  <label>Prompt content<textarea rows={12} value={window.customContent} onChange={(event) => updateWindow(index, (current) => ({ ...current, customContent: event.target.value }))} placeholder="Paste or write any Prompt here. It does not need to exist in IntellectVault." /></label>
+                  <label>Prompt content<textarea rows={12} value={window.customContent} onChange={(event) => updateWindow(index, (current) => ({ ...current, customContent: event.target.value }))} placeholder="Paste or write any Prompt here. It does not need to exist in EurekaVault." /></label>
                 </div>}
               </article>;
             })}

@@ -218,7 +218,7 @@ export function AiPromptRepurposePage() {
             </div>
 
             <aside className="ai-repurpose-save-panel">
-              <div><span className="eyebrow">Save as new Prompt</span><p>Saving uses normal IntellectVault Prompt creation, so the new record receives its own independent Version 1 history.</p></div>
+              <div><span className="eyebrow">Save as new Prompt</span><p>Saving uses normal EurekaVault Prompt creation, so the new record receives its own independent Version 1 history.</p></div>
               <label>Endeavor<select value={destinationEndeavorId} onChange={(event) => { setDestinationEndeavorId(event.target.value); setDestinationTaskId(""); }}><option value="">Select Endeavor…</option>{activeEndeavors.map((endeavor) => <option key={endeavor.id} value={endeavor.id}>{endeavor.name}</option>)}</select></label>
               <label>Task<select value={destinationTaskId} disabled={!destinationEndeavorId} onChange={(event) => setDestinationTaskId(event.target.value)}><option value="">Select Task…</option>{destinationTasks.map((task) => <option key={task.id} value={task.id}>{task.name}</option>)}</select></label>
               <div className="ai-repurpose-save-actions">

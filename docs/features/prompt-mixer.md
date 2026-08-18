@@ -13,8 +13,8 @@ Prompt Mixer synthesizes multiple Prompt inputs into one coherent standalone Pro
 
 The interface starts with at least two source windows and allows more to be added. Each window can operate in one of two modes:
 
-- **Load from vault** - choose an existing active IntellectVault Prompt.
-- **Paste / type** - provide arbitrary Prompt text that does not need to exist in IntellectVault.
+- **Load from vault** - choose an existing active EurekaVault Prompt.
+- **Paste / type** - provide arbitrary Prompt text that does not need to exist in EurekaVault.
 
 A custom source may also have an optional label.
 

@@ -1,6 +1,6 @@
-# IntellectVault Documentation
+# EurekaVault Documentation
 
-This directory documents the **implemented IntellectVault codebase** as inspected at Git commit `6818b808dc51cf72d3698e61a6bfbfa059108f46` on 2026-08-18.
+This directory documents the **implemented EurekaVault codebase** as inspected at Git commit `6818b808dc51cf72d3698e61a6bfbfa059108f46` on 2026-08-18.
 
 The documentation is intentionally implementation-led: the current source code and commit history are treated as the source of truth for what the product actually does. Older repository prose that conflicts with the implementation is treated as stale or superseded rather than repeated as current behavior.
 
@@ -35,7 +35,7 @@ The documentation is intentionally implementation-led: the current source code a
 
 ## Current product shape
 
-IntellectVault is no longer accurately described as only a manual prompt CRUD application. The current implementation combines:
+EurekaVault is no longer accurately described as only a manual prompt CRUD application. The current implementation combines:
 
 1. A private hierarchical Prompt knowledge base.
 2. Automatic Prompt-local version history and Git-style line comparison.

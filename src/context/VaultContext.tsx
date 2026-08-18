@@ -254,7 +254,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           [`${VAULT_ROOT}/${user.uid}/activityStats/trackingStartedAt`]: engagement.activityStats.trackingStartedAt || now,
         });
       } catch (error) {
-        console.warn("IntellectVault activity tracking failed:", error);
+        console.warn("EurekaVault activity tracking failed:", error);
       }
     },
     [engagement.activityStats.actionFirstAt, engagement.activityStats.trackingStartedAt, user],
@@ -932,7 +932,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `intellectvault-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.download = `eurekavault-${new Date().toISOString().slice(0, 10)}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   }, [data, engagement, profile, user]);

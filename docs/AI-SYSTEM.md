@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-IntellectVault currently implements three Gemini-backed workflows:
+EurekaVault currently implements three Gemini-backed workflows:
 
 1. Semantic Prompt Finder
 2. Prompt Repurposer
@@ -235,4 +235,4 @@ This allows AI usage to contribute to the broader engagement/activity record wit
 
 ## 10. Current architectural limitation
 
-Netlify Functions are the server-side AI boundary because the application otherwise has no conventional backend. If IntellectVault later gains a standard backend service, Gemini calls and `GEMINI_API_KEY` handling should naturally migrate there so the dedicated Netlify-function proxy is no longer required for this purpose.
+Netlify Functions are the server-side AI boundary because the application otherwise has no conventional backend. If EurekaVault later gains a standard backend service, Gemini calls and `GEMINI_API_KEY` handling should naturally migrate there so the dedicated Netlify-function proxy is no longer required for this purpose.
