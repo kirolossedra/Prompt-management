@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { ArrowRight, Brain, Camera, FileCode2, Network, Plus, Sparkles, Target, Trophy } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight, Brain, Camera, Clock3, FileCode2, History, Network, Plus, Sparkles, Target, Trophy } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useVault } from "../context/VaultContext";
 import { evaluateAchievements } from "../lib/achievements";
@@ -7,11 +7,15 @@ import { activeRecords, formatRelativeTime, taskPath } from "../lib/utils";
 import { useEntityUi } from "../components/entities/EntityUiProvider";
 import { Button } from "../components/ui/Button";
 import { EmptyState } from "../components/ui/EmptyState";
+import { Modal } from "../components/ui/Modal";
+
+type ActivityModal = "continue" | "history" | null;
 
 export function DashboardPage() {
   const { data, profile, engagement } = useVault();
   const { openCreate } = useEntityUi();
   const navigate = useNavigate();
+  const [activityModal, setActivityModal] = useState<ActivityModal>(null);
   const prompts = activeRecords(data.prompts);
   const promptVersions = activeRecords(data.promptVersions);
   const globalVersions = activeRecords(data.globalCommits);
@@ -25,11 +29,25 @@ export function DashboardPage() {
     .filter((item) => !item.unlock)
     .sort((a, b) => b.ratio - a.ratio)[0];
 
+  const openPrompt = (promptId: string) => {
+    setActivityModal(null);
+    navigate(`/prompts/${promptId}`);
+  };
+
+  const openPromptHistory = (promptId: string) => {
+    setActivityModal(null);
+    navigate(`/prompts/${promptId}?tab=history`);
+  };
+
   return (
     <div className="dashboard-page">
       <header className="workspace-heading">
         <div><span className="eyebrow">Personal knowledge system</span><h1>{profile?.workspaceName || "EurekaVault"}</h1><p>Preserve the prompts, methods, and versions that define how you work.</p></div>
-        <Button variant="primary" icon={<Plus size={17} />} onClick={() => openCreate("prompts")}>New prompt</Button>
+        <div className="dashboard-heading-actions">
+          <Button variant="ghost" size="sm" icon={<Clock3 size={16} />} aria-haspopup="dialog" onClick={() => setActivityModal("continue")}>Continue</Button>
+          <Button variant="ghost" size="sm" icon={<History size={16} />} aria-haspopup="dialog" onClick={() => setActivityModal("history")}>History</Button>
+          <Button variant="primary" icon={<Plus size={17} />} onClick={() => openCreate("prompts")}>New prompt</Button>
+        </div>
       </header>
 
       <section className="summary-strip" aria-label="Vault summary">
@@ -40,21 +58,10 @@ export function DashboardPage() {
       </section>
 
       <div className="dashboard-workspace-grid">
-        <section className="workspace-section workspace-section--wide">
-          <div className="section-heading"><div><span className="eyebrow">Continue working</span><h2>Recently edited prompts</h2></div><button className="text-action" onClick={() => navigate("/prompts")}>View library <ArrowRight size={15} /></button></div>
-          {recentPrompts.length ? <div className="recent-prompt-list">{recentPrompts.map((prompt) => <button key={prompt.id} onClick={() => navigate(`/prompts/${prompt.id}`)}><span className="artifact-icon"><FileCode2 size={17} /></span><span className="recent-prompt-list__copy"><strong>{prompt.title}</strong><small>{taskPath(data, prompt.taskId)}</small></span><time>{formatRelativeTime(prompt.updatedAt)}</time><ArrowRight size={15} /></button>)}</div> : <EmptyState icon={<Sparkles />} title="Start your vault" description="Create your first prompt and its history begins automatically." action={<Button variant="primary" onClick={() => openCreate("prompts")}>Create prompt</Button>} />}
-        </section>
-
-        <section className="workspace-section version-activity-panel">
-          <div className="section-heading"><div><span className="eyebrow">Local history</span><h2>Prompt versions</h2></div></div>
-          {recentVersions.length ? <div className="version-feed">{recentVersions.map((version) => { const prompt = data.prompts[version.promptId]; return <button key={version.id} onClick={() => prompt && navigate(`/prompts/${prompt.id}?tab=history`)}><span className="version-badge">v{version.versionNumber || "—"}</span><span><strong>{prompt?.title || "Deleted prompt"}</strong><small>{version.changedFields?.join(", ") || version.changeDescription}</small></span><time>{formatRelativeTime(version.createdAt)}</time></button>; })}</div> : <p className="muted-copy">Prompt edits will appear here as automatic versions.</p>}
-        </section>
-
         <section className="workspace-section global-version-panel">
           <div className="section-heading"><div><span className="eyebrow">Vault baseline</span><h2>Latest Global Version</h2></div><Camera size={18} /></div>
           {latestGlobal ? <button className="global-version-preview" onClick={() => navigate("/versions")}><span className="global-version-id">{latestGlobal.displayId}</span><strong>{latestGlobal.title}</strong><p>{latestGlobal.summary || "Snapshot of the complete vault."}</p><div><span>{latestGlobal.recordCounts?.prompts || 0} prompts</span><span>{formatRelativeTime(latestGlobal.commitTimestamp)}</span></div></button> : <div className="empty-inline"><p>No Global Version has been released yet.</p><Button size="sm" onClick={() => navigate("/versions")}>Release baseline</Button></div>}
         </section>
-
 
         <section className="workspace-section achievement-dashboard-panel">
           <div className="section-heading"><div><span className="eyebrow">Milestones</span><h2>Achievements</h2></div><button className="text-action" onClick={() => navigate("/achievements")}>View all <ArrowRight size={15} /></button></div>
@@ -70,6 +77,34 @@ export function DashboardPage() {
           <div className="quick-action-list"><button onClick={() => openCreate("endeavors")}><Network size={17} /><span><strong>New endeavor</strong><small>Start a major area of work</small></span></button><button onClick={() => openCreate("tasks")}><Target size={17} /><span><strong>New task</strong><small>Add focused work beneath an endeavor</small></span></button><button onClick={() => openCreate("prompts")}><FileCode2 size={17} /><span><strong>New prompt</strong><small>Create a version-tracked instruction</small></span></button><button onClick={() => navigate("/mindset-construction")}><Brain size={17} /><span><strong>Construct mindset</strong><small>Build a persona from selected prompts</small></span></button></div>
         </section>
       </div>
+
+      <Modal
+        open={activityModal === "continue"}
+        onClose={() => setActivityModal(null)}
+        title="Continue working"
+        description="Recently edited prompts stay out of the overview until you need them."
+        size="lg"
+        backdropClassName="dashboard-activity-backdrop"
+      >
+        <div className="dashboard-activity-modal">
+          <div className="dashboard-activity-modal__toolbar"><span className="eyebrow">Recently edited prompts</span><button className="text-action" onClick={() => { setActivityModal(null); navigate("/prompts"); }}>View library <ArrowRight size={15} /></button></div>
+          {recentPrompts.length ? <div className="recent-prompt-list">{recentPrompts.map((prompt) => <button key={prompt.id} onClick={() => openPrompt(prompt.id)}><span className="artifact-icon"><FileCode2 size={17} /></span><span className="recent-prompt-list__copy"><strong>{prompt.title}</strong><small>{taskPath(data, prompt.taskId)}</small></span><time>{formatRelativeTime(prompt.updatedAt)}</time><ArrowRight size={15} /></button>)}</div> : <EmptyState icon={<Sparkles />} title="Start your vault" description="Create your first prompt and its history begins automatically." action={<Button variant="primary" onClick={() => { setActivityModal(null); openCreate("prompts"); }}>Create prompt</Button>} />}
+        </div>
+      </Modal>
+
+      <Modal
+        open={activityModal === "history"}
+        onClose={() => setActivityModal(null)}
+        title="Prompt history"
+        description="Recent automatic versions are available on demand instead of occupying the overview."
+        size="lg"
+        backdropClassName="dashboard-activity-backdrop"
+      >
+        <div className="dashboard-activity-modal">
+          <span className="eyebrow">Local history</span>
+          {recentVersions.length ? <div className="version-feed">{recentVersions.map((version) => { const prompt = data.prompts[version.promptId]; return <button key={version.id} onClick={() => prompt && openPromptHistory(prompt.id)}><span className="version-badge">v{version.versionNumber || "—"}</span><span><strong>{prompt?.title || "Deleted prompt"}</strong><small>{version.changedFields?.join(", ") || version.changeDescription}</small></span><time>{formatRelativeTime(version.createdAt)}</time></button>; })}</div> : <p className="muted-copy">Prompt edits will appear here as automatic versions.</p>}
+        </div>
+      </Modal>
     </div>
   );
 }

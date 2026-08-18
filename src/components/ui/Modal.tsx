@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 import { Dialog } from "radix-ui";
+import { cx } from "../../lib/utils";
 import { Button } from "./Button";
 
 export function Modal({
@@ -11,6 +12,7 @@ export function Modal({
   children,
   footer,
   size = "md",
+  backdropClassName,
 }: {
   open: boolean;
   onClose: () => void;
@@ -19,11 +21,12 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  backdropClassName?: string;
 }) {
   return (
     <Dialog.Root open={open} onOpenChange={(value) => { if (!value) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="modal-backdrop" />
+        <Dialog.Overlay className={cx("modal-backdrop", backdropClassName)} />
         <Dialog.Content
           className={`modal-panel modal-panel--${size}`}
           onOpenAutoFocus={(event) => {
