@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildActivePromptIndex, buildCustomPromptMixSource, buildPromptMixSources, buildRepurposePromptSource, buildVaultPromptMixSource, MAX_PROMPT_INDEX_CONTENT_CHARS } from "./promptIndex";
+import { buildActivePromptIndex, buildCustomPromptMixSource, buildPromptFinderLearningExamples, buildPromptMixSources, buildRepurposePromptSource, buildVaultPromptMixSource, MAX_PROMPT_FINDER_LEARNING_QUERY_CHARS, MAX_PROMPT_INDEX_CONTENT_CHARS } from "./promptIndex";
 import type { VaultCollections } from "../types/domain";
 
 const stamp = { uid: "u1", email: "u@example.com", displayName: "User" };
@@ -24,6 +24,7 @@ function data(): VaultCollections {
     promptRelations: {
       r1: { id: "r1", parentPromptId: "p1", childPromptId: "p2", relationshipType: "inspired-by", ...base },
     },
+    promptFinderFeedback: {},
     mindsets: {}, preferences: {}, localCommits: {}, globalCommits: {}, decisions: {},
   };
 }
@@ -81,5 +82,23 @@ describe("Prompt Mixer source builders", () => {
       endeavor: "",
     });
     expect(buildCustomPromptMixSource("window-empty", "", "   ")).toBeNull();
+  });
+});
+
+
+describe("Prompt Finder learning examples", () => {
+  it("uses recent confirmed choices, filters invalid targets, and bounds historical query text", () => {
+    const vault = data();
+    vault.promptFinderFeedback = {
+      old: { id: "old", query: "older search", selectedPromptId: "p1", selectedPromptTitleSnapshot: "Old title", matches: [{ promptId: "p2", score: 60 }], model: "gemini", corpusSize: 2, learningExampleCount: 0, ...base, updatedAt: 2 },
+      newest: { id: "newest", query: `newest ${"x".repeat(MAX_PROMPT_FINDER_LEARNING_QUERY_CHARS + 50)}`, selectedPromptId: "p2", selectedPromptTitleSnapshot: "Old second title", matches: [{ promptId: "p1", score: 80 }], model: "gemini", corpusSize: 2, learningExampleCount: 0, ...base, updatedAt: 4 },
+      invalid: { id: "invalid", query: "missing target", selectedPromptId: "missing", selectedPromptTitleSnapshot: "Missing", matches: [], model: "gemini", corpusSize: 2, learningExampleCount: 0, ...base, updatedAt: 5 },
+    };
+
+    const examples = buildPromptFinderLearningExamples(vault);
+    expect(examples).toHaveLength(2);
+    expect(examples.map((example) => example.selectedPromptId)).toEqual(["p2", "p1"]);
+    expect(examples[0].selectedPromptTitle).toBe("Independent critique");
+    expect(examples[0].query.length).toBe(MAX_PROMPT_FINDER_LEARNING_QUERY_CHARS);
   });
 });

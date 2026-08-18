@@ -2,6 +2,7 @@ import type {
   PromptFinderMatch,
   PromptFinderRequest,
   PromptFinderResponse,
+  PromptFinderLearningExample,
   SearchablePrompt,
 } from "./types";
 
@@ -40,10 +41,12 @@ export async function findPromptMatches(input: {
   prompts: SearchablePrompt[];
   uid: string;
   idToken: string;
+  learningExamples?: PromptFinderLearningExample[];
 }): Promise<PromptFinderResponse> {
   const request: PromptFinderRequest = {
     query: input.query.trim(),
     prompts: input.prompts,
+    learningExamples: input.learningExamples || [],
     uid: input.uid,
   };
 
@@ -70,5 +73,6 @@ export async function findPromptMatches(input: {
     provider: "gemini",
     model: String(payloadObject?.model || "Gemini"),
     corpusSize: Number(payloadObject?.corpusSize || input.prompts.length),
+    learningExampleCount: Math.max(0, Number(payloadObject?.learningExampleCount || 0)),
   };
 }

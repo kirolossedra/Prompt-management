@@ -19,6 +19,7 @@ export const EMPTY_COLLECTIONS = {
   promptVersions: {},
   promptAttachments: {},
   promptRelations: {},
+  promptFinderFeedback: {},
   mindsets: {},
   preferences: {},
   localCommits: {},

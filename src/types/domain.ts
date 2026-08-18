@@ -43,6 +43,7 @@ export type ActivityAction =
   | "relationship.removed"
   | "relationship.map-downloaded"
   | "ai.prompt-finder.searched"
+  | "ai.prompt-finder.feedback"
   | "ai.prompt-repurpose.generated"
   | "ai.prompt-mixer.generated";
 
@@ -155,6 +156,22 @@ export interface PromptRelation extends BaseRecord {
   relationshipType: "inspired-by";
 }
 
+
+export interface PromptFinderFeedbackMatch {
+  promptId: string;
+  score: number;
+}
+
+export interface PromptFinderFeedback extends BaseRecord {
+  query: string;
+  selectedPromptId: string;
+  selectedPromptTitleSnapshot: string;
+  matches: PromptFinderFeedbackMatch[];
+  model: string;
+  corpusSize: number;
+  learningExampleCount: number;
+}
+
 export interface PromptVersion extends BaseRecord {
   promptId: string;
   versionLabel: string;
@@ -210,6 +227,7 @@ export interface GlobalVersionSnapshot {
   promptVersions: Record<string, PromptVersion>;
   promptAttachments?: Record<string, PromptAttachment>;
   promptRelations?: Record<string, PromptRelation>;
+  promptFinderFeedback?: Record<string, PromptFinderFeedback>;
   mindsets: Record<string, Mindset>;
   preferences: Record<string, Preference>;
   localCommits: Record<string, LocalCommit>;
@@ -246,6 +264,7 @@ export interface VaultCollections {
   promptVersions: Record<string, PromptVersion>;
   promptAttachments: Record<string, PromptAttachment>;
   promptRelations: Record<string, PromptRelation>;
+  promptFinderFeedback: Record<string, PromptFinderFeedback>;
   mindsets: Record<string, Mindset>;
   preferences: Record<string, Preference>;
   localCommits: Record<string, LocalCommit>;

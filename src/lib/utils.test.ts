@@ -26,6 +26,7 @@ function emptyData(): VaultCollections {
     promptVersions: {},
     promptAttachments: {},
     promptRelations: {},
+    promptFinderFeedback: {},
     mindsets: {},
     preferences: {},
     localCommits: {},

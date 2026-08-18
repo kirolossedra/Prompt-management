@@ -1,6 +1,7 @@
 import { activeRecords } from "../lib/utils";
 import type { Prompt, VaultCollections } from "../types/domain";
 import type {
+  PromptFinderLearningExample,
   PromptRelationshipPeer,
   RepurposePromptSource,
   PromptMixSource,
@@ -9,6 +10,9 @@ import type {
 
 export const MAX_PROMPT_INDEX_ITEMS = 200;
 export const MAX_PROMPT_INDEX_CONTENT_CHARS = 24_000;
+export const MAX_PROMPT_FINDER_LEARNING_EXAMPLES = 24;
+export const MAX_PROMPT_FINDER_LEARNING_QUERY_CHARS = 800;
+export const MAX_PROMPT_FINDER_LEARNING_TOTAL_CHARS = 12_000;
 
 function compactContent(value: string): string {
   const content = String(value || "").trim();
@@ -71,6 +75,37 @@ export function buildActivePromptIndex(data: VaultCollections): SearchablePrompt
         relationships: relationshipContext(data, prompt.id),
       };
     });
+}
+
+export function buildPromptFinderLearningExamples(data: VaultCollections): PromptFinderLearningExample[] {
+  const feedback = Object.values(data.promptFinderFeedback || {})
+    .filter((item) => !item.archivedAt)
+    .sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
+
+  const examples: PromptFinderLearningExample[] = [];
+  const seen = new Set<string>();
+  let totalChars = 0;
+
+  for (const item of feedback) {
+    if (examples.length >= MAX_PROMPT_FINDER_LEARNING_EXAMPLES) break;
+    const prompt = data.prompts[item.selectedPromptId];
+    if (!prompt || prompt.archivedAt) continue;
+
+    const query = String(item.query || "").trim().slice(0, MAX_PROMPT_FINDER_LEARNING_QUERY_CHARS);
+    if (!query) continue;
+    const dedupeKey = `${query.toLocaleLowerCase()}::${prompt.id}`;
+    if (seen.has(dedupeKey)) continue;
+
+    const selectedPromptTitle = String(prompt.title || item.selectedPromptTitleSnapshot || "Untitled Prompt").trim();
+    const exampleChars = query.length + selectedPromptTitle.length + prompt.id.length;
+    if (examples.length && totalChars + exampleChars > MAX_PROMPT_FINDER_LEARNING_TOTAL_CHARS) break;
+
+    seen.add(dedupeKey);
+    totalChars += exampleChars;
+    examples.push({ query, selectedPromptId: prompt.id, selectedPromptTitle });
+  }
+
+  return examples;
 }
 
 export function buildRepurposePromptSource(data: VaultCollections, promptId: string): RepurposePromptSource | null {

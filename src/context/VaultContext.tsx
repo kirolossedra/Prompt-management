@@ -39,6 +39,7 @@ import type {
   Preference,
   Prompt,
   PromptAttachment,
+  PromptFinderFeedback,
   PromptRelation,
   PromptSnapshot,
   PromptVersion,
@@ -52,6 +53,16 @@ import type {
 } from "../types/domain";
 
 type ConnectionState = "idle" | "connecting" | "connected" | "error";
+
+interface PromptFinderFeedbackInput {
+  feedbackId?: string;
+  query: string;
+  selectedPromptId: string;
+  matches: Array<{ promptId: string; score: number }>;
+  model: string;
+  corpusSize: number;
+  learningExampleCount: number;
+}
 
 interface VaultContextValue {
   data: VaultCollections;
@@ -73,6 +84,7 @@ interface VaultContextValue {
   removePromptRelation: (relationId: string) => Promise<void>;
   recordRelationshipMapDownload: (format: "svg" | "png") => Promise<void>;
   recordPromptFinderSearch: (matchCount: number) => Promise<void>;
+  savePromptFinderFeedback: (input: PromptFinderFeedbackInput) => Promise<string>;
   recordPromptRepurpose: (sourcePromptId: string) => Promise<void>;
   recordPromptMix: (sourcePromptIds: string[], sourceCount?: number) => Promise<void>;
   createGlobalVersion: (title: string, summary: string) => Promise<string>;
@@ -273,6 +285,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           promptVersions: normalizeCollection<PromptVersion>(value.promptVersions),
           promptAttachments: normalizeCollection<PromptAttachment>(value.promptAttachments),
           promptRelations: normalizeCollection<PromptRelation>(value.promptRelations),
+          promptFinderFeedback: normalizeCollection<PromptFinderFeedback>(value.promptFinderFeedback),
           mindsets: normalizeCollection<Mindset>(value.mindsets),
           preferences: normalizeCollection<Preference>(value.preferences),
           localCommits: normalizeCollection<LocalCommit>(value.localCommits),
@@ -668,6 +681,68 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     [recordActivity],
   );
 
+  const savePromptFinderFeedback = useCallback(
+    async (input: PromptFinderFeedbackInput) => {
+      if (!user) throw new Error("A signed-in user is required.");
+      const query = cleanText(input.query, 2_000);
+      if (!query) throw new Error("The search query is required before feedback can be saved.");
+
+      const selectedPrompt = data.prompts[input.selectedPromptId];
+      if (!selectedPrompt || selectedPrompt.archivedAt) throw new Error("Select an active Prompt as the result you actually wanted.");
+
+      const now = Date.now();
+      const stamp = userStamp(user);
+      const matches = input.matches.slice(0, 5).flatMap((match) => {
+        const promptId = cleanText(match.promptId, 180);
+        if (!promptId || !data.prompts[promptId]) return [];
+        const rawScore = Number(match.score);
+        const score = Number.isFinite(rawScore) ? Math.max(0, Math.min(100, Math.round(rawScore))) : 0;
+        return [{ promptId, score }];
+      });
+      const feedbackId = cleanText(input.feedbackId || "", 180);
+
+      if (feedbackId) {
+        await update(ref(database), {
+          [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${feedbackId}/query`]: query,
+          [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${feedbackId}/selectedPromptId`]: selectedPrompt.id,
+          [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${feedbackId}/selectedPromptTitleSnapshot`]: selectedPrompt.title,
+          [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${feedbackId}/matches`]: matches,
+          [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${feedbackId}/model`]: cleanText(input.model, 180),
+          [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${feedbackId}/corpusSize`]: Math.max(0, Math.round(Number(input.corpusSize) || 0)),
+          [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${feedbackId}/learningExampleCount`]: Math.max(0, Math.round(Number(input.learningExampleCount) || 0)),
+          [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${feedbackId}/updatedAt`]: now,
+          [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${feedbackId}/updatedBy`]: stamp,
+        });
+        await recordActivity("ai.prompt-finder.feedback", "ai", selectedPrompt.id, `Corrected Finder choice to ${selectedPrompt.title}`);
+        return feedbackId;
+      }
+
+      const itemRef = push(ref(database, `${VAULT_ROOT}/${user.uid}/promptFinderFeedback`));
+      if (!itemRef.key) throw new Error("Firebase could not allocate a Prompt Finder feedback identifier.");
+      await update(ref(database), {
+        [`${VAULT_ROOT}/${user.uid}/promptFinderFeedback/${itemRef.key}`]: {
+          id: itemRef.key,
+          query,
+          selectedPromptId: selectedPrompt.id,
+          selectedPromptTitleSnapshot: selectedPrompt.title,
+          matches,
+          model: cleanText(input.model, 180),
+          corpusSize: Math.max(0, Math.round(Number(input.corpusSize) || 0)),
+          learningExampleCount: Math.max(0, Math.round(Number(input.learningExampleCount) || 0)),
+          createdAt: now,
+          updatedAt: now,
+          createdBy: stamp,
+          updatedBy: stamp,
+          archivedAt: null,
+          archivedBy: null,
+        },
+      });
+      await recordActivity("ai.prompt-finder.feedback", "ai", selectedPrompt.id, `Finder learned ${selectedPrompt.title}`);
+      return itemRef.key;
+    },
+    [data.prompts, recordActivity, user],
+  );
+
   const recordPromptRepurpose = useCallback(
     async (sourcePromptId: string) => {
       await recordActivity(
@@ -716,6 +791,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         promptVersions: data.promptVersions,
         promptAttachments: data.promptAttachments,
         promptRelations: data.promptRelations,
+        promptFinderFeedback: data.promptFinderFeedback,
         mindsets: data.mindsets,
         preferences: data.preferences,
         localCommits: data.localCommits,
@@ -728,6 +804,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         promptVersions: Object.keys(data.promptVersions).length,
         promptAttachments: Object.keys(data.promptAttachments).length,
         promptRelations: Object.keys(data.promptRelations).length,
+        promptFinderFeedback: Object.keys(data.promptFinderFeedback).length,
         mindsets: Object.keys(data.mindsets).length,
         preferences: Object.keys(data.preferences).length,
         decisions: Object.keys(data.decisions).length,
@@ -881,6 +958,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       removePromptRelation,
       recordRelationshipMapDownload,
       recordPromptFinderSearch,
+      savePromptFinderFeedback,
       recordPromptRepurpose,
       recordPromptMix,
       createGlobalVersion,
@@ -907,6 +985,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       removePromptRelation,
       recordRelationshipMapDownload,
       recordPromptFinderSearch,
+      savePromptFinderFeedback,
       recordPromptRepurpose,
       recordPromptMix,
       createGlobalVersion,

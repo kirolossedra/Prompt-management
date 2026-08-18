@@ -27,16 +27,24 @@ export interface PromptFinderMatch {
   reason: string;
 }
 
+export interface PromptFinderLearningExample {
+  query: string;
+  selectedPromptId: string;
+  selectedPromptTitle: string;
+}
+
 export interface PromptFinderResponse {
   matches: PromptFinderMatch[];
   provider: "gemini";
   model: string;
   corpusSize: number;
+  learningExampleCount: number;
 }
 
 export interface PromptFinderRequest {
   query: string;
   prompts: SearchablePrompt[];
+  learningExamples: PromptFinderLearningExample[];
   uid: string;
 }
 
