@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: eurekavault-backend
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health

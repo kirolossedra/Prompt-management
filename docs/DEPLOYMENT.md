@@ -103,3 +103,33 @@ A build success validates TypeScript compilation and Vite bundling but does not 
 ## 10. Current backend boundary
 
 Netlify Functions should be regarded as a narrowly scoped server-side adapter for Gemini, not as a full application backend. If a conventional backend is introduced later, AI secret management and Gemini calls should move there to avoid maintaining two backend boundaries for the same concern.
+
+## 11. Incremental Spring Boot backend
+
+The first 3-tier migration step adds a standalone Spring Boot service under `backend/`. It currently exists only as a deployable backend foundation and does not replace the working Firebase or Netlify request paths yet.
+
+Local run:
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+The service respects Render's `PORT` environment variable and defaults to port `8080` locally. Its infrastructure health endpoint is:
+
+```text
+/actuator/health
+```
+
+## 12. Render deployment
+
+`render.yaml` defines `eurekavault-backend` as a Docker-based Render web service rooted at `backend/`, because Render does not provide a native JVM runtime. The backend Dockerfile builds with Maven and Java 21, then runs on a Java 21 JRE.
+
+The Render health check uses `/actuator/health`. On the Free instance type, Render may spin a web service down after 15 minutes without inbound traffic, so this tier should be treated as a development/testing deployment rather than a production reliability guarantee.
+
+## 13. UptimeRobot wake-up monitor
+
+The intended external monitor is UptimeRobot using an HTTP(S) check against the deployed backend's `/actuator/health` URL every 5 minutes. This is separate from Render: UptimeRobot monitors/pings the service, while Render hosts it.
+
+This monitor is not a substitute for application observability or a production availability commitment. It is only the wake-up/uptime check for the current low-cost migration environment.
+

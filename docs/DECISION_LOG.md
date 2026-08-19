@@ -70,6 +70,14 @@ Prompt relationships use directed `inspired-by` semantics, support cross-Endeavo
 
 Saving a repurposed Prompt creates a new Prompt and Version 1, but no Prompt relationship is automatically created. The user can add one manually if semantically appropriate.
 
+### Incremental migration to a Spring Boot 3-tier architecture
+
+**Status:** Finalized by product-owner direction on 2026-08-19
+
+EurekaVault will migrate incrementally from the current browser-to-Firebase architecture to a 3-tier architecture with a Spring Boot backend. The migration is deliberately non-big-bang: existing working paths remain active until bounded backend replacements are implemented and verified.
+
+The backend deployment target is Render. During the low-cost migration/testing phase, UptimeRobot is intended to call the backend health endpoint every 5 minutes. Existing Netlify Functions remain in place until their responsibilities are explicitly migrated to Spring Boot.
+
 ## Superseded historical decisions
 
 ### "Release 1 is manual-first and performs no AI calls"

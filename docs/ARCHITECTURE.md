@@ -2,7 +2,7 @@
 
 ## 1. Snapshot and source of truth
 
-This document describes the implementation at commit `6818b808dc51cf72d3698e61a6bfbfa059108f46` (2026-08-18). The current TypeScript domain model, providers, page routes, Firebase rules, Netlify functions and tests take precedence over older prose.
+The application baseline comes from commit `6818b808dc51cf72d3698e61a6bfbfa059108f46` (2026-08-18). This document also includes the incremental Spring Boot migration foundation added on 2026-08-19; assign its final commit SHA after integration. Current code, Firebase rules, Netlify functions, backend configuration and tests take precedence over older prose.
 
 ## 2. High-level architecture
 
@@ -15,15 +15,21 @@ Browser
   +-- Firebase Authentication
   |
   +-- Firebase Realtime Database
-  |     owner-scoped vault data
+  |     owner-scoped vault data (current path during migration)
   |
   +-- Netlify Functions
-        authenticated server-side boundary for Gemini
-        |
-        +-- Gemini Interactions API
+  |     authenticated server-side boundary for Gemini (current path during migration)
+  |     |
+  |     +-- Gemini Interactions API
+  |
+  +-- Spring Boot backend
+        incremental 3-tier migration target
+        currently exposes infrastructure health only
 ```
 
 The browser is the main application runtime. Firebase supplies authentication and persistence. Netlify Functions exist specifically where a server-side trust boundary is required for Gemini credentials and authenticated AI requests.
+
+The repository now also contains a Spring Boot backend under `backend/`. This is an intentionally non-disruptive migration foundation: no existing CRUD, Firebase subscription, authentication, or AI request has been rerouted yet. Subsequent migration steps can move one bounded capability at a time behind this backend while preserving the working client path until each replacement is verified.
 
 ## 3. Frontend composition
 

@@ -12,6 +12,7 @@ A private, version-controlled workspace for Prompts, methodologies, preferences,
 - Lucide icons
 - Sonner notifications
 - Netlify Functions for server-side Gemini access
+- Spring Boot 4.1 / Java 21 migration backend (incremental 3-tier foundation)
 
 ## Run locally
 
@@ -26,6 +27,21 @@ Production validation:
 npm run lint
 npm run test
 npm run build
+```
+
+### Spring Boot migration backend
+
+The first incremental 3-tier migration step lives under `backend/`. It currently exposes infrastructure health only; existing Firebase CRUD and Netlify AI behavior are intentionally unchanged.
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+Health endpoint:
+
+```text
+http://localhost:8080/actuator/health
 ```
 
 ## Firebase setup
