@@ -302,7 +302,7 @@ Settings provides:
 
 ### Frontend host: Netlify
 
-Netlify continues to host the Vite/React frontend and the three existing AI functions. `netlify.toml` builds with Node 22.12.0, executes `npm run build`, publishes `dist`, and applies the SPA fallback to `/index.html`.
+Netlify continues to host the Vite/React frontend and the three existing AI functions. `netlify.toml` builds with Node 22.12.0, executes `npm run build`, publishes `dist`, applies the SPA fallback to `/index.html`, and sets `ignore = "exit 0"` so ordinary Git-triggered builds are skipped. Build-hook-triggered builds bypass that ignore rule and are therefore reserved for the post-CI production path.
 
 During this migration stage, Netlify is therefore both a static frontend host and the temporary server-side AI boundary. Removing Netlify Functions before the Spring Boot replacement is implemented would break current AI functionality.
 
@@ -451,7 +451,7 @@ Git push
 
 If Netlify or Render also deploys immediately on every commit, failing code could begin deployment before CI finishes, nullifying the intended safety property. `render.yaml` therefore records `autoDeployTrigger: off` for future/recreated Blueprint-managed services, and the manually created live Render service must also be set to Auto-Deploy Off in its dashboard.
 
-The Netlify site must likewise have direct Git-push deployment disabled once the Netlify build hook has been configured.
+Netlify uses a repository-level gating mechanism rather than stopping builds globally: `netlify.toml` contains `ignore = "exit 0"`. Ordinary Git-triggered Netlify builds are therefore skipped, while Netlify explicitly does not apply the `ignore` command to build-hook-triggered builds. A successful GitHub Actions run can consequently trigger Netlify through `NETLIFY_BUILD_HOOK_URL`, but an unvalidated push cannot deploy the frontend directly. Builds remain active because stopping Netlify builds globally would also disable build hooks.
 
 ### CI/CD does not collapse service boundaries
 

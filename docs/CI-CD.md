@@ -98,7 +98,7 @@ NETLIFY_BUILD_HOOK_URL
 
 The hook URL is a secret because possession of it allows a caller to trigger a production build. It must never be committed to the repository or printed into logs.
 
-For the CI gate to be meaningful, Netlify's normal Git-push auto-deployment must be disabled after the build hook is configured. Otherwise Netlify could begin deployment immediately on a push before GitHub Actions finishes testing.
+For the CI gate to be meaningful, Netlify must not build directly from ordinary Git pushes before GitHub Actions finishes. This repository therefore sets `ignore = "exit 0"` in `netlify.toml`. Netlify evaluates that command for ordinary Git-triggered builds and stops them because it exits with code 0. Netlify build-hook requests bypass the `ignore` command, so a successful GitHub Actions run can still trigger the production build through `NETLIFY_BUILD_HOOK_URL`. This keeps Netlify builds active while making GitHub Actions the release gate.
 
 ### Backend deployment
 
@@ -124,6 +124,8 @@ RENDER_DEPLOY_HOOK_URL
 No Firebase credential, Gemini credential, Render API key, or Netlify personal access token is required by these workflows.
 
 The deployment workflow intentionally uses narrowly scoped deploy hooks instead of broad account API credentials.
+
+The local developer copies of these hook URLs may be stored in the git-ignored `.env.local`; GitHub-hosted workflows cannot read that local file, so the same values must also exist as GitHub Actions repository secrets.
 
 ## 5. Deployment hosts and responsibility boundaries
 

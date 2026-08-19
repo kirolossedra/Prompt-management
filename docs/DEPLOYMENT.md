@@ -195,7 +195,7 @@ autoDeployTrigger: off
 
 ### Netlify
 
-Disable the site's direct Git-push production build trigger once the GitHub Actions build hook is ready.
+Keep Netlify builds **active** so the build hook can work. The repository instead sets `ignore = "exit 0"` in `netlify.toml`. For ordinary Git-triggered builds, exit code 0 tells Netlify to stop the build. Netlify build-hook-triggered builds bypass the `ignore` command, so GitHub Actions can still deploy after CI succeeds. Do **not** use Netlify's global **Stopped builds** setting for this design, because stopped builds also disable build hooks.
 
 This creates one authoritative release path:
 

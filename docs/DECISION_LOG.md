@@ -162,3 +162,9 @@ The current Render service was created manually through the Web Service UI rathe
 **Status:** Finalized and configured on 2026-08-19
 
 UptimeRobot independently requests the Render health endpoint every 5 minutes using its free monitoring interval. It does not host Spring Boot, perform deployments, run CI, or replace application observability. Its present purpose is external reachability monitoring and periodic traffic during the Render Free migration/testing phase.
+
+### Netlify direct Git-triggered builds are skipped; build-hook deploys remain active
+
+**Status:** Finalized on 2026-08-19
+
+GitHub Actions is the frontend release gate. Netlify builds must remain active because the production workflow uses a Netlify build hook, but ordinary Git pushes must not bypass CI. `netlify.toml` therefore uses `ignore = "exit 0"`: ordinary Git-triggered builds are skipped, while Netlify's build-hook path bypasses the ignore command and can run after CI succeeds. The build-hook URL is stored locally only in git-ignored `.env.local` for developer reference and separately in GitHub Actions as `NETLIFY_BUILD_HOOK_URL` for hosted workflow execution.
