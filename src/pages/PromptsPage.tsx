@@ -56,7 +56,12 @@ export function PromptsPage() {
   const allSelected = prompts.length > 0 && prompts.every((prompt) => selected.has(prompt.id));
 
   function toggleSelected(id: string) {
-    setSelected((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   async function copyPromptText(id: string) {

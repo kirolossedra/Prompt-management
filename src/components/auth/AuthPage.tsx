@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { Camera, FileCode2, History, Network, ShieldCheck } from "lucide-react";
+import { Camera, FileCode2, Network, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
 import { EurekaMark } from "../brand/EurekaIdentity";

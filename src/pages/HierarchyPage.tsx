@@ -93,7 +93,12 @@ export function HierarchyPage() {
   }, [endeavors, filter, prompts, tasks]);
 
   function toggle(key: string) {
-    setExpanded((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
   async function moveTask(taskId: string, endeavorId: string) {
