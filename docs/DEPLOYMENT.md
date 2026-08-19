@@ -1,135 +1,224 @@
 # Deployment
 
-## 1. Frontend build
+## 1. Current deployment topology
 
-The project is a Vite + React + TypeScript application.
-
-Primary commands:
-
-```bash
-npm install
-npm run dev
-npm run lint
-npm run test
-npm run build
-```
-
-`npm run build` runs TypeScript project compilation followed by `vite build`.
-
-## 2. Runtime requirement
-
-`package.json` requires Node `>=22.12.0`. `netlify.toml` pins the Netlify build environment to Node `22.12.0`.
-
-## 3. Netlify configuration
-
-Current `netlify.toml` behavior:
-
-- build command: `npm run build`
-- publish directory: `dist`
-- Node version: `22.12.0`
-- SPA redirect: all unmatched paths -> `/index.html` with HTTP 200
-
-The SPA redirect is required for browser-routed URLs such as `/prompts/:promptId` and `/ai/find-prompt` to load correctly on direct navigation.
-
-## 4. Firebase services
-
-The browser application uses:
-
-- Firebase Authentication
-- Firebase Realtime Database
-
-The EurekaVault root is `intellectVault/users/{{uid}}` and must be protected with the supplied owner-only rule.
-
-## 5. Client Firebase environment variables
-
-Optional variables for deploying against a different Firebase project:
+EurekaVault currently spans two application hosting platforms plus Firebase and an external uptime monitor:
 
 ```text
-VITE_FIREBASE_API_KEY
-VITE_FIREBASE_AUTH_DOMAIN
-VITE_FIREBASE_DATABASE_URL
-VITE_FIREBASE_PROJECT_ID
-VITE_FIREBASE_STORAGE_BUCKET
-VITE_FIREBASE_MESSAGING_SENDER_ID
-VITE_FIREBASE_APP_ID
+GitHub repository
+   |
+   +-- GitHub Actions CI/CD gate
+   |      |
+   |      +-- Netlify deploy hook
+   |      |      -> React/Vite frontend
+   |      |      -> existing Netlify Gemini Functions
+   |      |
+   |      +-- Render deploy hook
+   |             -> Docker
+   |             -> Java 21 JVM
+   |             -> Spring Boot
+   |
+Browser
+   +-- Netlify-hosted frontend
+   +-- Firebase Authentication
+   +-- Firebase Realtime Database (current direct data path)
+   +-- Netlify Functions (current AI path)
+   +-- Spring Boot backend (migration foundation only)
+
+UptimeRobot
+   -> GET Render /actuator/health every 5 minutes
 ```
 
-The repository currently includes a fallback Firebase configuration in `src/lib/firebase.ts`.
+No user-data CRUD, Firebase authentication verification, or Gemini traffic has been migrated to Spring Boot yet.
 
-## 6. AI server-side variables
+## 2. Frontend / Netlify
 
-Configure these in Netlify's server-side environment settings:
+The frontend remains a Vite + React + TypeScript application. `netlify.toml` defines:
+
+- build command: `npm run build`;
+- publish directory: `dist`;
+- Node version: `22.12.0`;
+- SPA fallback to `/index.html`.
+
+The existing three Netlify Functions remain deployed during incremental migration:
 
 ```text
-GEMINI_API_KEY
-GEMINI_MODEL
-GEMINI_REPURPOSE_MODEL
-GEMINI_MIXER_MODEL
-FIREBASE_WEB_API_KEY
+netlify/functions/prompt-retrieval.mjs
+netlify/functions/prompt-repurpose.mjs
+netlify/functions/prompt-mix.mjs
 ```
 
-`GEMINI_API_KEY` is required for AI features. Model variables are optional overrides. `FIREBASE_WEB_API_KEY` is used by the functions' server-side Firebase token verification and has a code fallback in the current implementation.
+They continue to protect Gemini credentials until that responsibility is explicitly migrated.
 
-Do not expose `GEMINI_API_KEY` as `VITE_GEMINI_API_KEY` or any other browser-bundled variable.
+## 3. Spring Boot / Render
 
-## 7. Netlify Functions
-
-The deployed project requires the three AI function files under `netlify/functions/`:
+The backend lives under the monorepo directory:
 
 ```text
-prompt-retrieval.mjs
-prompt-repurpose.mjs
-prompt-mix.mjs
+backend/
 ```
 
-These form the backend boundary for Gemini access even though the product otherwise has no conventional backend service.
+Render was configured as a Web Service with:
 
-## 8. Local development and AI
-
-`vite dev` serves the frontend, but AI routes ultimately need the Netlify Function endpoints. Local AI testing therefore requires a development setup that can execute/proxy the Netlify functions and provide the server-side environment variables, or an equivalent deployed function endpoint.
-
-## 9. Production validation
-
-Before packaging/deploying a change, run:
-
-```bash
-npm run lint
-npm run test
-npm run build
+```text
+Name:           eurekavault-backend
+Branch:         main
+Runtime:        Docker
+Root Directory: backend
+Instance:       Free
+Health path:    /actuator/health
 ```
 
-A build success validates TypeScript compilation and Vite bundling but does not by itself validate live Firebase rules, Gemini quota, Netlify environment variables or end-to-end authentication against production services.
+Current public URL:
 
-## 10. Current backend boundary
-
-Netlify Functions should be regarded as a narrowly scoped server-side adapter for Gemini, not as a full application backend. If a conventional backend is introduced later, AI secret management and Gemini calls should move there to avoid maintaining two backend boundaries for the same concern.
-
-## 11. Incremental Spring Boot backend
-
-The first 3-tier migration step adds a standalone Spring Boot service under `backend/`. It currently exists only as a deployable backend foundation and does not replace the working Firebase or Netlify request paths yet.
-
-Local run:
-
-```bash
-cd backend
-mvn spring-boot:run
+```text
+https://eurekavault-backend.onrender.com
 ```
 
-The service respects Render's `PORT` environment variable and defaults to port `8080` locally. Its infrastructure health endpoint is:
+The externally deployed endpoint was manually verified on 2026-08-19 and returned `status=UP`.
+
+## 4. Why Docker is used for Java on Render
+
+Render does not provide Java/JVM as one of its native language runtimes. The backend therefore runs through Docker.
+
+`backend/Dockerfile` is a multi-stage image:
+
+```text
+Stage 1: Maven + Eclipse Temurin Java 21
+    -> resolve dependencies
+    -> compile/test/package Spring Boot JAR
+
+Stage 2: Eclipse Temurin Java 21 JRE
+    -> copy packaged JAR
+    -> java -jar /app/app.jar
+```
+
+The deployment chain is therefore explicitly:
+
+```text
+Render Web Service
+   -> Docker container
+      -> JVM / Java 21 runtime
+         -> Spring Boot JAR
+            -> embedded Tomcat
+               -> HTTP API
+```
+
+The local development machine used Java 25 successfully to run the project, while the project compilation target and production container remain Java 21. Maven 3.9.16 was installed locally and `mvn spring-boot:run` successfully started the service on port 8080.
+
+## 5. Port behavior
+
+`application.yml` uses:
+
+```text
+${PORT:8080}
+```
+
+Therefore:
+
+- local default: `8080`;
+- Render: the platform-supplied `PORT` value is honored automatically.
+
+## 6. Health checking
+
+Spring Boot Actuator exposes only:
 
 ```text
 /actuator/health
 ```
 
-## 12. Render deployment
+Health details are not configured for public disclosure.
 
-`render.yaml` defines `eurekavault-backend` as a Docker-based Render web service rooted at `backend/`, because Render does not provide a native JVM runtime. The backend Dockerfile builds with Maven and Java 21, then runs on a Java 21 JRE.
+The endpoint has three separate uses:
 
-The Render health check uses `/actuator/health`. On the Free instance type, Render may spin a web service down after 15 minutes without inbound traffic, so this tier should be treated as a development/testing deployment rather than a production reliability guarantee.
+1. local developer verification;
+2. Render service health checking;
+3. UptimeRobot external monitoring/wake-up requests.
 
-## 13. UptimeRobot wake-up monitor
+These are distinct consumers of the same narrow infrastructure endpoint.
 
-The intended external monitor is UptimeRobot using an HTTP(S) check against the deployed backend's `/actuator/health` URL every 5 minutes. This is separate from Render: UptimeRobot monitors/pings the service, while Render hosts it.
+## 7. UptimeRobot
 
-This monitor is not a substitute for application observability or a production availability commitment. It is only the wake-up/uptime check for the current low-cost migration environment.
+UptimeRobot is not part of Render and does not host EurekaVault. It is a third-party external monitor configured to request:
 
+```text
+https://eurekavault-backend.onrender.com/actuator/health
+```
+
+at the free-plan 5-minute interval.
+
+Its purpose during this migration/testing phase is:
+
+- external uptime observation;
+- periodic inbound traffic to reduce Render Free idle spin-down behavior;
+- email notification when monitor status changes.
+
+The initial UP/DOWN emails seen during setup were UptimeRobot test notifications, not five-minute email spam.
+
+UptimeRobot does not provide production-grade availability guarantees and does not replace application observability.
+
+## 8. GitHub Actions release gate
+
+The repository now contains:
+
+```text
+.github/workflows/ci.yml
+.github/workflows/deploy-production.yml
+```
+
+CI runs on pull requests and pushes to `main`. Production deployment occurs only after a successful CI run caused by a push to `main`.
+
+Detailed behavior is documented in `docs/CI-CD.md`.
+
+## 9. Required deployment secrets
+
+GitHub Actions production deployment uses narrow deploy-hook secrets:
+
+```text
+NETLIFY_BUILD_HOOK_URL
+RENDER_DEPLOY_HOOK_URL
+```
+
+These values must be stored under GitHub repository Actions secrets and never committed.
+
+## 10. Native auto-deploy must be disabled
+
+After deploy hooks are configured, disable native Git-push auto-deploy in both hosting platforms. Otherwise a host could deploy before CI completes.
+
+### Render
+
+Set the live `eurekavault-backend` service's Auto-Deploy setting to **Off**. The repository `render.yaml` also records:
+
+```text
+autoDeployTrigger: off
+```
+
+### Netlify
+
+Disable the site's direct Git-push production build trigger once the GitHub Actions build hook is ready.
+
+This creates one authoritative release path:
+
+```text
+push -> GitHub Actions tests -> success -> deploy hooks -> hosts
+```
+
+## 11. Important Render configuration-source detail
+
+The currently running Render service was created manually through **New Web Service**, not by creating a Render Blueprint from `render.yaml`.
+
+Therefore `render.yaml` documents the desired/recreatable service configuration, but editing it does not automatically reconfigure the already-created live service unless that service is later brought under Blueprint management. Settings such as Auto-Deploy must currently be changed in the Render Dashboard as well.
+
+This distinction matters because treating the YAML as live infrastructure-as-code when it is not attached to a Blueprint would create false confidence.
+
+## 12. Current Firebase and AI environment variables
+
+The existing frontend/Netlify deployment still uses the current Firebase client variables and server-side Gemini variables documented in `.env.example` and the prior deployment configuration.
+
+`GEMINI_API_KEY` remains server-side. It must never be exposed through a browser-bundled `VITE_` variable.
+
+No Firebase Admin service-account secret has been added to Render yet because backend authentication/data migration has not started.
+
+## 13. Reliability boundary
+
+Render Free plus a five-minute external monitor is appropriate for migration, development and low-cost validation, not a production SLA. The design must not silently redefine availability expectations simply because periodic pings reduce idle behavior.

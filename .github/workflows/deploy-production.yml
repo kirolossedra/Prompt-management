@@ -1,0 +1,60 @@
+name: EurekaVault Production Deployment
+
+on:
+  workflow_run:
+    workflows: ["EurekaVault CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eurekavault-production
+  cancel-in-progress: false
+
+jobs:
+  deploy-frontend:
+    name: Trigger Netlify production deploy
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+    steps:
+      - name: Require Netlify deploy hook secret
+        shell: bash
+        run: test -n "$NETLIFY_BUILD_HOOK_URL"
+
+      - name: Trigger Netlify build and deploy
+        shell: bash
+        run: curl --fail --silent --show-error --request POST "$NETLIFY_BUILD_HOOK_URL"
+
+  deploy-backend:
+    name: Trigger Render production deploy
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Require Render deploy hook secret
+        shell: bash
+        run: test -n "$RENDER_DEPLOY_HOOK_URL"
+
+      - name: Trigger the exact tested commit on Render
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$RENDER_DEPLOY_HOOK_URL" == *"?"* ]]; then
+            deploy_url="${RENDER_DEPLOY_HOOK_URL}&ref=${DEPLOY_SHA}"
+          else
+            deploy_url="${RENDER_DEPLOY_HOOK_URL}?ref=${DEPLOY_SHA}"
+          fi
+          curl --fail --silent --show-error --request POST "$deploy_url"

@@ -61,3 +61,5 @@ Endeavor -> Task -> Prompt -> Prompt Version
 ```
 
 This documentation does not silently rewrite repository history. Superseded decisions are retained and labeled in [DECISION_LOG.md](DECISION_LOG.md).
+
+- [`CI-CD.md`](CI-CD.md) — GitHub Actions test gates, deployment orchestration, required secrets, and host auto-deploy rules.

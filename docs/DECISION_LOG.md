@@ -140,3 +140,25 @@ Repository inspection found no current implementation corresponding to:
 - Prompt Blocks.
 
 Their future priority/status should be supplied by the product owner rather than inferred from old planning discussions.
+
+### CI must gate both frontend and backend production deployment
+
+**Status:** Finalized by product-owner direction on 2026-08-19
+
+Before any functional 2-tier-to-3-tier migration continues, EurekaVault will establish substantial automated validation for both frontend and Spring Boot backend. GitHub Actions is the common validation/release gate. Frontend checks include lint, Vitest, production build and Netlify Function syntax validation. Backend checks include Spring Boot unit/configuration tests, integration tests, Maven `verify`, Docker image build and a live container health/exposure smoke test.
+
+Production deployment is automatic only after successful CI on a push to `main`. GitHub Actions triggers the existing Netlify deployment and the Render backend deployment using protected deploy-hook secrets. Native host auto-deploy should be disabled once this path is active so a host cannot bypass CI by deploying immediately on push.
+
+### Render backend runs as Docker -> JVM -> Spring Boot
+
+**Status:** Finalized and verified on 2026-08-19
+
+The Render backend is a Docker Web Service rooted at `backend/`. Render builds `backend/Dockerfile`; the runtime image contains an Eclipse Temurin Java 21 JRE that runs the packaged Spring Boot JAR and embedded Tomcat. The public service is `https://eurekavault-backend.onrender.com`, and `/actuator/health` was verified externally as `UP`.
+
+The current Render service was created manually through the Web Service UI rather than from a Blueprint. `render.yaml` therefore records the desired/recreation configuration but is not automatically authoritative for the existing service unless it is later placed under Blueprint management.
+
+### UptimeRobot is an external monitor, not a backend host or deployment system
+
+**Status:** Finalized and configured on 2026-08-19
+
+UptimeRobot independently requests the Render health endpoint every 5 minutes using its free monitoring interval. It does not host Spring Boot, perform deployments, run CI, or replace application observability. Its present purpose is external reachability monitoring and periodic traffic during the Render Free migration/testing phase.

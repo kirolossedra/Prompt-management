@@ -7,3 +7,4 @@ services:
     dockerfilePath: Dockerfile
     dockerContext: .
     healthCheckPath: /actuator/health
+    autoDeployTrigger: off

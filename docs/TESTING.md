@@ -1,86 +1,95 @@
 # Testing and Validation
 
-## 1. Tooling
+## 1. Test philosophy
 
-The project uses Vitest for automated unit tests.
+Testing is now a deployment gate, not merely a local recommendation. The repository deliberately validates three different representations of the product before production deployment:
 
-Package scripts:
+1. frontend source and deterministic business logic;
+2. Spring Boot source/configuration and HTTP behavior;
+3. the actual backend Docker artifact that Render runs.
+
+This keeps the test surface proportional to what is implemented. The migration foundation does not yet contain application CRUD/authentication controllers, so the backend suite tests infrastructure behavior rather than pretending to have business-domain coverage that does not yet exist.
+
+## 2. Frontend automated tests
+
+Vitest remains the frontend test runner.
+
+Existing logic coverage includes AI request/result handling, prompt indexing, feedback learning, achievements, attachments, diff behavior, relationships, search/deletion utilities and shared helpers.
+
+The CI/CD hardening adds component-level tests for:
+
+- `Button`: semantics, click behavior, loading disablement and styling contract;
+- `EmptyState`: content and optional action rendering;
+- `LoadingScreen`: accessible live-status behavior and caller-supplied status text.
+
+These are intentionally stable UI primitives rather than brittle pixel/layout snapshots.
+
+Frontend CI also runs:
 
 ```text
-npm run test       -> vitest run
-npm run test:watch -> vitest
-npm run lint       -> eslint .
-npm run build      -> tsc -b && vite build
+npm run lint
+npm run test
+npm run build
 ```
 
-## 2. Current test files found in the repository
+and syntax-validates every Netlify Function with Node.
 
-### AI
+## 3. Backend automated tests
 
-- `src/ai/mix.test.ts`
-- `src/ai/promptIndex.test.ts`
-- `src/ai/repurpose.test.ts`
-- `src/ai/retrieval.test.ts`
+### Unit/application-context tests
 
-### Core libraries
+`EurekaVaultApiApplicationTests` verifies that the Spring application context can load.
 
-- `src/lib/achievements.test.ts`
-- `src/lib/attachments.test.ts`
-- `src/lib/diff.test.ts`
-- `src/lib/relationships.test.ts`
-- `src/lib/utils.test.ts`
+`BackendConfigurationTests` verifies the current infrastructure contract:
 
-## 3. Tested concerns
+- application name is `eurekavault-backend`;
+- only `health` is configured for Actuator web exposure;
+- graceful shutdown remains enabled.
 
-The current test surface covers important pure logic used by the product, including:
+### Integration tests
 
-- Prompt Mixer request/source preparation;
-- Repurposer request/source handling;
-- Finder retrieval helpers;
-- Prompt index construction;
-- Finder learning-example filtering, recency and query bounds;
-- attachment limits and validation;
-- line diff behavior;
-- relationship validation/layout behavior;
-- achievement progress/evaluation;
-- shared utility behavior.
+`BackendHealthIT` runs under Spring Boot and MockMvc and verifies:
 
-## 4. Feedback-learning regression coverage
+- `/actuator/health` returns HTTP 200 and `status=UP`;
+- `/actuator/env` is not exposed and returns HTTP 404;
+- `/` does not accidentally expose an application API before one is intentionally introduced.
 
-The 2026-08-18 Finder feedback commit extended `promptIndex.test.ts` to verify that learning-example generation:
+The Maven Failsafe plugin executes `*IT` tests during the `integration-test` and `verify` lifecycle phases.
 
-- prefers recent confirmed choices;
-- filters feedback whose target Prompt no longer exists;
-- uses the current Prompt title rather than trusting only a historical title snapshot;
-- bounds historical query length.
+## 4. Docker/runtime validation
 
-This is important because the feedback loop affects future AI retrieval requests and must not blindly replay stale data.
+GitHub Actions builds `backend/Dockerfile`, starts the resulting image and checks the live container over HTTP.
 
-## 5. Build validation scope
+This is separate from Spring's in-process integration tests. It validates the deployment artifact and catches errors in:
 
-`npm run build` validates:
+- the Maven builder image/stage;
+- JAR packaging;
+- multi-stage COPY paths;
+- the Java runtime image;
+- the Docker entrypoint;
+- port binding;
+- application startup inside a container;
+- Actuator exposure in the packaged runtime.
 
-- TypeScript project compilation;
-- Vite production bundle generation.
+## 5. CI matrix
 
-It does not validate external service configuration.
+| Gate | Frontend | Backend | Deployment artifact |
+|---|---|---|---|
+| Lint/static checks | ESLint | Maven compilation/Enforcer | Dockerfile build |
+| Unit tests | Vitest logic + UI primitives | Spring context/config tests | — |
+| Integration tests | Production Vite build + function syntax | MockMvc Actuator integration | Running-container HTTP checks |
+| Production eligibility | Required | Required | Required |
 
-## 6. Gaps visible from repository inspection
+All three CI jobs must succeed before the production deployment workflow is eligible to run for `main`.
 
-No dedicated browser end-to-end suite (for example Playwright/Cypress) was identified in the current repository tree. No Firebase emulator integration-test suite or live Netlify/Gemini integration suite was identified either.
+## 6. Current limitations
 
-Therefore the current automated coverage is strongest around deterministic TypeScript logic and request preparation, while full browser/service integration still depends on manual or deployment-level verification.
+No browser end-to-end suite, Firebase Emulator integration suite, or live Gemini integration suite is currently present. That is intentional at this stage: those tests should be added when the relevant boundaries are migrated or when a stable end-to-end test environment is defined.
 
-## 7. Recommended validation matrix for future changes
+The current frontend repository also has no committed npm lock file. CI uses `npm install`. A lock file should be introduced before dependency reproducibility is treated as guaranteed.
 
-For any change to existing functionality:
+The backend currently has no database/auth/business endpoints, so there is nothing legitimate to test yet for backend CRUD, Firebase Admin access, authorization, data ownership, or Gemini integration. Those tests must arrive together with each migrated capability rather than after it.
 
-1. run targeted unit tests for the modified module;
-2. run the full Vitest suite;
-3. run ESLint;
-4. run the production build;
-5. manually verify the affected UI route;
-6. for Firebase changes, verify owner-only access rules;
-7. for AI changes, verify authenticated function calls, invalid-session rejection, quota/network failure behavior and structured-output handling;
-8. for versioning changes, verify no historical state is silently destroyed;
-9. for attachments/relationships, verify lifecycle cleanup and Global Version snapshot inclusion.
+## 7. Required rule for migration work
+
+Every incremental migration slice must add tests at the same time as the implementation. A capability is not considered ready to replace its existing Firebase/Netlify path unless its backend behavior, authorization boundary and failure behavior are covered by automated tests appropriate to that slice.

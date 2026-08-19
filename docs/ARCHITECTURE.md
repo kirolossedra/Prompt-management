@@ -2,7 +2,7 @@
 
 ## 1. Snapshot and source of truth
 
-The application baseline comes from commit `6818b808dc51cf72d3698e61a6bfbfa059108f46` (2026-08-18). This document also includes the incremental Spring Boot migration foundation added on 2026-08-19; assign its final commit SHA after integration. Current code, Firebase rules, Netlify functions, backend configuration and tests take precedence over older prose.
+The current repository baseline inspected for this architecture is commit `4a3cc23134da6133deab04bafa53df3c285e3113` (2026-08-19), which contains the first Spring Boot migration foundation. This document then incorporates the CI/CD hardening and deployment-state updates prepared after that commit. Current code, Firebase rules, Netlify functions, backend configuration, host configuration and tests take precedence over older prose.
 
 ## 2. High-level architecture
 
@@ -30,6 +30,37 @@ Browser
 The browser is the main application runtime. Firebase supplies authentication and persistence. Netlify Functions exist specifically where a server-side trust boundary is required for Gemini credentials and authenticated AI requests.
 
 The repository now also contains a Spring Boot backend under `backend/`. This is an intentionally non-disruptive migration foundation: no existing CRUD, Firebase subscription, authentication, or AI request has been rerouted yet. Subsequent migration steps can move one bounded capability at a time behind this backend while preserving the working client path until each replacement is verified.
+
+### Physical hosting topology as of 2026-08-19
+
+```text
+GitHub repository
+  |
+  +-- GitHub Actions CI/CD
+  |     |
+  |     +-- Netlify deployment trigger
+  |     |     -> React/Vite static application
+  |     |     -> Netlify Functions
+  |     |
+  |     +-- Render deployment trigger
+  |           -> Render Web Service
+  |              -> Docker container
+  |                 -> Eclipse Temurin Java 21 JRE
+  |                    -> Spring Boot JAR
+  |                       -> embedded Tomcat
+  |
+  +-- source of both frontend and backend artifacts
+
+Firebase
+  +-- Authentication
+  +-- Realtime Database
+
+UptimeRobot
+  -> external GET every 5 minutes
+     -> https://eurekavault-backend.onrender.com/actuator/health
+```
+
+The physical deployment topology is already multi-service, but the application data path is **not yet fully 3-tier**. The browser still talks directly to Firebase for persisted vault data, and AI calls still use Netlify Functions. Spring Boot currently provides only the migration foundation and health endpoint. Calling the system fully migrated at this point would be inaccurate.
 
 ## 3. Frontend composition
 
@@ -269,9 +300,186 @@ Settings provides:
 
 ## 16. Deployment architecture
 
-Netlify runs `npm run build`, publishes `dist`, uses Node `22.12.0`, and applies an SPA fallback redirect to `/index.html`. Firebase provides auth/database services. Netlify Functions provide the server-side AI boundary.
+### Frontend host: Netlify
 
-## 17. Architectural boundaries and known non-features
+Netlify continues to host the Vite/React frontend and the three existing AI functions. `netlify.toml` builds with Node 22.12.0, executes `npm run build`, publishes `dist`, and applies the SPA fallback to `/index.html`.
+
+During this migration stage, Netlify is therefore both a static frontend host and the temporary server-side AI boundary. Removing Netlify Functions before the Spring Boot replacement is implemented would break current AI functionality.
+
+### Backend host: Render
+
+The Spring Boot service is deployed as the Render Web Service `eurekavault-backend` from the `main` branch. The repository is a monorepo, so Render's service root is `backend/`.
+
+Current public endpoint:
+
+```text
+https://eurekavault-backend.onrender.com
+```
+
+Current infrastructure health endpoint:
+
+```text
+https://eurekavault-backend.onrender.com/actuator/health
+```
+
+Both local execution and the deployed Render endpoint were verified on 2026-08-19. The local service ran on Windows with Maven 3.9.16 and Java 25; the project itself targets Java 21, and the production container deliberately uses Java 21. The deployed health endpoint returned `UP`.
+
+### Why Render runs Docker instead of a native JVM service
+
+Render does not expose Java/JVM as a native language runtime for this service. The backend is therefore packaged and executed through `backend/Dockerfile`.
+
+The runtime chain is not merely "Render runs Spring Boot"; the actual boundary is:
+
+```text
+Render Web Service
+  -> Docker
+     -> Java 21 JRE / JVM
+        -> packaged Spring Boot executable JAR
+           -> embedded Tomcat
+              -> HTTP endpoints
+```
+
+The Dockerfile uses a Maven + Eclipse Temurin 21 builder stage and a smaller Eclipse Temurin 21 JRE runtime stage. This keeps the Maven toolchain out of the final runtime image.
+
+### Monorepo path contract
+
+Frontend build context remains the repository root. The Spring Boot project is isolated under:
+
+```text
+backend/
+  Dockerfile
+  pom.xml
+  src/
+```
+
+The live Render service was created manually through **New Web Service**, with Root Directory set to `backend`. It was not created as a Blueprint resource. Consequently, `render.yaml` is currently a version-controlled desired/recreation specification, not an automatically authoritative controller for the already-created service. Dashboard settings must still be changed in the Render service itself unless the resource is later brought under Blueprint management.
+
+This distinction is intentional documentation because treating an unattached YAML file as active infrastructure-as-code would obscure the real operational state.
+
+### Port and lifecycle contract
+
+Spring Boot binds to:
+
+```text
+${PORT:8080}
+```
+
+so local development defaults to port 8080 while Render can inject its platform port. Graceful shutdown is enabled.
+
+Actuator web exposure is deliberately limited to `health`; environment/configuration Actuator endpoints are not intended to be public.
+
+## 17. Uptime and wake-up architecture
+
+UptimeRobot is a separate third-party service from Render. It does not execute code and does not host the backend.
+
+The configured relationship is:
+
+```text
+UptimeRobot Free monitor
+  -> every 5 minutes
+     -> HTTPS GET
+        -> Render
+           -> /actuator/health
+```
+
+The five-minute monitor serves two low-cost migration purposes: external reachability monitoring and periodic inbound requests to reduce the chance of the Render Free service remaining idle. UptimeRobot status-change notifications are separate from the five-minute requests; the initial UP/DOWN emails observed during setup were test notifications.
+
+This arrangement must not be mistaken for a production SLA. Periodic pings do not create redundancy, eliminate cold starts under every failure mode, or replace application-level observability.
+
+## 18. CI/CD architecture
+
+Before any functional migration begins, frontend and backend changes are gated by GitHub Actions. The repository contains two workflows:
+
+```text
+.github/workflows/ci.yml
+.github/workflows/deploy-production.yml
+```
+
+### CI path
+
+```text
+pull request or push to main
+  |
+  +-- Frontend quality job
+  |     +-- dependency install
+  |     +-- ESLint
+  |     +-- Vitest
+  |     +-- TypeScript + Vite production build
+  |     +-- Netlify Function syntax checks
+  |
+  +-- Backend test job
+  |     +-- Java 21
+  |     +-- Maven clean verify
+  |     +-- unit/context tests
+  |     +-- Failsafe integration tests
+  |
+  +-- Backend container job
+        +-- build backend/Dockerfile
+        +-- start packaged container
+        +-- verify /actuator/health -> UP
+        +-- verify /actuator/env -> 404
+```
+
+The container job matters architecturally because Render runs the Docker artifact, not `mvn spring-boot:run`. Passing Spring tests while shipping a broken Dockerfile would otherwise remain possible.
+
+### CD path
+
+A production deployment is eligible only after a successful CI workflow caused by a push to `main`. Pull-request CI cannot deploy production.
+
+The deployment workflow uses two repository secrets:
+
+```text
+NETLIFY_BUILD_HOOK_URL
+RENDER_DEPLOY_HOOK_URL
+```
+
+GitHub Actions triggers Netlify through its build hook and Render through its deploy hook. The Render request includes the exact CI-tested commit SHA.
+
+Deploy-hook URLs are credentials: anyone possessing one can trigger deployments. They therefore belong in GitHub Actions secrets rather than source code. This is a narrower privilege surface than storing broad Netlify/Render account API credentials for the current need.
+
+### One authoritative deployment path
+
+For the test gate to be real, native host auto-deployment must be disabled after the hook-based workflow is configured:
+
+```text
+Git push
+  -> GitHub Actions CI
+     -> success
+        -> deploy hooks
+           -> Netlify and Render
+```
+
+If Netlify or Render also deploys immediately on every commit, failing code could begin deployment before CI finishes, nullifying the intended safety property. `render.yaml` therefore records `autoDeployTrigger: off` for future/recreated Blueprint-managed services, and the manually created live Render service must also be set to Auto-Deploy Off in its dashboard.
+
+The Netlify site must likewise have direct Git-push deployment disabled once the Netlify build hook has been configured.
+
+### CI/CD does not collapse service boundaries
+
+GitHub Actions coordinates validation and deployment but does not become an application runtime. Runtime responsibility remains local to each host. This preserves a clear distinction between:
+
+- source/version control: GitHub;
+- validation/release orchestration: GitHub Actions;
+- frontend + transitional AI hosting: Netlify;
+- Spring Boot hosting: Render;
+- identity/data services: Firebase;
+- external availability monitoring: UptimeRobot.
+
+Full CI/CD details and required operational setup are documented in `docs/CI-CD.md`.
+
+## 19. Migration safety boundary
+
+The migration remains incremental. CI/CD hardening does **not** itself move any user operation to Spring Boot. Current behavior remains:
+
+```text
+Authentication: browser <-> Firebase Auth
+Vault data:     browser <-> Firebase Realtime Database
+AI:             browser -> Netlify Functions -> Gemini
+Spring Boot:    health/infrastructure only
+```
+
+When functional migration begins, each bounded capability must carry its tests with it before its old path is retired. In particular, future Firebase Admin access will be a privileged server-side boundary: the backend must derive identity from a verified Firebase token rather than trusting a browser-supplied UID. No Firebase Admin credential has been provisioned to Render yet.
+
+## 20. Architectural boundaries and known non-features
 
 Current code inspection does **not** show implementations for:
 
@@ -282,4 +490,4 @@ Current code inspection does **not** show implementations for:
 
 The first two are explicitly historical open/gated product areas. The latter two should not be documented as implemented unless corresponding code is added.
 
-The current architecture also has no conventional application backend. If a future backend is introduced, the Gemini calls and secret handling are natural candidates to move from Netlify Functions into that backend.
+The Spring Boot service is now a real deployed backend foundation, but it is not yet the application's data/API authority. That distinction should remain explicit until actual capabilities are migrated.

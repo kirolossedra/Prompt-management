@@ -29,6 +29,12 @@ npm run test
 npm run build
 ```
 
+### CI/CD safety gate
+
+Before functional migration continues, GitHub Actions now validates both tiers. Frontend CI runs ESLint, the Vitest suite, the production Vite build, and Netlify Function syntax checks. Backend CI runs Maven `clean verify`, Spring integration tests, then builds and boots the actual Docker image and verifies `/actuator/health`.
+
+Production deployment is designed to occur only after successful CI on `main`: GitHub Actions triggers Netlify and Render through protected deployment hooks. See `docs/CI-CD.md`, `docs/TESTING.md`, and `docs/DEPLOYMENT.md` for the complete contract and required host settings.
+
 ### Spring Boot migration backend
 
 The first incremental 3-tier migration step lives under `backend/`. It currently exposes infrastructure health only; existing Firebase CRUD and Netlify AI behavior are intentionally unchanged.
