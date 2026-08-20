@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Archive, Braces, ChevronDown, CirclePlay, CopyPlus, Database, Save, Trash2, X } from "lucide-react";
+import { useMemo, useState, type CSSProperties } from "react";
+import { AlertTriangle, Archive, Braces, ChevronDown, ChevronUp, CirclePlay, CopyPlus, Database, Printer, Save, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
 import { useVault } from "../../context/VaultContext";
@@ -7,6 +7,7 @@ import { copyTextToClipboard } from "../../lib/clipboard";
 import { activeRecords, cleanText } from "../../lib/utils";
 import { blockPort, createPromptBlock } from "../../prompt-blocks/catalog";
 import { nextConstraintPriority, topologicalOrder, validateConnection, validatePipelineGraph } from "../../prompt-blocks/graph";
+import { beautifyPromptBlockLayout } from "../../prompt-blocks/layout";
 import { runPromptBlockPipeline } from "../../prompt-blocks/runtime";
 import type {
   Prompt,
@@ -70,6 +71,7 @@ export function PromptBlocksWorkspace() {
   const [promptSaving, setPromptSaving] = useState(false);
   const [outputBlockId, setOutputBlockId] = useState<string | null>(null);
   const [outputSaving, setOutputSaving] = useState(false);
+  const [toolbarExpanded, setToolbarExpanded] = useState(false);
 
   const savedPipelines = useMemo(() => activeRecords(data.promptBlockPipelines), [data.promptBlockPipelines]);
   const selectedBlock = selectedBlockId ? blocks[selectedBlockId] || null : null;
@@ -77,6 +79,7 @@ export function PromptBlocksWorkspace() {
   const outputState = outputBlockId ? run?.nodeStates[outputBlockId] : undefined;
   const outputText = outputState?.output?.text || outputState?.output?.constraint?.content || "";
   const outputTitle = outputBlockId && blocks[outputBlockId] ? `${blocks[outputBlockId].variableLabel} · ${blocks[outputBlockId].label}` : "Prompt Blocks output";
+  const hasDedicatedOutput = useMemo(() => Object.values(blocks).some((block) => block.family === "output"), [blocks]);
   const canvasSize = useMemo(() => {
     const values = Object.values(blocks);
     return {
@@ -84,19 +87,44 @@ export function PromptBlocksWorkspace() {
       height: Math.max(680, ...values.map((block) => block.position.y + NODE_HEIGHT + 160)),
     };
   }, [blocks]);
+  const printScale = Math.min(1, 1040 / canvasSize.width);
+  const workspaceStyle = {
+    "--pb-print-scale": String(printScale),
+    "--pb-print-height": `${Math.ceil(canvasSize.height * printScale)}px`,
+  } as CSSProperties;
 
   function newQuickPipeline() {
     const next = quickState();
     setPipelineId(undefined); setTitle(next.title); setDescription(next.description); setBlocks(next.blocks); setConnections(next.connections);
-    setSelectedBlockId(null); setPendingSource(null); setRun(null); setValidationErrors([]);
+    setSelectedBlockId(null); setPendingSource(null); setRun(null); setValidationErrors([]); setToolbarExpanded(false);
   }
 
   function loadPipeline(id: string) {
     if (!id) { newQuickPipeline(); return; }
     const pipeline = data.promptBlockPipelines[id];
     if (!pipeline) return;
-    setPipelineId(id); setTitle(pipeline.title); setDescription(pipeline.description || ""); setBlocks(clone(pipeline.blocks || {})); setConnections(clone(pipeline.connections || {}));
+    const loadedConnections = clone(pipeline.connections || {});
+    const loadedBlocks = beautifyPromptBlockLayout(clone(pipeline.blocks || {}), loadedConnections);
+    setPipelineId(id); setTitle(pipeline.title); setDescription(pipeline.description || ""); setBlocks(loadedBlocks); setConnections(loadedConnections);
     setSelectedBlockId(null); setPendingSource(null); setRun(null); setValidationErrors([]);
+  }
+
+  function beautifyPipeline(showToast = true) {
+    if (!Object.keys(blocks).length) {
+      if (showToast) toast.message("Add blocks before beautifying the pipeline.");
+      return;
+    }
+    setBlocks(beautifyPromptBlockLayout(blocks, connections));
+    if (showToast) toast.success("Pipeline layout beautified.");
+  }
+
+  function printPipelineDesign() {
+    if (!Object.keys(blocks).length) {
+      toast.message("Add blocks before printing the pipeline design.");
+      return;
+    }
+    setBlocks(beautifyPromptBlockLayout(blocks, connections));
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
   }
 
   function addBlock(kind: PromptBlockKind) {
@@ -190,6 +218,15 @@ export function PromptBlocksWorkspace() {
     const validation = validatePipelineGraph(blocks, connections);
     setValidationErrors(validation.errors);
     if (!validation.valid) { toast.error("Resolve the pipeline validation issues before running."); return; }
+    if (!hasDedicatedOutput) {
+      const proceed = window.confirm(
+        "This pipeline has no dedicated Output block. Intermediate results will still be inspectable, but no explicit As Is, Summarized, or Conclusion Only output preference is configured. Run anyway?",
+      );
+      if (!proceed) {
+        toast.message("Add an Output block to make the pipeline's intended final representation explicit.");
+        return;
+      }
+    }
     setRunning(true);
     const startedAt = Date.now();
     setRun({ startedAt, pipelineId, nodeStates: Object.fromEntries(Object.keys(blocks).map((id) => [id, { status: "waiting" as const }])) });
@@ -273,12 +310,46 @@ export function PromptBlocksWorkspace() {
     return [{ connection, d: `M ${sx} ${sy} C ${sx + dx} ${sy}, ${tx - dx} ${ty}, ${tx} ${ty}` }];
   });
 
-  return <div className="pb-workspace">
-    <header className="pb-toolbar">
-      <div className="pb-toolbar__identity"><span className="eyebrow">AI · Prompt-processing methodology</span><div><Braces size={23} /><input aria-label="Pipeline title" value={title} onChange={(event) => setTitle(event.target.value)} /><span>{pipelineId ? "Saved pipeline" : "Quick pipeline"}</span></div><textarea rows={2} aria-label="Pipeline description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Optional methodology description…" /></div>
-      <div className="pb-toolbar__saved"><label>Saved pipelines<div><select value={pipelineId || ""} onChange={(event) => loadPipeline(event.target.value)}><option value="">Quick / unsaved</option>{savedPipelines.map((pipeline) => <option key={pipeline.id} value={pipeline.id}>{pipeline.title}</option>)}</select><ChevronDown size={14} /></div></label></div>
-      <div className="pb-toolbar__actions"><Button variant="ghost" icon={<CopyPlus size={15} />} onClick={newQuickPipeline}>New quick</Button><Button variant="ghost" icon={<Database size={15} />} onClick={() => setPromptEditorOpen(true)}>Transformation prompts</Button>{pipelineId ? <Button variant="ghost" icon={<Archive size={15} />} onClick={() => void archiveCurrent()}>Archive</Button> : null}{pipelineId ? <Button variant="ghost" icon={<Trash2 size={15} />} onClick={() => void deleteCurrent()}>Delete</Button> : null}<Button icon={<Save size={15} />} loading={saving} onClick={() => void savePipeline()}>{pipelineId ? "Save changes" : "Save pipeline"}</Button><Button variant="primary" icon={<CirclePlay size={16} />} loading={running} onClick={() => void runPipeline()}>Run Pipeline</Button></div>
+  return <div className="pb-workspace" style={workspaceStyle}>
+    <header className={`pb-toolbar${toolbarExpanded ? " pb-toolbar--expanded" : ""}`}>
+      <div className="pb-toolbar__main">
+        <div className="pb-toolbar__identity">
+          <Braces size={20} aria-hidden />
+          <input aria-label="Pipeline title" value={title} onChange={(event) => setTitle(event.target.value)} />
+          <span>{pipelineId ? "Saved" : "Quick"}</span>
+          {!hasDedicatedOutput ? <span className="pb-toolbar__output-warning" title="No dedicated Output block is configured."><AlertTriangle size={13} />No output</span> : null}
+        </div>
+        <div className="pb-toolbar__saved">
+          <label className="sr-only" htmlFor="pb-saved-pipeline">Saved pipelines</label>
+          <div><select id="pb-saved-pipeline" aria-label="Saved pipelines" value={pipelineId || ""} onChange={(event) => loadPipeline(event.target.value)}><option value="">Quick / unsaved</option>{savedPipelines.map((pipeline) => <option key={pipeline.id} value={pipeline.id}>{pipeline.title}</option>)}</select><ChevronDown size={14} /></div>
+        </div>
+        <div className="pb-toolbar__actions" aria-label="Pipeline controls">
+          <Button size="icon" variant="ghost" title="New quick pipeline" aria-label="New quick pipeline" icon={<CopyPlus size={16} />} onClick={newQuickPipeline} />
+          <Button size="icon" title={pipelineId ? "Save pipeline changes" : "Save pipeline"} aria-label={pipelineId ? "Save pipeline changes" : "Save pipeline"} icon={<Save size={16} />} loading={saving} onClick={() => void savePipeline()} />
+          <Button size="icon" variant="primary" title="Run pipeline" aria-label="Run pipeline" icon={<CirclePlay size={17} />} loading={running} onClick={() => void runPipeline()} />
+          <span className="pb-toolbar__divider" aria-hidden />
+          <Button size="icon" variant="ghost" title="Beautify pipeline layout" aria-label="Beautify pipeline layout" icon={<Sparkles size={16} />} onClick={() => beautifyPipeline()} />
+          <Button size="icon" variant="ghost" title="Print pipeline design" aria-label="Print pipeline design" icon={<Printer size={16} />} onClick={printPipelineDesign} />
+          <Button size="icon" variant="ghost" title={toolbarExpanded ? "Collapse pipeline controls" : "Expand pipeline controls"} aria-label={toolbarExpanded ? "Collapse pipeline controls" : "Expand pipeline controls"} aria-expanded={toolbarExpanded} icon={toolbarExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />} onClick={() => setToolbarExpanded((current) => !current)} />
+        </div>
+      </div>
+      {toolbarExpanded ? <div className="pb-toolbar__details">
+        <label>Methodology description<textarea rows={2} aria-label="Pipeline description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Optional methodology description…" /></label>
+        <div className="pb-toolbar__secondary-actions">
+          <Button variant="ghost" icon={<Database size={15} />} onClick={() => setPromptEditorOpen(true)}>Transformation prompts</Button>
+          {pipelineId ? <Button variant="ghost" icon={<Archive size={15} />} onClick={() => void archiveCurrent()}>Archive</Button> : null}
+          {pipelineId ? <Button variant="ghost" icon={<Trash2 size={15} />} onClick={() => void deleteCurrent()}>Delete</Button> : null}
+        </div>
+        {!hasDedicatedOutput ? <p className="pb-toolbar__warning-detail"><AlertTriangle size={14} />No dedicated Output block is configured. Run will ask for confirmation so intermediate-only execution remains possible.</p> : null}
+      </div> : null}
     </header>
+
+    <div className="pb-print-heading" aria-hidden>
+      <span>Prompt Blocks · Pipeline Design</span>
+      <h1>{title}</h1>
+      {description ? <p>{description}</p> : null}
+      <small>{Object.keys(blocks).length} blocks · {Object.keys(connections).length} connections · {pipelineId ? "Saved methodology" : "Quick methodology"}</small>
+    </div>
 
     {pendingSource ? <div className="pb-connect-banner"><span>Connection mode: choose a compatible input port.</span><button type="button" onClick={() => setPendingSource(null)}><X size={14} />Cancel</button></div> : null}
     {validationErrors.length ? <div className="pb-validation"><strong>Pipeline validation</strong><ul>{validationErrors.map((error) => <li key={error}>{error}</li>)}</ul></div> : null}

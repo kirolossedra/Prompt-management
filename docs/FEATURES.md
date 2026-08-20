@@ -182,7 +182,12 @@ Implemented capabilities include:
 - editable Firebase-backed transformation prompts seeded from thorough product defaults only when missing;
 - explicit output save into the existing Prompt creation/versioning lifecycle;
 - inclusion of saved pipeline definitions and transformation prompt configuration in Global Version snapshots/export;
-- desktop visual graph editing and a mobile-specific ordered workflow editor rather than a scaled-down canvas.
+- desktop visual graph editing and a mobile-specific ordered workflow editor rather than a scaled-down canvas;
+- compact IDE-style run/save controls that do not obscure block placement and can expand for secondary methodology controls;
+- deterministic graph beautification, applied automatically when a saved pipeline is loaded and available manually for quick/saved graphs;
+- a pre-run warning when no dedicated Output block defines the intended final representation;
+- independently scrollable desktop run inspection so the final intermediate/output card remains reachable;
+- printable, printer-friendly pipeline methodology diagrams with application chrome removed.
 
 Runtime generated values are not persisted into the saved graph definition. Running a pipeline never mutates a source Prompt. Only explicit save actions create a Prompt or create the next normal Prompt Version.
 

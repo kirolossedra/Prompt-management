@@ -312,6 +312,57 @@ Subtraction uses semantic removal:
 - preserve unrelated requirements;
 - do not use blind string deletion.
 
+## IDE-style workspace controls
+
+Prompt Blocks uses a compact IDE-style control strip rather than a large sticky hero panel. The primary controls remain available without covering the graph:
+
+- **New quick** — starts a temporary pipeline;
+- **Save** — creates or updates the saved methodology;
+- **Run** — executes the validated DAG;
+- **Beautify** — deterministically reorganizes the current graph into dependency columns;
+- **Print** — prepares a clean, landscape, printer-friendly representation of the methodology;
+- **Expand/collapse** — reveals or hides secondary methodology controls such as description, transformation-prompt editing, archive, and delete.
+
+The control strip is part of normal page flow rather than an overlay on top of the canvas, so dragging or inspecting blocks never requires working underneath a large persistent run panel.
+
+## Automatic beautification
+
+Loading a saved pipeline automatically applies the deterministic layout engine to the in-memory working copy. The stored graph semantics are unchanged: IDs, block types, configurations, connections, constraint priorities, Prompt references, and output configuration are preserved; only block positions are recalculated.
+
+The same beautifier is available manually through the toolbar and is also applied immediately before printing. The layout engine:
+
+1. derives dependency order from the DAG;
+2. assigns upstream inputs/constraints to earlier columns;
+3. places downstream transformations and outputs progressively to the right;
+4. separates parallel blocks vertically;
+5. centers shorter dependency columns for a readable engineering-diagram appearance.
+
+Beautification does not automatically persist new coordinates. A user saves the pipeline explicitly if they want the beautified positions stored.
+
+## Output-intent warning
+
+Prompt Blocks still allows intermediate-only exploratory runs, but the product now distinguishes those runs from pipelines with an explicit final output representation.
+
+If a valid pipeline contains **no Output block**, the toolbar shows a `No output` warning and Run requires confirmation before execution. The warning explicitly points the user toward **As Is**, **Summarized**, or **Conclusion Only**. This is a warning rather than a validation failure because inspecting intermediate transformations remains a legitimate use case.
+
+## Run-inspector scrolling
+
+The desktop inspector rail owns a fixed working height aligned with the graph stage. Both the block inspector and run inspector use `min-height: 0` grid semantics so the run list becomes the scrolling region instead of forcing the entire rail to grow beyond its container. The run list has stable scrollbar space, contained overscroll, and bottom padding so the final output card and its View/Copy/Save controls remain reachable.
+
+On mobile, nested run-list scrolling is removed and the list participates in normal page flow.
+
+## Printable pipeline design
+
+The Print action produces a dedicated print presentation of the **pipeline design**, not the surrounding application chrome. Before opening the browser print dialog, Prompt Blocks beautifies the in-memory graph. Print media rules then:
+
+- hide navigation, Block Library, inspectors, runtime controls, validation banners, and editor chrome;
+- include the pipeline title, methodology description, block count, connection count, and saved/quick status;
+- render the graph in a printer-friendly light palette;
+- scale the visual canvas to a landscape page while preserving block/wire geometry;
+- keep the printed artifact independent of runtime output persistence.
+
+Printing does not save, execute, or mutate the pipeline.
+
 ## Responsive interaction
 
 Desktop uses the full draggable visual canvas with SVG wires and side inspectors.

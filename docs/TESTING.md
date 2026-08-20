@@ -107,6 +107,13 @@ Prompt Blocks adds pure-logic tests around the areas where a visual workflow can
 - required Fill Context inputs;
 - deterministic/unique constraint priorities.
 
+`src/prompt-blocks/layout.test.ts` covers:
+
+- deterministic left-to-right dependency layout;
+- non-overlapping placement of parallel upstream blocks;
+- constraint dependencies placed before governed transformations;
+- purity: beautification changes positions without mutating the supplied pipeline definition.
+
 `src/prompt-blocks/runtime.test.ts` covers:
 
 - intermediate output propagation;
@@ -116,3 +123,5 @@ Prompt Blocks adds pure-logic tests around the areas where a visual workflow can
 `src/ai/promptBlocks.test.ts` covers client response normalization and rejects invalid/empty AI output. Existing utility tests now cover saved-pipeline Prompt references as delete blockers.
 
 The Netlify Prompt Blocks endpoint should also be included in the existing `node --check netlify/functions/*.mjs` CI syntax gate. No live Gemini integration test is introduced because that would make CI depend on a billable/external model call and nondeterministic model output.
+
+UI regression coverage should specifically preserve the Prompt Blocks workspace invariants introduced after the first visual delivery: the run inspector must remain independently scrollable on desktop, loading a saved pipeline must invoke the pure beautification layout, a no-output run must require explicit user confirmation, and print media must exclude application controls while retaining the methodology graph. The layout behavior is covered in pure tests; browser-level scroll/print behavior should be added when the repository adopts an end-to-end browser test runner.

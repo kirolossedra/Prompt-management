@@ -88,3 +88,7 @@ The current root README was last materially aligned with the early 2026-08-06 fo
 - local/global commits as the primary model.
 
 The current code contradicts each of those points in important ways. This docs package therefore documents implementation reality while preserving the old decisions as superseded history rather than silently deleting them.
+
+### 2026-08-19 — Prompt Blocks workspace refinement
+
+The initial Prompt Blocks workspace was hardened after live UI use: the oversized sticky run header was replaced with compact IDE-style controls; the run inspector became an independently scrolling grid region so final outputs remain reachable; saved pipelines now auto-beautify on load; users receive an explicit warning before running without an Output block; and pipeline methodology designs can be printed in a dedicated landscape presentation. A pure deterministic layout module and focused layout tests were added alongside the UI changes.
