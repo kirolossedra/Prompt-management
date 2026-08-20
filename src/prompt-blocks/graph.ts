@@ -42,8 +42,10 @@ export function validateConnection(
   if (!targetPort || targetPort.direction !== "input") return "Choose an input port as the destination.";
   if (sourcePort.flowType !== targetPort.flowType) return `A ${sourcePort.flowType} output cannot connect to a ${targetPort.flowType} input.`;
   if (Object.values(connections).some((connection) => connection.sourceBlockId === sourceBlockId && connection.sourcePortId === sourcePortId && connection.targetBlockId === targetBlockId && connection.targetPortId === targetPortId)) return "That connection already exists.";
-  if (!targetPort.multiple && Object.values(connections).some((connection) => connection.targetBlockId === targetBlockId && connection.targetPortId === targetPortId)) return `${targetPort.label} accepts only one upstream connection.`;
+  // Structural validity takes precedence over port cardinality so a connection
+  // that would make the graph cyclic is always reported as a cycle.
   if (wouldCreateCycle(blocks, connections, sourceBlockId, targetBlockId)) return "Prompt Blocks v1 uses a directed acyclic graph. This connection would create a cycle.";
+  if (!targetPort.multiple && Object.values(connections).some((connection) => connection.targetBlockId === targetBlockId && connection.targetPortId === targetPortId)) return `${targetPort.label} accepts only one upstream connection.`;
   return null;
 }
 
