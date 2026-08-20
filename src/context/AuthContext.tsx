@@ -19,6 +19,7 @@ import {
 } from "firebase/auth";
 import { push, ref, update } from "firebase/database";
 import { auth, database, VAULT_ROOT } from "../lib/firebase";
+import { getBackendAuthenticatedUser, isBackendApiConfigured } from "../lib/backendApi";
 import { initialDecisions } from "../lib/constants";
 import { cleanText } from "../lib/utils";
 import type { UserStamp } from "../types/domain";
@@ -94,6 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
       setLoading(false);
+
+      if (nextUser && isBackendApiConfigured()) {
+        void getBackendAuthenticatedUser().catch((error) => {
+          console.warn("Spring Boot authentication verification failed.", error);
+        });
+      }
     }), []);
 
   const signIn = useCallback(async (email: string, password: string) => {
