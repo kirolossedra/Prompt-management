@@ -76,28 +76,34 @@ This document is a **proposal only**. It does not apply any GitHub changes.
 
 ## Milestone 4 — Prompt Blocks MVP
 
+> **Implementation update (2026-08-19):** The MVP described by this milestone is implemented in the delivery working tree. GitHub Issue #7 remains remotely open because this documentation update does not mutate Issue state.
+
 | Field | Value |
 |---|---|
-| Objective | Introduce persisted, reusable, version-controlled DAG-style Prompt methodology execution |
-| Issues | #7 epic/tracker after decomposition |
-| Dependencies | Existing Prompt/version model and authenticated AI boundary; new workflow data/runtime layers required |
-| Estimated start | Nov 2, 2026 |
-| Estimated target | Dec 20, 2026 |
-| Duration | ~6–7+ weeks |
-| Progress | 0% |
-| Confidence | Low |
+| Objective | Introduce persisted, reusable, typed DAG-style Prompt methodology execution |
+| Issues | #7 |
+| Dependencies | Existing Prompt/version model and authenticated AI boundary |
+| Delivered | Aug 19, 2026 |
+| Progress | 100% implementation delivery |
+| Confidence | High |
 
-**Definition of Done**
+**Delivered MVP boundary**
 
-- workflow artifact CRUD/archive/restore;
-- named variables with readable `X + Y → Z` semantics;
-- visual DAG builder;
+- pipeline artifact create/update/archive/restore/delete;
+- named variables with readable multi-stage graph semantics;
+- typed content and constraint wires;
+- desktop visual DAG builder plus mobile ordered workflow interaction;
 - current vs pinned Prompt-version references;
-- dependency validation/topological execution preview;
-- authenticated block execution with intermediate outputs/error states;
-- workflow versioning and run reproducibility metadata;
-- tests around cycles/dependency ordering/persistence/runtime failure;
-- loops/conditional routing remain explicitly post-MVP unless separately approved.
+- dependency validation, cycle rejection and topological execution;
+- authenticated per-block execution with intermediate outputs/error states;
+- Mindset and extracted-style constraints with explicit priority;
+- owner-viewable/editable Firebase transformation prompts seeded only when missing;
+- As Is, Summarized and Conclusion Only branching outputs;
+- explicit output save through existing Prompt/version lifecycle;
+- saved definition/configuration preservation in Global Version snapshots/export;
+- focused tests around cycles/dependency ordering/runtime failure/type semantics.
+
+Dedicated pipeline-local automatic history/reproducibility objects, loops, conditional routing and typed non-text values remain post-MVP rather than being silently added.
 
 ---
 
@@ -111,7 +117,7 @@ This document is a **proposal only**. It does not apply any GitHub changes.
 | #4 | Architecture helper AI | Vault Intelligence & Contextual Assistance | P2 | New technical docs provide potential authoritative source |
 | #5 | AI commit/change messages | Configurable AI & Version Intelligence | P2 | Clarify meaning of “commit”; recommended reuse of #2 |
 | #6 | Explorer hover AI summary | Vault Intelligence & Contextual Assistance | P2 | Needs freshness/cache/payload design |
-| #7 | Prompt Blocks | Prompt Blocks MVP | P1 Strategic | Epic; must be decomposed |
+| #7 | Prompt Blocks | Prompt Blocks MVP | P1 Strategic | MVP implemented Aug 19; Issue state still open until Product Owner chooses closure |
 | #8 | New Prompt lingering defect | Productization & UX Hardening | **P0** | Reproduce/root-cause first |
 | #9 | EurekaVault rebrand | Productization & UX Hardening | P1 | Explicit part1 commit exists |
 | #10 | Frontend overhaul | Productization & UX Hardening | P1 | Scope too vague; define acceptance criteria |

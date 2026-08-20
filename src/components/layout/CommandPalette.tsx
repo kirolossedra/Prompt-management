@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Brain, BrainCircuit, Camera, FileCode2, Layers3, Network, Plus, Search, Settings2, Share2, SlidersHorizontal, Sparkles, Trophy, WandSparkles } from "lucide-react";
+import { Boxes, Brain, BrainCircuit, Camera, FileCode2, Layers3, Network, Plus, Search, Settings2, Share2, SlidersHorizontal, Sparkles, Trophy, WandSparkles } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useNavigate } from "react-router";
 import { useVault } from "../../context/VaultContext";
@@ -9,6 +9,7 @@ import { useEntityUi } from "../entities/EntityUiProvider";
 
 const routes = [
   ["AI Prompt Finder", "/ai/find-prompt", Sparkles],
+  ["AI Prompt Blocks", "/ai/prompt-blocks", Boxes],
   ["AI Prompt Mixer", "/ai/prompt-mixer", Layers3],
   ["AI Prompt Repurposer", "/ai/repurpose-prompt", WandSparkles],
   ["Achievements", "/achievements", Trophy],

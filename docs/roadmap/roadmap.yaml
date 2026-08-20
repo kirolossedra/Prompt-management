@@ -18,7 +18,6 @@ current_milestone: productization-ux-hardening
 next_milestones:
 - configurable-ai-version-intelligence
 - vault-intelligence-contextual-assistance
-- prompt-blocks-mvp
 forecast_policy:
   historical_dates: repository_fact
   future_dates: estimated_ranges
@@ -82,4 +81,11 @@ historical_milestones:
   start: '2026-08-18'
   completed: '2026-08-18'
   provenance: repository_fact
+  confidence: high
+
+- id: prompt-blocks-mvp
+  name: Prompt Blocks MVP
+  start: '2026-08-19'
+  completed: '2026-08-19'
+  provenance: delivery_working_tree
   confidence: high

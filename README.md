@@ -81,12 +81,16 @@ Enable Email/Password in Firebase Authentication.
 - Mindsets, Preferences, deterministic Mindset Construction, Decisions, Archive, and Global Versions
 - Activity tracking and Achievements
 - Vault-wide Prompt search, command palette, responsive navigation, and light/dark/system themes
-- Gemini-backed Semantic Prompt Finder, Prompt Repurposer, and Prompt Mixer through authenticated Netlify Functions
+- Gemini-backed Semantic Prompt Finder, Prompt Repurposer, Prompt Mixer, and Prompt Blocks through authenticated Netlify Functions
+- Prompt Blocks visual Prompt-transformation DAG with typed content/constraint flow, explicit priority, inspectable intermediate values, quick/saved pipelines, current/pinned Prompt references, and branching outputs
+- Editable Prompt Blocks transformation prompts seeded once into Firebase and thereafter treated as database-controlled behavior
 - Finder feedback learning: user-confirmed search → Prompt mappings become bounded few-shot retrieval examples
 
 ## Not implemented / decision-gated
 
-- Prompt Blocks executable workflow orchestration — tracked by GitHub Issue #7
+Prompt Blocks MVP is now implemented in this delivery. Dedicated pipeline-local automatic version history remains a future extension; saved definitions are already included in Global Version snapshots and workspace export.
+
+
 - Markup-defined hierarchy parsing — blocked by unresolved markup-format decisions
 - Collaboration — blocked by unresolved ownership, permissions, synchronization, and conflict semantics
 - Formal Mindset inheritance/conflict rules and Preference precedence rules remain open architectural decisions
@@ -133,7 +137,7 @@ Primary scope:
 |---|---|---|---|---|
 | Configurable AI & Version Intelligence | Issues #2, #3, #5 | Sep 21–Oct 11, 2026 | Low | User-configurable AI building prompts plus AI-assisted version/change interpretation |
 | Vault Intelligence & Contextual Assistance | Issues #4, #6 | Oct 12–Nov 1, 2026 | Low | Architecture-aware helper AI and contextual Prompt summaries in the vault UI |
-| Prompt Blocks MVP | Issue #7 | Nov 2–Dec 20, 2026 | Low | Persisted, version-controlled DAG workflows that execute named variables such as `X + Y → Z` |
+| Prompt Blocks MVP | Implemented Aug 19, 2026 | Completed | High | Typed Prompt-processing DAG, editable transformation prompts, reusable saved pipelines, deterministic execution, intermediate inspection and branching outputs |
 
 Markup parsing and collaboration remain confirmed long-term decision gates, but no delivery dates are assigned because their product/architecture decisions are still unresolved and no GitHub Issues currently define executable scope.
 
@@ -141,7 +145,7 @@ Markup parsing and collaboration remain confirmed long-term decision gates, but 
 
 1. **Product Experience & Identity** — documentation, EurekaVault rebrand, usability defects, frontend quality.
 2. **Prompt Intelligence & Explainability** — configurable AI instructions, version intelligence, architecture Q&A, contextual summaries.
-3. **Executable Methodology** — Prompt Blocks and reusable, version-controlled AI workflows.
+3. **Executable Methodology** — Prompt Blocks is now implemented; future work can deepen methodology-local history, reproducibility metadata, and approved advanced routing without turning it into a generic agent graph.
 4. **Decision-Gated Platform Expansion** — markup parsing, collaboration, inheritance/precedence semantics, workspace deletion policy.
 
 ## Timeline
@@ -160,6 +164,7 @@ gantt
     AI Prompt Intelligence                      :done, ai-prompt-intelligence, 2026-08-08, 1d
     Adaptive Retrieval                          :done, adaptive-retrieval, 2026-08-18, 1d
     Documentation Modernization                 :done, documentation-modernization, 2026-08-18, 1d
+    Prompt Blocks MVP                           :done, prompt-blocks-mvp, 2026-08-19, 1d
 
     section Current - forecast
     EurekaVault Productization & UX Hardening   :active, productization-ux-hardening, 2026-08-18, 2026-09-06
@@ -167,7 +172,6 @@ gantt
     section Planned - forecast
     Configurable AI & Version Intelligence      :configurable-ai-version-intelligence, 2026-09-07, 2026-10-11
     Vault Intelligence & Contextual Assistance  :vault-intelligence-contextual-assistance, 2026-10-12, 2026-11-01
-    Prompt Blocks MVP                           :prompt-blocks-mvp, 2026-11-02, 2026-12-20
 ```
 <!-- ROADMAP-GANTT:END -->
 
@@ -177,7 +181,7 @@ gantt
 Productization & UX Hardening          ███░░░░░░░  ~30% estimated
 Configurable AI & Version Intelligence ░░░░░░░░░░    0% repository evidence
 Vault Intelligence & Assistance        ░░░░░░░░░░    0% repository evidence
-Prompt Blocks MVP                      ░░░░░░░░░░    0% repository evidence
+Prompt Blocks MVP                      ██████████  100% implementation delivery
 ```
 
 ## Planned vs. Completed
@@ -187,9 +191,9 @@ flowchart LR
     A[Completed: Core Versioned Vault] --> B[Completed: Knowledge Graph + AI Tools]
     B --> C[Completed: Adaptive Retrieval]
     C --> D[Current: Productization + UX]
+    C --> G[Completed Aug 19: Prompt Blocks MVP]
     D --> E[Planned: Configurable AI + Version Intelligence]
     E --> F[Planned: Vault Intelligence]
-    F --> G[Planned: Prompt Blocks MVP]
 ```
 
 ## Major Dependencies

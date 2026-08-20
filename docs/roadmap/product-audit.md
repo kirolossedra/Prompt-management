@@ -1,5 +1,8 @@
 # EurekaVault Product Roadmap, Agile Velocity & Repository Audit
 
+> **2026-08-19 delivery update:** This document is primarily the pre-Prompt-Blocks historical audit. Prompt Blocks MVP has since been implemented in the delivery working tree. Statements below that describe Prompt Blocks as planned/0% are retained as historical audit evidence and are superseded by `docs/features/prompt-blocks.md`, `docs/AI_PIPELINES.md`, `docs/roadmap/milestones.yaml`, and the current root README. GitHub Issue #7 was not automatically closed by this file update.
+
+
 ## 0. Audit boundary and evidence rules
 
 This audit follows the repository-first methodology supplied by the product owner. The roadmap is a consequence of repository evidence rather than a list of desired features imposed on the repository.

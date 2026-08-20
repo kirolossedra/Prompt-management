@@ -146,6 +146,17 @@ export function matchesPromptWords(
   return words.every((word) => searchable.includes(word));
 }
 
+function promptBlockPipelineReferenceCount(
+  data: VaultCollections,
+  predicate: (block: import("../types/domain").PromptBlockNodeDefinition) => boolean,
+  activeOnly = false,
+): number {
+  return Object.values(data.promptBlockPipelines || {}).filter((pipeline) => {
+    if (activeOnly && pipeline.archivedAt) return false;
+    return Object.values(pipeline.blocks || {}).some(predicate);
+  }).length;
+}
+
 export function archiveBlockers(
   collection: CollectionName,
   id: string,
@@ -159,6 +170,18 @@ export function archiveBlockers(
   if (collection === "tasks") {
     const prompts = activeRecords(data.prompts).filter((prompt) => prompt.taskId === id).length;
     if (prompts) blockers.push(`${prompts} active prompt${prompts === 1 ? "" : "s"}`);
+  }
+  if (collection === "prompts") {
+    const pipelines = promptBlockPipelineReferenceCount(data, (block) => block.kind === "system-prompt" && block.config.promptId === id, true);
+    if (pipelines) blockers.push(`${pipelines} active Prompt Blocks pipeline reference${pipelines === 1 ? "" : "s"}`);
+  }
+  if (collection === "promptVersions") {
+    const pipelines = promptBlockPipelineReferenceCount(data, (block) => block.kind === "system-prompt" && block.config.promptReferenceMode === "pinned" && block.config.promptVersionId === id, true);
+    if (pipelines) blockers.push(`${pipelines} active Prompt Blocks pinned-version reference${pipelines === 1 ? "" : "s"}`);
+  }
+  if (collection === "mindsets") {
+    const pipelines = promptBlockPipelineReferenceCount(data, (block) => block.kind === "mindset-constraint" && block.config.mindsetId === id, true);
+    if (pipelines) blockers.push(`${pipelines} active Prompt Blocks Mindset reference${pipelines === 1 ? "" : "s"}`);
   }
   return blockers;
 }
@@ -198,8 +221,20 @@ export function deleteBlockers(
   if (collection === "prompts") {
     const mindsets = Object.values(data.mindsets).filter((item) => item.scopeType === "prompt" && item.scopeId === id).length;
     const constructions = Object.values(data.mindsets).filter((item) => item.sourcePromptIds?.includes(id)).length;
+    const pipelines = promptBlockPipelineReferenceCount(data, (block) => block.kind === "system-prompt" && block.config.promptId === id);
     if (mindsets) blockers.push(`${mindsets} prompt mindset${mindsets === 1 ? "" : "s"}`);
     if (constructions) blockers.push(`${constructions} constructed mindset source reference${constructions === 1 ? "" : "s"}`);
+    if (pipelines) blockers.push(`${pipelines} Prompt Blocks pipeline reference${pipelines === 1 ? "" : "s"}`);
+  }
+
+  if (collection === "promptVersions") {
+    const pipelines = promptBlockPipelineReferenceCount(data, (block) => block.kind === "system-prompt" && block.config.promptReferenceMode === "pinned" && block.config.promptVersionId === id);
+    if (pipelines) blockers.push(`${pipelines} Prompt Blocks pinned-version reference${pipelines === 1 ? "" : "s"}`);
+  }
+
+  if (collection === "mindsets") {
+    const pipelines = promptBlockPipelineReferenceCount(data, (block) => block.kind === "mindset-constraint" && block.config.mindsetId === id);
+    if (pipelines) blockers.push(`${pipelines} Prompt Blocks Mindset reference${pipelines === 1 ? "" : "s"}`);
   }
 
   if (collection === "localCommits") {

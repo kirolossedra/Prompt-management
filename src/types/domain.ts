@@ -45,7 +45,12 @@ export type ActivityAction =
   | "ai.prompt-finder.searched"
   | "ai.prompt-finder.feedback"
   | "ai.prompt-repurpose.generated"
-  | "ai.prompt-mixer.generated";
+  | "ai.prompt-mixer.generated"
+  | "ai.prompt-block.pipeline-created"
+  | "ai.prompt-block.pipeline-updated"
+  | "ai.prompt-block.pipeline-run"
+  | "ai.prompt-block.output-saved"
+  | "ai.prompt-block.transform-prompt-updated";
 
 export interface ActivityDay {
   date: string;
@@ -185,6 +190,123 @@ export interface PromptVersion extends BaseRecord {
   localCommitId: string;
 }
 
+
+
+export type PromptBlockFamily = "input" | "transform" | "constraint" | "output";
+export type PromptBlockFlowType = "content" | "constraint";
+export type PromptBlockReferenceMode = "current" | "pinned";
+export type PromptBlockRunStatus = "idle" | "waiting" | "running" | "completed" | "failed" | "blocked";
+
+export type PromptBlockAiOperation =
+  | "context-free"
+  | "extract-context"
+  | "fill-context"
+  | "less-detailed"
+  | "more-detailed"
+  | "without-markdown"
+  | "with-markdown"
+  | "addition"
+  | "subtraction"
+  | "extract-style"
+  | "summarized"
+  | "conclusion-only";
+
+export type PromptBlockKind =
+  | "system-prompt"
+  | "direct-input"
+  | "context-free"
+  | "extract-context"
+  | "fill-context"
+  | "less-detailed"
+  | "more-detailed"
+  | "without-markdown"
+  | "with-markdown"
+  | "addition"
+  | "subtraction"
+  | "extract-style"
+  | "mindset-constraint"
+  | "extracted-style-constraint"
+  | "as-is"
+  | "summarized"
+  | "conclusion-only";
+
+export interface PromptBlockPosition {
+  x: number;
+  y: number;
+}
+
+export interface PromptBlockNodeConfig {
+  directText?: string;
+  promptId?: string;
+  promptReferenceMode?: PromptBlockReferenceMode;
+  promptVersionId?: string;
+  mindsetId?: string;
+}
+
+export interface PromptBlockNodeDefinition {
+  id: string;
+  family: PromptBlockFamily;
+  kind: PromptBlockKind;
+  label: string;
+  variableLabel: string;
+  position: PromptBlockPosition;
+  config: PromptBlockNodeConfig;
+}
+
+export interface PromptBlockConnection {
+  id: string;
+  sourceBlockId: string;
+  sourcePortId: string;
+  targetBlockId: string;
+  targetPortId: string;
+  flowType: PromptBlockFlowType;
+  priority?: number;
+}
+
+export interface PromptBlockPipeline extends BaseRecord {
+  title: string;
+  description: string;
+  schemaVersion: 1;
+  blocks: Record<string, PromptBlockNodeDefinition>;
+  connections: Record<string, PromptBlockConnection>;
+}
+
+export interface PromptBlockTransformPrompt extends BaseRecord {
+  operation: PromptBlockAiOperation;
+  title: string;
+  content: string;
+  seedVersion: number;
+}
+
+export interface PromptBlockConstraintValue {
+  label: string;
+  content: string;
+  sourceType: "mindset" | "extracted-style";
+  sourceId?: string;
+}
+
+export interface PromptBlockRuntimeValue {
+  flowType: PromptBlockFlowType;
+  text?: string;
+  constraint?: PromptBlockConstraintValue;
+}
+
+export interface PromptBlockRunNodeState {
+  status: PromptBlockRunStatus;
+  startedAt?: number;
+  completedAt?: number;
+  error?: string;
+  output?: PromptBlockRuntimeValue;
+  model?: string;
+}
+
+export interface PromptBlockRunState {
+  startedAt: number;
+  completedAt?: number;
+  pipelineId?: string;
+  nodeStates: Record<string, PromptBlockRunNodeState>;
+}
+
 export interface Mindset extends BaseRecord {
   title: string;
   content: string;
@@ -228,6 +350,8 @@ export interface GlobalVersionSnapshot {
   promptAttachments?: Record<string, PromptAttachment>;
   promptRelations?: Record<string, PromptRelation>;
   promptFinderFeedback?: Record<string, PromptFinderFeedback>;
+  promptBlockPipelines?: Record<string, PromptBlockPipeline>;
+  promptBlockTransformPrompts?: Record<string, PromptBlockTransformPrompt>;
   mindsets: Record<string, Mindset>;
   preferences: Record<string, Preference>;
   localCommits: Record<string, LocalCommit>;
@@ -265,6 +389,8 @@ export interface VaultCollections {
   promptAttachments: Record<string, PromptAttachment>;
   promptRelations: Record<string, PromptRelation>;
   promptFinderFeedback: Record<string, PromptFinderFeedback>;
+  promptBlockPipelines: Record<string, PromptBlockPipeline>;
+  promptBlockTransformPrompts: Record<string, PromptBlockTransformPrompt>;
   mindsets: Record<string, Mindset>;
   preferences: Record<string, Preference>;
   localCommits: Record<string, LocalCommit>;

@@ -25,6 +25,8 @@ function data(): VaultCollections {
       r1: { id: "r1", parentPromptId: "p1", childPromptId: "p2", relationshipType: "inspired-by", ...base },
     },
     promptFinderFeedback: {},
+    promptBlockPipelines: {},
+    promptBlockTransformPrompts: {},
     mindsets: {}, preferences: {}, localCommits: {}, globalCommits: {}, decisions: {},
   };
 }

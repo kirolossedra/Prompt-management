@@ -101,7 +101,7 @@ issues:
 - number: 7
   title: Prompt Blocks
   state: open
-  implementation_status: not_started
+  implementation_status: implemented_in_2026-08-19-delivery
   type: Epic / Feature / Architecture
   priority: P1-Strategic
   complexity: Epic / Very Large
@@ -109,14 +109,12 @@ issues:
   dependencies:
   - Prompt versioning (completed)
   - Authenticated Gemini boundary (completed)
-  - New workflow persistence/runtime model (not started)
-  stale: false
-  partial_implementation: No Prompt Blocks/workflow code found. Existing Prompt versioning, relationships and AI functions
-    are foundations, not partial Prompt Blocks implementation.
+  - Prompt Blocks workflow persistence/runtime model (completed in delivery)
+  stale: true
+  partial_implementation: Core Prompt Blocks MVP is implemented in the delivery working tree. Remaining post-MVP scope includes dedicated pipeline-local automatic history, loops/conditions and richer workflow evolution if later approved.
   duplicate: false
-  needs_split: true
-  split_reason: 'Issue contains data model, visual builder, execution engine, versioning, runtime/debugging, reproducibility
-    and future advanced routing; these should become child issues under #7.'
+  needs_split: false
+  split_reason: null
 - number: 8
   title: when you click on new prompt it lingers and it is so shitty needs immediate fix
   state: open

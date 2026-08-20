@@ -3,8 +3,8 @@
 This directory is the maintainable planning source for the EurekaVault product roadmap.
 
 **Repository snapshot:** `main` at `3b61d7050f905a5c591971f6e8ecbdc8588870ac`.  
-**Analysis cutoff:** 2026-08-18T12:39:00-04:00.  
-**GitHub was inspected read-only; these files are proposals and do not imply that Milestones, labels, issue state, or target dates have already been applied on GitHub.**
+**Original audit cutoff:** 2026-08-18T12:39:00-04:00.  
+**Delivery update:** Prompt Blocks MVP implementation state was refreshed from the 2026-08-19 working tree. GitHub Issue state itself was not changed; roadmap files may therefore mark implementation delivered while Issue #7 remains open remotely.**
 
 ## Source files
 

@@ -101,3 +101,35 @@ The current data model is owner-private rather than collaborative. There is no i
 - Treat client-side checks as usability validation, not authorization.
 - Preserve server-side Firebase ID-token verification for every AI function.
 - If a conventional backend replaces Netlify Functions, move AI secret handling and token validation to that backend rather than into the browser.
+
+
+## 8. Prompt Blocks security and data minimization
+
+Prompt Blocks preserves the current application security boundaries rather than using the emerging Spring Boot service as an implicit migration target.
+
+### Saved data
+
+Saved pipeline definitions and editable transformation prompts live under the authenticated owner's existing Firebase subtree. The current Realtime Database owner rule therefore applies automatically. Runtime intermediate/final generated values are not persisted merely because a pipeline ran.
+
+### Gemini execution
+
+AI-based Prompt Blocks operations call `/.netlify/functions/prompt-block-transform`. The client supplies a current Firebase ID token; the function verifies the token before calling Gemini. `GEMINI_API_KEY` remains server-only.
+
+A block call is deliberately scoped to the information required for that block:
+
+- the selected operation;
+- the database-resolved transformation prompt for that operation;
+- only the required content inputs;
+- only constraints connected to that transformation, in explicit priority order.
+
+The function does not require the whole vault, attachments, achievements, unrelated Prompt history, relationship graph, activity history or account profile.
+
+### Editable transformation prompts
+
+Initial thorough transformation instructions are stored in a React constants module and written to Firebase only when the corresponding owner record is missing. After seeding, Firebase is authoritative and code defaults do not overwrite edits. The Prompt Blocks workspace exposes the records for owner inspection/editing.
+
+Because the initial seeding is performed by browser code, the seed strings are technically present in the built JavaScript bundle even though they are not rendered as ordinary UI content. They must therefore **not** be treated as secrets. If future product policy requires confidential system prompts, seeding and authoritative prompt retrieval must move behind the server/backend boundary.
+
+### Source-record safety
+
+Pipeline execution is read-only with respect to referenced Prompts, Prompt Versions and Mindsets. A run cannot mutate them. Saving generated text requires an explicit user action and reuses normal Prompt creation/versioning methods.

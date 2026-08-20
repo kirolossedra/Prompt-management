@@ -15,6 +15,7 @@ import { EMPTY_COLLECTIONS } from "../lib/constants";
 import { achievementById, evaluateAchievements } from "../lib/achievements";
 import { downloadAttachmentFile, readFileAsBase64, validateAttachmentBatch } from "../lib/attachments";
 import { validatePromptRelation } from "../lib/relationships";
+import { DEFAULT_PROMPT_BLOCK_TRANSFORM_PROMPTS } from "../prompt-blocks/defaultTransformPrompts";
 import {
   archiveBlockers,
   cleanText,
@@ -40,6 +41,9 @@ import type {
   Prompt,
   PromptAttachment,
   PromptFinderFeedback,
+  PromptBlockAiOperation,
+  PromptBlockPipeline,
+  PromptBlockTransformPrompt,
   PromptRelation,
   PromptSnapshot,
   PromptVersion,
@@ -87,6 +91,14 @@ interface VaultContextValue {
   savePromptFinderFeedback: (input: PromptFinderFeedbackInput) => Promise<string>;
   recordPromptRepurpose: (sourcePromptId: string) => Promise<void>;
   recordPromptMix: (sourcePromptIds: string[], sourceCount?: number) => Promise<void>;
+  createPromptBlockPipeline: (input: Pick<PromptBlockPipeline, "title" | "description" | "blocks" | "connections">) => Promise<string>;
+  updatePromptBlockPipeline: (id: string, patch: Partial<Pick<PromptBlockPipeline, "title" | "description" | "blocks" | "connections">>) => Promise<void>;
+  archivePromptBlockPipeline: (id: string) => Promise<void>;
+  restorePromptBlockPipeline: (id: string) => Promise<void>;
+  deletePromptBlockPipeline: (id: string) => Promise<void>;
+  updatePromptBlockTransformPrompt: (operation: PromptBlockAiOperation, content: string) => Promise<void>;
+  recordPromptBlockRun: (pipelineId: string | undefined, label: string) => Promise<void>;
+  recordPromptBlockOutputSaved: (pipelineId: string | undefined, promptId: string, label: string) => Promise<void>;
   createGlobalVersion: (title: string, summary: string) => Promise<string>;
   saveProfile: (patch: Partial<WorkspaceProfile>) => Promise<void>;
   exportWorkspace: () => void;
@@ -229,6 +241,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   const [connection, setConnection] = useState<ConnectionState>("idle");
   const achievementWritesInFlight = useRef(new Set<AchievementId>());
   const sessionRecordedRef = useRef("");
+  const promptBlockSeededForUserRef = useRef("");
 
   const recordActivity = useCallback(
     async (action: ActivityAction, entityType: string, entityId: string, label: string) => {
@@ -267,6 +280,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       setEngagement({ activityDays: {}, activityStats: { totalEvents: 0, actionCounts: {}, actionFirstAt: {}, actionLastAt: {} }, achievements: {} });
       setLoading(false);
       setConnection("idle");
+      promptBlockSeededForUserRef.current = "";
       return;
     }
 
@@ -286,6 +300,8 @@ export function VaultProvider({ children }: { children: ReactNode }) {
           promptAttachments: normalizeCollection<PromptAttachment>(value.promptAttachments),
           promptRelations: normalizeCollection<PromptRelation>(value.promptRelations),
           promptFinderFeedback: normalizeCollection<PromptFinderFeedback>(value.promptFinderFeedback),
+          promptBlockPipelines: normalizeCollection<PromptBlockPipeline>(value.promptBlockPipelines),
+          promptBlockTransformPrompts: normalizeCollection<PromptBlockTransformPrompt>(value.promptBlockTransformPrompts),
           mindsets: normalizeCollection<Mindset>(value.mindsets),
           preferences: normalizeCollection<Preference>(value.preferences),
           localCommits: normalizeCollection<LocalCommit>(value.localCommits),
@@ -310,6 +326,39 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       },
     );
   }, [user]);
+
+  useEffect(() => {
+    if (!user || connection !== "connected" || promptBlockSeededForUserRef.current === user.uid) return;
+    const missing = Object.values(DEFAULT_PROMPT_BLOCK_TRANSFORM_PROMPTS).filter((item) => !data.promptBlockTransformPrompts[item.operation]);
+    if (!missing.length) {
+      promptBlockSeededForUserRef.current = user.uid;
+      return;
+    }
+    promptBlockSeededForUserRef.current = user.uid;
+    const now = Date.now();
+    const stamp = userStamp(user);
+    const writes: Record<string, unknown> = {};
+    missing.forEach((item) => {
+      writes[`${VAULT_ROOT}/${user.uid}/promptBlockTransformPrompts/${item.operation}`] = {
+        id: item.operation,
+        operation: item.operation,
+        title: item.title,
+        content: item.content,
+        seedVersion: item.seedVersion,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: stamp,
+        updatedBy: stamp,
+        archivedAt: null,
+        archivedBy: null,
+      } satisfies PromptBlockTransformPrompt;
+    });
+    void update(ref(database), writes).catch((error) => {
+      promptBlockSeededForUserRef.current = "";
+      console.error("Could not seed Prompt Blocks transformation prompts:", error);
+      toast.error("Prompt Blocks could not initialize its transformation prompts.");
+    });
+  }, [connection, data.promptBlockTransformPrompts, user]);
 
   useEffect(() => {
     if (!user || connection !== "connected") return;
@@ -769,6 +818,102 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     [recordActivity],
   );
 
+  const createPromptBlockPipeline = useCallback(
+    async (input: Pick<PromptBlockPipeline, "title" | "description" | "blocks" | "connections">) => {
+      if (!user) throw new Error("A signed-in user is required.");
+      const title = cleanText(input.title, 240);
+      if (!title) throw new Error("Pipeline title is required.");
+      const itemRef = push(ref(database, `${VAULT_ROOT}/${user.uid}/promptBlockPipelines`));
+      if (!itemRef.key) throw new Error("Firebase could not allocate a pipeline identifier.");
+      const now = Date.now();
+      const stamp = userStamp(user);
+      const record: PromptBlockPipeline = {
+        id: itemRef.key,
+        title,
+        description: cleanText(input.description, 10_000),
+        schemaVersion: 1,
+        blocks: clone(input.blocks || {}),
+        connections: clone(input.connections || {}),
+        createdAt: now,
+        updatedAt: now,
+        createdBy: stamp,
+        updatedBy: stamp,
+        archivedAt: null,
+        archivedBy: null,
+      };
+      await update(ref(database), { [`${VAULT_ROOT}/${user.uid}/promptBlockPipelines/${itemRef.key}`]: record });
+      await recordActivity("ai.prompt-block.pipeline-created", "promptBlockPipelines", itemRef.key, title);
+      return itemRef.key;
+    },
+    [recordActivity, user],
+  );
+
+  const updatePromptBlockPipeline = useCallback(
+    async (id: string, patch: Partial<Pick<PromptBlockPipeline, "title" | "description" | "blocks" | "connections">>) => {
+      if (!user) throw new Error("A signed-in user is required.");
+      const current = data.promptBlockPipelines[id];
+      if (!current) throw new Error("This Prompt Blocks pipeline no longer exists.");
+      const sanitized: Record<string, unknown> = { updatedAt: Date.now(), updatedBy: userStamp(user) };
+      if (typeof patch.title === "string") {
+        const title = cleanText(patch.title, 240);
+        if (!title) throw new Error("Pipeline title is required.");
+        sanitized.title = title;
+      }
+      if (typeof patch.description === "string") sanitized.description = cleanText(patch.description, 10_000);
+      if (patch.blocks) sanitized.blocks = clone(patch.blocks);
+      if (patch.connections) sanitized.connections = clone(patch.connections);
+      await update(ref(database, `${VAULT_ROOT}/${user.uid}/promptBlockPipelines/${id}`), sanitized);
+      await recordActivity("ai.prompt-block.pipeline-updated", "promptBlockPipelines", id, String(sanitized.title || current.title));
+    },
+    [data.promptBlockPipelines, recordActivity, user],
+  );
+
+  const archivePromptBlockPipeline = useCallback(async (id: string) => {
+    if (!user) throw new Error("A signed-in user is required.");
+    const current = data.promptBlockPipelines[id];
+    if (!current) throw new Error("This Prompt Blocks pipeline no longer exists.");
+    await update(ref(database, `${VAULT_ROOT}/${user.uid}/promptBlockPipelines/${id}`), { archivedAt: Date.now(), archivedBy: userStamp(user), updatedAt: Date.now(), updatedBy: userStamp(user) });
+    await recordActivity("record.archived", "promptBlockPipelines", id, current.title);
+  }, [data.promptBlockPipelines, recordActivity, user]);
+
+  const restorePromptBlockPipeline = useCallback(async (id: string) => {
+    if (!user) throw new Error("A signed-in user is required.");
+    const current = data.promptBlockPipelines[id];
+    if (!current) throw new Error("This Prompt Blocks pipeline no longer exists.");
+    await update(ref(database, `${VAULT_ROOT}/${user.uid}/promptBlockPipelines/${id}`), { archivedAt: null, archivedBy: null, updatedAt: Date.now(), updatedBy: userStamp(user) });
+    await recordActivity("record.restored", "promptBlockPipelines", id, current.title);
+  }, [data.promptBlockPipelines, recordActivity, user]);
+
+  const deletePromptBlockPipeline = useCallback(async (id: string) => {
+    if (!user) throw new Error("A signed-in user is required.");
+    const current = data.promptBlockPipelines[id];
+    if (!current) throw new Error("This Prompt Blocks pipeline no longer exists.");
+    await update(ref(database), { [`${VAULT_ROOT}/${user.uid}/promptBlockPipelines/${id}`]: null });
+    await recordActivity("record.deleted", "promptBlockPipelines", id, current.title);
+  }, [data.promptBlockPipelines, recordActivity, user]);
+
+  const updatePromptBlockTransformPrompt = useCallback(async (operation: PromptBlockAiOperation, content: string) => {
+    if (!user) throw new Error("A signed-in user is required.");
+    const current = data.promptBlockTransformPrompts[operation];
+    if (!current) throw new Error("This Prompt Blocks transformation prompt has not been initialized.");
+    const nextContent = cleanText(content, 40_000);
+    if (!nextContent) throw new Error("A transformation prompt cannot be empty.");
+    await update(ref(database, `${VAULT_ROOT}/${user.uid}/promptBlockTransformPrompts/${operation}`), {
+      content: nextContent,
+      updatedAt: Date.now(),
+      updatedBy: userStamp(user),
+    });
+    await recordActivity("ai.prompt-block.transform-prompt-updated", "promptBlockTransformPrompts", operation, current.title);
+  }, [data.promptBlockTransformPrompts, recordActivity, user]);
+
+  const recordPromptBlockRun = useCallback(async (pipelineId: string | undefined, label: string) => {
+    await recordActivity("ai.prompt-block.pipeline-run", "promptBlockPipelines", pipelineId || "quick", cleanText(label, 240) || "Quick Pipeline");
+  }, [recordActivity]);
+
+  const recordPromptBlockOutputSaved = useCallback(async (pipelineId: string | undefined, promptId: string, label: string) => {
+    await recordActivity("ai.prompt-block.output-saved", "prompts", promptId, cleanText(label, 240) || "Prompt Blocks output");
+  }, [recordActivity]);
+
   const createGlobalVersion = useCallback(
     async (title: string, summary: string) => {
       if (!user) throw new Error("A signed-in user is required.");
@@ -792,6 +937,8 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         promptAttachments: data.promptAttachments,
         promptRelations: data.promptRelations,
         promptFinderFeedback: data.promptFinderFeedback,
+        promptBlockPipelines: data.promptBlockPipelines,
+        promptBlockTransformPrompts: data.promptBlockTransformPrompts,
         mindsets: data.mindsets,
         preferences: data.preferences,
         localCommits: data.localCommits,
@@ -805,6 +952,8 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         promptAttachments: Object.keys(data.promptAttachments).length,
         promptRelations: Object.keys(data.promptRelations).length,
         promptFinderFeedback: Object.keys(data.promptFinderFeedback).length,
+        promptBlockPipelines: Object.keys(data.promptBlockPipelines).length,
+        promptBlockTransformPrompts: Object.keys(data.promptBlockTransformPrompts).length,
         mindsets: Object.keys(data.mindsets).length,
         preferences: Object.keys(data.preferences).length,
         decisions: Object.keys(data.decisions).length,
@@ -961,6 +1110,14 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       savePromptFinderFeedback,
       recordPromptRepurpose,
       recordPromptMix,
+      createPromptBlockPipeline,
+      updatePromptBlockPipeline,
+      archivePromptBlockPipeline,
+      restorePromptBlockPipeline,
+      deletePromptBlockPipeline,
+      updatePromptBlockTransformPrompt,
+      recordPromptBlockRun,
+      recordPromptBlockOutputSaved,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,
@@ -988,6 +1145,14 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       savePromptFinderFeedback,
       recordPromptRepurpose,
       recordPromptMix,
+      createPromptBlockPipeline,
+      updatePromptBlockPipeline,
+      archivePromptBlockPipeline,
+      restorePromptBlockPipeline,
+      deletePromptBlockPipeline,
+      updatePromptBlockTransformPrompt,
+      recordPromptBlockRun,
+      recordPromptBlockOutputSaved,
       createGlobalVersion,
       saveProfile,
       exportWorkspace,

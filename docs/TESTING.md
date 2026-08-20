@@ -93,3 +93,26 @@ The backend currently has no database/auth/business endpoints, so there is nothi
 ## 7. Required rule for migration work
 
 Every incremental migration slice must add tests at the same time as the implementation. A capability is not considered ready to replace its existing Firebase/Netlify path unless its backend behavior, authorization boundary and failure behavior are covered by automated tests appropriate to that slice.
+
+
+## 8. Prompt Blocks focused test surface
+
+Prompt Blocks adds pure-logic tests around the areas where a visual workflow can otherwise become ambiguous or unsafe.
+
+`src/prompt-blocks/graph.test.ts` covers:
+
+- deterministic topological order;
+- content-vs-constraint port compatibility;
+- cycle prevention;
+- required Fill Context inputs;
+- deterministic/unique constraint priorities.
+
+`src/prompt-blocks/runtime.test.ts` covers:
+
+- intermediate output propagation;
+- downstream blocking after an upstream AI failure;
+- Extract Style producing a constraint-typed runtime value.
+
+`src/ai/promptBlocks.test.ts` covers client response normalization and rejects invalid/empty AI output. Existing utility tests now cover saved-pipeline Prompt references as delete blockers.
+
+The Netlify Prompt Blocks endpoint should also be included in the existing `node --check netlify/functions/*.mjs` CI syntax gate. No live Gemini integration test is introduced because that would make CI depend on a billable/external model call and nondeterministic model output.

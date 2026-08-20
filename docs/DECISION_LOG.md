@@ -132,14 +132,26 @@ Preferences can be scoped globally, by Endeavor or by Task. A formal merge/overr
 
 The exact full-account deletion and whole-workspace deletion policy is not represented as a finalized product workflow in the inspected code.
 
-## Not implemented in the inspected code
+## Current implementation boundary after Prompt Blocks delivery
 
-Repository inspection found no current implementation corresponding to:
+Prompt Rating remains unimplemented in the supplied baseline.
 
-- Prompt Rating;
-- Prompt Blocks.
+Prompt Blocks is implemented in the 2026-08-19 delivery with the following finalized product decisions:
 
-Their future priority/status should be supplied by the product owner rather than inferred from old planning discussions.
+- Prompt Blocks is a typed Prompt-transformation DAG, not a generic autonomous-agent graph.
+- Input, Transformation, Constraint and Output blocks remain semantically distinct.
+- Prompt/content flow and Constraint flow use different typed connections.
+- Mindset constraints reference existing Mindset entities rather than duplicate constraint records.
+- Multiple constraints use explicit, editable integer priority; lower numbers take precedence.
+- The v1 execution model is deterministic and acyclic; loops/conditional routing are not silently introduced.
+- Running a pipeline never overwrites source Prompts. Generated values remain runtime-only unless explicitly saved.
+- Saved pipelines are first-class owner artifacts with create/update/archive/restore/delete lifecycle.
+- Quick pipelines do not require persistence.
+- System Prompt inputs support following the current Prompt or pinning a specific Prompt Version.
+- Transformation prompts are product behavior: initial thorough defaults are seeded only when missing, then the owner's Firebase records are authoritative and editable.
+- Prompt Blocks retains the existing authenticated Netlify/Gemini boundary while Spring Boot remains an emerging infrastructure-only backend.
+- Addition performs structure-aware semantic incorporation rather than literal append. Subtraction performs semantic removal while preserving unrelated meaning rather than literal string deletion.
+- Dedicated pipeline-local automatic version history is deferred; saved pipeline definitions are included in Global Version snapshots/export so future methodology versioning can be introduced deliberately.
 
 ### CI must gate both frontend and backend production deployment
 

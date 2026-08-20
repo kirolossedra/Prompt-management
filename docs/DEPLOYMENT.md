@@ -40,12 +40,13 @@ The frontend remains a Vite + React + TypeScript application. `netlify.toml` def
 - Node version: `22.12.0`;
 - SPA fallback to `/index.html`.
 
-The existing three Netlify Functions remain deployed during incremental migration:
+The existing Netlify Functions remain deployed during incremental migration:
 
 ```text
 netlify/functions/prompt-retrieval.mjs
 netlify/functions/prompt-repurpose.mjs
 netlify/functions/prompt-mix.mjs
+netlify/functions/prompt-block-transform.mjs
 ```
 
 They continue to protect Gemini credentials until that responsibility is explicitly migrated.
@@ -215,7 +216,7 @@ This distinction matters because treating the YAML as live infrastructure-as-cod
 
 The existing frontend/Netlify deployment still uses the current Firebase client variables and server-side Gemini variables documented in `.env.example` and the prior deployment configuration.
 
-`GEMINI_API_KEY` remains server-side. It must never be exposed through a browser-bundled `VITE_` variable.
+`GEMINI_API_KEY` remains server-side. It must never be exposed through a browser-bundled `VITE_` variable. Prompt Blocks can optionally use `GEMINI_PROMPT_BLOCKS_MODEL`; when unset, the function falls back to `GEMINI_MIXER_MODEL` and then its built-in Gemini default. The editable transformation instructions themselves are owner records in Firebase after first seed and are not secrets.
 
 No Firebase Admin service-account secret has been added to Render yet because backend authentication/data migration has not started.
 

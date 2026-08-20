@@ -38,17 +38,16 @@ initiatives:
     confidence: low
 - id: executable-methodology
   name: Executable Methodology
-  strategic_goal: Preserve not only individual Prompts but reusable multi-stage human-AI
-    methodology as version-controlled executable graphs.
-  status: planned
+  strategic_goal: Preserve not only individual Prompts but reusable multi-stage human-AI methodology as typed executable graphs with explicit constraints, inspectable runtime values and vault-level snapshot coverage.
+  status: completed_mvp
   milestones:
   - prompt-blocks-mvp
   issues:
   - 7
   estimated_completion:
-    value: '2026-12-20'
-    type: estimated
-    confidence: low
+    value: '2026-08-19'
+    type: delivery_fact
+    confidence: high
 - id: decision-gated-platform-expansion
   name: Decision-Gated Platform Expansion
   strategic_goal: Resolve product semantics before implementing markup parsing, collaboration,

@@ -61,6 +61,14 @@ Finder gained an explicit learning loop. The user can confirm the Prompt actuall
 
 This is a qualitative change: the AI retrieval layer starts adapting to the owner's retrieval language and distinctions rather than treating every search as isolated.
 
+### Phase E - Executable Prompt methodology (2026-08-19 delivery)
+
+Prompt Blocks introduces a reusable visual Prompt-processing methodology layer. Unlike Mixer, it represents multiple typed stages, explicit constraints and priorities, intermediate values, branching outputs and deterministic dependency order. Saved pipeline definitions become first-class Firebase artifacts while runtime generated values remain ephemeral unless explicitly saved.
+
+The delivery also introduces owner-editable transformation prompts. Thorough initial defaults are seeded only when missing; thereafter the database copy is authoritative. Prompt Blocks reuses the existing authenticated Netlify/Gemini boundary and existing Prompt version lifecycle rather than introducing a parallel backend or versioning system.
+
+Because the supplied delivery workspace is an extracted ZIP rather than a Git checkout, this phase is identified by delivery date and implementation files rather than by inventing a commit SHA.
+
 ## 4. Feature-by-feature date rules
 
 When documenting dates elsewhere:

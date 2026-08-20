@@ -186,7 +186,95 @@ Fields:
 
 The selected Prompt remains authoritative only while it still exists and is active when building future learning examples. Historical title is retained as a snapshot for recordkeeping.
 
-## 12. Mindset
+## 12. Prompt Blocks Pipeline
+
+Stored at:
+
+```text
+intellectVault/users/{uid}/promptBlockPipelines/{pipelineId}
+```
+
+`PromptBlockPipeline` extends `BaseRecord` and contains:
+
+```text
+title
+description
+schemaVersion = 1
+blocks: Record<blockId, PromptBlockNodeDefinition>
+connections: Record<connectionId, PromptBlockConnection>
+```
+
+A `PromptBlockNodeDefinition` stores:
+
+```text
+id
+family: input | transform | constraint | output
+kind
+label
+variableLabel
+position { x, y }
+config
+```
+
+Block configuration may contain only the fields relevant to that block, including:
+
+- Direct Input text;
+- referenced `promptId`;
+- Prompt reference mode `current | pinned`;
+- pinned `promptVersionId`;
+- referenced `mindsetId`.
+
+A `PromptBlockConnection` stores:
+
+```text
+id
+sourceBlockId
+sourcePortId
+targetBlockId
+targetPortId
+flowType: content | constraint
+priority?
+```
+
+`priority` is required for constraint flow. It is not derived from node position.
+
+Generated intermediate/output text is deliberately absent from this record. A saved Pipeline describes reusable methodology, not one execution.
+
+## 13. Prompt Blocks Transformation Prompt
+
+Stored at:
+
+```text
+intellectVault/users/{uid}/promptBlockTransformPrompts/{operation}
+```
+
+`PromptBlockTransformPrompt` extends `BaseRecord` and contains:
+
+```text
+operation
+title
+content
+seedVersion
+```
+
+Operations are currently:
+
+- `context-free`
+- `extract-context`
+- `fill-context`
+- `less-detailed`
+- `more-detailed`
+- `without-markdown`
+- `with-markdown`
+- `addition`
+- `subtraction`
+- `extract-style`
+- `summarized`
+- `conclusion-only`
+
+These records are owner-editable behavior/configuration. Code defaults seed only missing records. Existing database values are not overwritten during normal loading.
+
+## 14. Mindset
 
 Fields:
 
@@ -201,7 +289,7 @@ Fields:
 
 The Mindset Construction workflow creates a global Mindset with selected Prompt IDs and `constructionMethod: prompt-selection` after deterministic text assembly and user editing.
 
-## 13. Preference
+## 15. Preference
 
 Fields:
 
@@ -213,7 +301,7 @@ Fields:
 
 Prompt-level Preference scope is not part of the current `PreferenceScopeType`.
 
-## 14. Decision
+## 16. Decision
 
 Fields:
 
@@ -227,11 +315,11 @@ Fields:
 
 The provider contains normalization logic that upgrades certain early seeded Decision text to reflect later finalized implementation decisions.
 
-## 15. Legacy Local Commit
+## 17. Legacy Local Commit
 
 `LocalCommit` remains part of the persisted domain model with fields such as display ID, message, task, changed artifacts, previous/resulting state and manual summaries. The current user-facing Prompt workflow is centered on automatic Prompt Versions rather than requiring explicit manual local commits.
 
-## 16. Global Version / Global Commit
+## 18. Global Version / Global Commit
 
 `GlobalCommit` is the persisted type backing the current **Global Versions** UI.
 
@@ -252,7 +340,7 @@ Fields include:
 
 The historical type name `GlobalCommit` remains in code, while the product UI uses Global Version terminology.
 
-## 17. Global Version Snapshot
+## 19. Global Version Snapshot
 
 The current snapshot type can contain:
 
@@ -268,6 +356,8 @@ The current snapshot type can contain:
 - `promptAttachments`
 - `promptRelations`
 - `promptFinderFeedback`
+- `promptBlockPipelines`
+- `promptBlockTransformPrompts`
 - `mindsets`
 - `preferences`
 - `localCommits`
@@ -275,7 +365,7 @@ The current snapshot type can contain:
 
 This makes a Global Version a substantially broader baseline than a Prompt-local version.
 
-## 18. Activity data
+## 20. Activity data
 
 ### ActivityDay
 
@@ -307,7 +397,7 @@ An unlock stores:
 
 Unlocks are persisted so already-earned achievements remain earned even when the live state later changes.
 
-## 19. Collection map
+## 21. Collection map
 
 The current `VaultCollections` aggregate contains:
 
@@ -319,6 +409,8 @@ endeavors
  promptAttachments
  promptRelations
  promptFinderFeedback
+ promptBlockPipelines
+ promptBlockTransformPrompts
  mindsets
  preferences
  localCommits
@@ -328,7 +420,7 @@ endeavors
 
 Activity and profile structures are managed alongside the collection aggregate rather than all being represented as generic CRUD collections.
 
-## 20. Important invariants
+## 22. Important invariants
 
 - The hierarchy is direct: Endeavor -> Task -> Prompt.
 - Folder records do not exist in the current domain model.
@@ -336,5 +428,10 @@ Activity and profile structures are managed alongside the collection aggregate r
 - Prompt relationships must remain acyclic.
 - AI Finder feedback points only to a selected Prompt ID and is filtered against the current active corpus before use as a learning example.
 - Prompt attachment limits are enforced before writes.
+- Prompt Blocks saved definitions contain no generated run values.
+- Prompt Blocks connections are typed as content or constraint and v1 graphs must remain acyclic.
+- Constraint priority is explicit persisted execution data.
+- Saved Pipeline Prompt/Prompt Version/Mindset references participate in dependency-safe archive/delete behavior.
+- Prompt Blocks transformation prompts are seeded only when missing; database-edited values are not overwritten by code defaults.
 - Archived records remain persisted and can be restored where supported.
 - Permanent deletion is dependency-aware.

@@ -249,39 +249,39 @@ milestones:
   - Failure states degrade gracefully to existing non-AI UI.
 - id: prompt-blocks-mvp
   name: Prompt Blocks MVP
-  status: planned
-  status_basis: issue_7_confirmed_scope
-  objective: Create the first reusable, persisted and version-controlled executable methodology graph
-    using named variables and deterministic DAG-style AI transformations.
+  status: completed
+  status_basis: 2026-08-19-delivery-working-tree
+  objective: Create the first reusable, persisted executable Prompt-processing methodology graph using typed blocks, named variables, explicit constraints and deterministic DAG-style AI transformations.
   issues:
   - 7
   dependencies:
   - versioned-prompt-workspace
   - ai-prompt-intelligence
   start_date:
-    value: '2026-11-02'
-    type: estimated
-    confidence: low
-  target_date:
-    value: '2026-12-20'
-    type: estimated
-    confidence: low
-    window_start: '2026-11-02'
-    window_end: '2026-12-20'
-  estimated_duration: '6-7+ weeks; Issue #7 must be decomposed before a trustworthy target can exist'
-  progress:
-    value: 0
-    type: repository_evidence
+    value: '2026-08-19'
+    type: delivery_fact
     confidence: high
-    basis: Code search found no Prompt Blocks/workflow implementation at snapshot.
+  target_date:
+    value: '2026-08-19'
+    type: delivery_fact
+    confidence: high
+    window_start: '2026-08-19'
+    window_end: '2026-08-19'
+  estimated_duration: Implemented as the 2026-08-19 delivery; historical forecast superseded.
+  progress:
+    value: 100
+    type: implementation_delivery
+    confidence: high
+    basis: Typed graph model, Firebase persistence, desktop/mobile workspace, authenticated per-block Gemini execution, intermediate inspection, branching outputs, lifecycle integration and focused tests are present in the delivery working tree.
   definition_of_done:
-  - Workflow artifact/domain model is persisted and supports CRUD plus archive/restore.
-  - Named variables and Prompt dependencies can be composed as readable DAGs such as X + Y → Z.
-  - Visual builder supports create/move/configure/connect/disconnect/duplicate/delete operations.
+  - Pipeline artifact/domain model is persisted and supports create/update/archive/restore/delete.
+  - Named variables and typed Prompt/constraint dependencies compose into a readable deterministic DAG.
+  - Visual desktop builder supports add/move/configure/connect/disconnect/delete operations; mobile uses an ordered workflow editor rather than a scaled canvas.
   - Existing Prompt references support current-version and pinned-version semantics.
-  - Execution preview produces a deterministic dependency order before any AI call.
-  - Gemini execution uses authenticated server-side boundary and preserves intermediate outputs/errors
-    for inspection.
-  - Workflow history/versioning records methodology evolution and dependency versions used for runs.
-  - Loops/conditional routing and typed non-text variables are explicitly outside MVP unless separately
-    approved.
+  - Validation/topological ordering happens before execution and cycles are rejected.
+  - Gemini execution uses the authenticated Netlify boundary and preserves intermediate outputs/errors for inspection.
+  - Constraints include real Mindset references and extracted-style runtime constraints with explicit stored priority.
+  - Transformation prompts are viewable/editable Firebase records seeded only when missing from thorough defaults.
+  - Running a pipeline never mutates source Prompt data; explicit output save reuses normal Prompt/version lifecycle.
+  - Saved definitions and transform-prompt configuration participate in Global Version snapshots/export; runtime values do not.
+  - Dedicated pipeline-local automatic history, loops, conditional routing and typed non-text variables are explicitly outside this MVP.

@@ -4,6 +4,7 @@ import {
   ArchiveRestore,
   Brain,
   BrainCircuit,
+  Boxes,
   BriefcaseBusiness,
   Camera,
   ChevronDown,
@@ -50,6 +51,7 @@ const knowledgeNav = [
 
 const aiNav = [
   ["Find Prompt", "/ai/find-prompt", Sparkles],
+  ["Prompt Blocks", "/ai/prompt-blocks", Boxes],
   ["Prompt Mixer", "/ai/prompt-mixer", Layers3],
   ["Repurpose Prompt", "/ai/repurpose-prompt", WandSparkles],
 ] as const;

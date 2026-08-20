@@ -27,6 +27,8 @@ function emptyData(): VaultCollections {
     promptAttachments: {},
     promptRelations: {},
     promptFinderFeedback: {},
+    promptBlockPipelines: {},
+    promptBlockTransformPrompts: {},
     mindsets: {},
     preferences: {},
     localCommits: {},
@@ -153,5 +155,32 @@ describe("vault-wide prompt search", () => {
       localCommitId: "",
     };
     expect(matchesPromptWords(prompt(), [version], "keyword maximization")).toBe(true);
+  });
+});
+
+describe("Prompt Blocks reference protection", () => {
+  it("blocks deleting a Prompt referenced by a saved pipeline", () => {
+    const data = emptyData();
+    data.prompts.p1 = prompt();
+    data.promptBlockPipelines.pipe1 = {
+      ...base,
+      id: "pipe1",
+      title: "Reusable methodology",
+      description: "",
+      schemaVersion: 1,
+      blocks: {
+        source: {
+          id: "source",
+          family: "input",
+          kind: "system-prompt",
+          label: "System Prompt",
+          variableLabel: "X",
+          position: { x: 0, y: 0 },
+          config: { promptId: "p1", promptReferenceMode: "current" },
+        },
+      },
+      connections: {},
+    };
+    expect(deleteBlockers("prompts", "p1", data).join(" ")).toMatch(/Prompt Blocks pipeline reference/i);
   });
 });

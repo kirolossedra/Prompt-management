@@ -2,7 +2,7 @@
 
 ## 1. Status basis
 
-This catalog describes code present at commit `6818b808dc51cf72d3698e61a6bfbfa059108f46`. Dates are taken from Git history. Where a single introducing commit can be identified, it is listed directly. Where the exact introduction is not uniquely isolated by commit message, the documentation uses the earliest commit snapshot in which the feature was verified and labels that distinction.
+This catalog uses the supplied repository baseline as historical evidence and includes the Prompt Blocks implementation delivery completed on **2026-08-19**. Historical dates are taken from Git history where available. Prompt Blocks is documented as a delivery-layer change because this working copy is an extracted repository snapshot rather than a Git checkout, so no new commit SHA is invented.
 
 ## 2. Implementation ledger
 
@@ -23,6 +23,7 @@ This catalog describes code present at commit `6818b808dc51cf72d3698e61a6bfbfa05
 | Prompt Mixer | 2026-08-08 | `40fc00e` | Prompt Mixer Feature | Exact commit |
 | Mixer arbitrary pasted/custom sources | 2026-08-08 | `6923740` | Prompt Mixer generic instead of forcing existing ones | Exact commit |
 | Finder feedback-learning / few-shot retrieval adaptation | 2026-08-18 | `6818b80` | feat: implementing feedback for AI search | Exact commit |
+| Prompt Blocks MVP | 2026-08-19 | Delivery working tree | Typed Prompt-processing DAG, editable transform prompts, reusable saved pipelines | Implemented in this delivery |
 
 ## 3. Core workspace features
 
@@ -162,13 +163,39 @@ At least two non-empty sources are synthesized into one editable Prompt. Sources
 
 **Implementation timing:** initial feature `40fc00e` on 2026-08-08; arbitrary pasted/custom sources generalized by `6923740` later the same day.
 
+### Prompt Blocks
+
+Prompt Blocks is EurekaVault's visual Prompt-processing environment. It models reusable methodology as a deterministic directed acyclic graph rather than as a single synthesis call. The first implementation distinguishes **Input**, **Transformation**, **Constraint**, and **Output** block families and uses typed content/constraint ports.
+
+Implemented capabilities include:
+
+- System Prompt inputs referencing the current Prompt or a pinned Prompt Version by ID;
+- Direct Input blocks for user-supplied Prompt/context material;
+- Context Free, Extract Context, Fill Context, Less Detailed, More Detailed, Without Markdown, With Markdown, Addition, Subtraction, and Extract Style transforms;
+- Mindset constraints referencing existing Mindsets and runtime Extracted Style constraints;
+- explicit stored/editable constraint priority;
+- As Is, Summarized and Conclusion Only outputs, including output branching;
+- deterministic DAG validation and topological execution;
+- inspectable intermediate results, block-level failures and downstream blocking;
+- temporary Quick pipelines and persisted saved pipelines with create/update/archive/restore/delete lifecycle;
+- current/pinned Prompt reference validation and dependency-safe deletion;
+- editable Firebase-backed transformation prompts seeded from thorough product defaults only when missing;
+- explicit output save into the existing Prompt creation/versioning lifecycle;
+- inclusion of saved pipeline definitions and transformation prompt configuration in Global Version snapshots/export;
+- desktop visual graph editing and a mobile-specific ordered workflow editor rather than a scaled-down canvas.
+
+Runtime generated values are not persisted into the saved graph definition. Running a pipeline never mutates a source Prompt. Only explicit save actions create a Prompt or create the next normal Prompt Version.
+
+**Implementation timing:** 2026-08-19 delivery working tree.
+
+See [`features/prompt-blocks.md`](features/prompt-blocks.md) and [`AI_PIPELINES.md`](AI_PIPELINES.md) for the full behavioral and AI contracts.
+
 ## 8. Current non-implemented/gated areas
 
-No current implementation was found for:
+The following remain non-implemented or decision-gated:
 
 - collaborative multi-user editing/sync;
 - finalized markup parsing;
-- Prompt Rating;
-- Prompt Blocks.
+- Prompt Rating.
 
-These must not be presented as implemented features unless code is added later.
+Prompt Blocks is implemented as of the 2026-08-19 delivery. Dedicated pipeline-local automatic history/version objects, loops, conditional routing, typed non-text variables and autonomous-agent behavior remain deliberately outside the MVP.

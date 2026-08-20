@@ -281,6 +281,43 @@ The Repurposer sends one source Prompt plus a new objective. Gemini returns an e
 
 The Mixer accepts at least two non-empty source windows. A source can be an existing vault Prompt or arbitrary pasted/typed Prompt text. Gemini synthesizes one editable Prompt. The result can be discarded, copied, saved as a new Prompt or saved as the next version of an existing Prompt.
 
+### Prompt Blocks
+
+Prompt Blocks adds a visual, typed Prompt-processing DAG without introducing an autonomous-agent runtime. The main boundaries are:
+
+```text
+Prompt Blocks workspace
+  ├─ graph definition editor
+  ├─ typed connection validation
+  ├─ block inspector / priority editor
+  ├─ transformation-prompt editor
+  └─ run inspector
+          │
+          ▼
+src/prompt-blocks/runtime.ts
+  ├─ validates DAG
+  ├─ resolves Prompt / Prompt Version / Mindset references
+  ├─ topologically schedules ready blocks
+  ├─ keeps intermediate runtime values in memory
+  └─ invokes AI only for AI blocks
+          │
+          ▼
+/.netlify/functions/prompt-block-transform
+          │
+          ▼
+Gemini
+```
+
+Saved methodology and runtime execution are separate. `promptBlockPipelines` stores graph definitions; generated run values are not persisted by default. `promptBlockTransformPrompts` stores owner-editable AI behavior. Both are included in Global Version snapshots and JSON export, while ephemeral run outputs are excluded.
+
+Prompt Blocks wires are not Prompt Relationships. Relationship records represent Prompt provenance/lineage; Prompt Blocks connections represent execution flow.
+
+The graph has two wire types: `content` and `constraint`. `Extract Style` emits a constraint value. Mindset blocks reference existing Mindset IDs. Constraint priority is explicit connection data rather than inferred from visual position.
+
+The first execution model is a DAG: cycles are rejected. Failed upstream blocks mark dependent blocks as blocked, while independent branches and previously completed intermediate results remain available.
+
+On mobile, the desktop canvas is replaced with an ordered block-flow representation instead of merely shrinking the canvas. The semantic graph, ports, run states, and inspector remain the same.
+
 ## 14. Search and discovery
 
 Conventional Search is separate from semantic Finder. `/search` performs deterministic word matching across active Prompt titles, descriptions, purposes, current content and saved version history, with an optional Endeavor filter.
@@ -481,13 +518,12 @@ When functional migration begins, each bounded capability must carry its tests w
 
 ## 20. Architectural boundaries and known non-features
 
-Current code inspection does **not** show implementations for:
+Current implementation still does **not** provide:
 
 - collaborative multi-user editing/sync;
 - markup parsing based on a finalized custom markup format;
-- Prompt Rating;
-- Prompt Blocks.
+- Prompt Rating.
 
-The first two are explicitly historical open/gated product areas. The latter two should not be documented as implemented unless corresponding code is added.
+Prompt Blocks is implemented in the 2026-08-19 delivery. Its MVP deliberately excludes loops, conditional routing, autonomous-agent behavior and dedicated pipeline-local automatic version history; those exclusions should not be mistaken for missing core Prompt Blocks execution.
 
 The Spring Boot service is now a real deployed backend foundation, but it is not yet the application's data/API authority. That distinction should remain explicit until actual capabilities are migrated.
