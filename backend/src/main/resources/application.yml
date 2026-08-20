@@ -6,6 +6,11 @@ server:
   port: ${PORT:8080}
   shutdown: graceful
 
+firebase:
+  admin:
+    enabled: ${FIREBASE_ADMIN_ENABLED:false}
+    service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}
+
 management:
   endpoints:
     web:
