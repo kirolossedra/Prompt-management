@@ -1,165 +1,132 @@
-schema_version: 1
-snapshot_commit: 3b61d7050f905a5c591971f6e8ecbdc8588870ac
-note: All ten GitHub Issues were open at the snapshot; no closed issues were found. Priority/complexity/milestone mappings
-  below are analytical proposals and do not modify GitHub.
+schema_version: 2
+repository: kirolossedra/Prompt-management
+snapshot_commit: 7e45248a408e372088d18cab74faef5a79523075
+note: No priority, complexity, milestone, dependency, or delivery date is inferred. `github_state` is separate from `implementation_status`.
 issues:
-- number: 1
-  title: Improve the documentations, it should be updated and reflect the latest status, and also have the roadmap and timelines,
-    what endeavours (major blocks) started and what not yet
-  state: open
-  implementation_status: in_progress
-  type: Documentation / Product Planning
-  priority: P1
-  complexity: Medium
-  milestone: productization-ux-hardening
-  dependencies: []
-  stale: false
-  partial_implementation: Commit 5b9e61d added comprehensive docs, but docs/roadmap did not yet exist and root README remained
-    stale at snapshot.
-  duplicate: false
-  needs_split: false
-  provenance: repository_fact + analysis
-- number: 2
-  title: Version comparison using AI
-  state: open
-  implementation_status: not_started
-  type: Feature / AI
-  priority: P1
-  complexity: Medium
-  milestone: configurable-ai-version-intelligence
-  dependencies:
-  - Existing deterministic Prompt version history and Git-style diff (completed)
-  stale: false
-  partial_implementation: Deterministic line diff exists, but no AI comparison implementation was found.
-  duplicate: false
-  needs_split: false
-  provenance: repository_fact + analysis
-- number: 3
-  title: base prompts modification possibility instead of having it fixed in the database
-  state: open
-  implementation_status: not_started
-  type: Architecture / Feature
-  priority: P1
-  complexity: Medium-Large
-  milestone: configurable-ai-version-intelligence
-  dependencies:
-  - Existing AI feature boundary (completed)
-  stale: false
-  partial_implementation: AI system instructions are currently hard-coded in Netlify Function source.
-  duplicate: false
-  needs_split: true
-  split_reason: Separate storage/versioning model, editing UX, fallback/default semantics, and migration of each existing
-    AI function.
-- number: 4
-  title: There should be a helper AI that inspects the underlying arhcitecture and answer basic questions
-  state: open
-  implementation_status: not_started
-  type: Feature / AI
-  priority: P2
-  complexity: Medium-Large
-  milestone: vault-intelligence-contextual-assistance
-  dependencies:
-  - Implementation-led documentation exists (completed)
-  stale: false
-  partial_implementation: No architecture-Q&A route/function found. The new docs provide a potential authoritative knowledge
-    source.
-  duplicate: false
-  needs_split: true
-  split_reason: Define knowledge source/bounds separately from assistant UI and server-side retrieval/execution.
-- number: 5
-  title: Add commit message for every commit. for previous commits make AI generate a constrained commit version for it
-  state: open
-  implementation_status: not_started
-  type: Enhancement / AI / Versioning
-  priority: P2
-  complexity: Medium
-  milestone: configurable-ai-version-intelligence
-  dependencies:
-  - Prompt version history (completed)
-  - 'Recommended reuse of AI version comparison #2'
-  stale: false
-  partial_implementation: PromptVersion already stores changeDescription, but no AI backfill/generation workflow was found.
-  duplicate: false
-  needs_split: false
-  needs_refinement: true
-  refinement_note: Clarify whether “commit” means Prompt-local versions, legacy localCommits, Global Versions, or Git commits.
-    Product context suggests Prompt/version history but repository evidence does not resolve the wording.
-- number: 6
-  title: when in vault explorer hover to display the full name and a brief summary AI generated about this prompt.
-  state: open
-  implementation_status: not_started
-  type: UX / AI
-  priority: P2
-  complexity: Medium
-  milestone: vault-intelligence-contextual-assistance
-  dependencies:
-  - Summary generation/freshness/caching design
-  stale: false
-  partial_implementation: No hover AI-summary implementation found.
-  duplicate: false
-  needs_split: false
-- number: 7
-  title: Prompt Blocks
-  state: open
-  implementation_status: implemented_in_2026-08-19-delivery
-  type: Epic / Feature / Architecture
-  priority: P1-Strategic
-  complexity: Epic / Very Large
-  milestone: prompt-blocks-mvp
-  dependencies:
-  - Prompt versioning (completed)
-  - Authenticated Gemini boundary (completed)
-  - Prompt Blocks workflow persistence/runtime model (completed in delivery)
-  stale: true
-  partial_implementation: Core Prompt Blocks MVP is implemented in the delivery working tree. Remaining post-MVP scope includes dedicated pipeline-local automatic history, loops/conditions and richer workflow evolution if later approved.
-  duplicate: false
-  needs_split: false
-  split_reason: null
-- number: 8
-  title: when you click on new prompt it lingers and it is so shitty needs immediate fix
-  state: open
-  implementation_status: bug_reported_root_cause_unverified
-  type: Bug / UX
-  priority: P0
-  complexity: Small-Medium until reproduced
-  milestone: productization-ux-hardening
-  dependencies: []
-  stale: false
-  partial_implementation: New Prompt uses generic EntityDialog and submit calls onClose after successful create, so the reported
-    lingering behavior is not explained by an obvious missing close call. Reproduction is required.
-  duplicate: false
-  needs_split: false
-- number: 9
-  title: Rebranding the Product as EurekaVault
-  state: open
-  implementation_status: in_progress
-  type: Product / UX / Branding
-  priority: P1
-  complexity: Medium
-  milestone: productization-ux-hardening
-  dependencies: []
-  stale: false
-  partial_implementation: 'HEAD commit 3b61d705 is explicitly “issue #9 part1”; visible strings/package/server prompts are
-    partly renamed, while requested Greek identity/slogan/Archimedes logo are not evidenced complete and sidebar brand mark
-    remains IV.'
-  duplicate: false
-  needs_split: true
-  split_reason: Separate product naming sweep, visual identity/logo, landing/auth experience, and acceptance sweep for remaining
-    legacy identity.
-- number: 10
-  title: Frontend Overhaul
-  state: open
-  implementation_status: not_started_needs_refinement
-  type: UX / Enhancement
-  priority: P1
-  complexity: Medium-Large (unknown until refined)
-  milestone: productization-ux-hardening
-  dependencies:
-  - 'Recommended: settle rebrand visual identity #9 first'
-  stale: false
-  partial_implementation: Existing app already has Motion animations and light/dark/system themes. Issue was created after
-    current HEAD, so its requested delta is not implemented and needs acceptance criteria.
-  duplicate: false
-  needs_split: true
-  split_reason: “Animations, themes” is too broad to estimate or verify; define target screens, motion principles, theme changes
-    and regression criteria.
+  - number: 1
+    title: Improve the documentations, it should be updated and reflect the latest status, and also have the roadmap and timelines, what endeavours (major blocks) started and what not yet
+    github_state: open
+    labels: []
+    github_milestone: null
+    implementation_status: in_progress
+    evidence_commits: [5b9e61d, 2e9aa3f, c7c2727]
+    note: This evidence-driven cleanup further addresses the Issue without changing its GitHub state.
+  - number: 2
+    title: Version comparison using AI
+    github_state: open
+    labels: []
+    github_milestone: null
+    implementation_status: not_started
+    note: Deterministic Git-style version diff exists, but no AI version-comparison workflow was found.
+  - number: 3
+    title: base prompts modification possibility instead of having it fixed in the database
+    github_state: open
+    labels: [architecture, epic]
+    github_milestone: null
+    implementation_status: partial
+    evidence_commits: [b556e64]
+    note: Prompt Blocks transformation prompts are owner-editable Firebase records; the broad all-feature request and dedicated revision history are not implemented.
+  - number: 4
+    title: There should be a helper AI that inspects the underlying arhcitecture and answer basic questions
+    github_state: open
+    labels: [epic]
+    github_milestone: null
+    implementation_status: not_started
+  - number: 5
+    title: Add commit message for every commit. for previous commits make AI generate a constrained commit version for it
+    github_state: open
+    labels: [enhancement]
+    github_milestone: null
+    implementation_status: not_started
+  - number: 6
+    title: when in vault explorer hover to display the full name and a brief summary AI generated about this prompt.
+    github_state: open
+    labels: [enhancement, frontend]
+    github_milestone: null
+    implementation_status: not_started
+  - number: 7
+    title: Prompt Blocks
+    github_state: open
+    labels: [epic]
+    github_milestone: null
+    implementation_status: mvp_implemented_issue_still_open
+    evidence_commits: [b556e64, e079616, 90b6799, 7e45248]
+    note: The implemented MVP does not imply approval of every later/future possibility described in the large Issue body.
+  - number: 8
+    title: when you click on new prompt it lingers and it is so shitty needs immediate fix
+    github_state: open
+    labels: [bug, frontend]
+    github_milestone: null
+    implementation_status: unresolved_bug
+  - number: 9
+    title: Rebranding the Product as EurekaVault
+    github_state: open
+    labels: [product]
+    github_milestone: null
+    implementation_status: partially_implemented
+    evidence_commits: [3b61d70, 22916bb, 66ecfbb, a5e27b5, 349b24f]
+    note: EurekaVault naming/identity, Greek/Alexandrian motifs, palette, and navigation/landing work exist; Issue remains open.
+  - number: 10
+    title: Frontend Overhaul
+    github_state: open
+    labels: [frontend]
+    github_milestone: null
+    implementation_status: partially_evidenced
+    evidence_commits: [22916bb, 66ecfbb, a5e27b5, 349b24f]
+    note: The Issue body is broad (animations/themes); several frontend changes landed after creation, but the Issue has no acceptance criteria and remains open.
+  - number: 11
+    title: CI/CD
+    github_state: open
+    labels: [epic]
+    github_milestone: null
+    implementation_status: core_implemented_issue_still_open
+    evidence_commits: [3d2bfa9, 54373c9, 3259398, 6aad9a0]
+  - number: 12
+    title: 2-tier to 3-tier
+    github_state: open
+    labels: [architecture, epic]
+    github_milestone: null
+    implementation_status: in_progress_foundation
+    evidence_commits: [4a3cc23]
+    issue_comment: "It's gonna be springboot"
+    note: Spring Boot/Render foundation is real; functional Firebase/AI migration remains unfinished.
+  - number: 13
+    title: Favorite or bookmarking prompts either manually or based on AI recommendation when it is searched multiple times
+    github_state: open
+    labels: []
+    github_milestone: null
+    implementation_status: not_started
+  - number: 14
+    title: on the phone decisions is obscured by the bottom baar
+    github_state: open
+    labels: [bug, frontend]
+    github_milestone: null
+    implementation_status: unresolved_bug
+  - number: 15
+    title: instead of relationships as a separate feature why not just create instance system, same prompt, different instances?! much more efficient while still keeping visualizations
+    github_state: open
+    labels: []
+    github_milestone: null
+    implementation_status: design_proposal
+    note: This is recorded as a question/proposal, not an approved migration or commitment.
+  - number: 16
+    title: why does Frontend modifications trigger backend deployment?
+    github_state: open
+    labels: []
+    github_milestone: null
+    implementation_status: unresolved_cicd_behavior
+    note: The current production deployment workflow can trigger both deployment jobs after successful main CI and has no frontend/backend path-aware deployment split.
+  - number: 17
+    title: add saved pipeline beautify, and printing the design for it.
+    github_state: open
+    labels: []
+    github_milestone: null
+    implementation_status: addressed_in_code_issue_still_open
+    evidence_commits: [7e45248]
+  - number: 18
+    title: you can't scroll down to see the output of the last prompt
+    github_state: open
+    labels: []
+    github_milestone: null
+    implementation_status: addressed_in_code_issue_still_open
+    evidence_commits: [7e45248]

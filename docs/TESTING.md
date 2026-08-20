@@ -84,15 +84,15 @@ All three CI jobs must succeed before the production deployment workflow is elig
 
 ## 6. Current limitations
 
-No browser end-to-end suite, Firebase Emulator integration suite, or live Gemini integration suite is currently present. That is intentional at this stage: those tests should be added when the relevant boundaries are migrated or when a stable end-to-end test environment is defined.
+No browser end-to-end suite, Firebase Emulator integration suite, or live Gemini integration suite is currently present. This is a coverage limitation, not an implied roadmap item.
 
-The current frontend repository also has no committed npm lock file. CI uses `npm install`. A lock file should be introduced before dependency reproducibility is treated as guaranteed.
+The current frontend repository also has no committed npm lock file. CI therefore uses `npm install`; deterministic dependency locking is not claimed.
 
-The backend currently has no database/auth/business endpoints, so there is nothing legitimate to test yet for backend CRUD, Firebase Admin access, authorization, data ownership, or Gemini integration. Those tests must arrive together with each migrated capability rather than after it.
+The Spring Boot backend currently has no database/auth/business endpoints, so the backend suite correctly contains no CRUD, Firebase Admin, user-authorization, data-ownership, or Gemini business tests.
 
-## 7. Required rule for migration work
+## 7. Migration validation criterion
 
-Every incremental migration slice must add tests at the same time as the implementation. A capability is not considered ready to replace its existing Firebase/Netlify path unless its backend behavior, authorization boundary and failure behavior are covered by automated tests appropriate to that slice.
+GitHub Issue #12 makes the backend migration real scope. For documentation purposes, a migrated capability should only be described as replacing its Firebase/Netlify path once the repository contains the replacement behavior and appropriate validation of its authorization/failure boundary. This is a completion criterion, not a claim about which capability will migrate next.
 
 
 ## 8. Prompt Blocks focused test surface
@@ -122,6 +122,6 @@ Prompt Blocks adds pure-logic tests around the areas where a visual workflow can
 
 `src/ai/promptBlocks.test.ts` covers client response normalization and rejects invalid/empty AI output. Existing utility tests now cover saved-pipeline Prompt references as delete blockers.
 
-The Netlify Prompt Blocks endpoint should also be included in the existing `node --check netlify/functions/*.mjs` CI syntax gate. No live Gemini integration test is introduced because that would make CI depend on a billable/external model call and nondeterministic model output.
+The existing CI syntax loop covers every `netlify/functions/*.mjs` file, so the Prompt Blocks endpoint is included automatically. No live Gemini integration test is present; CI therefore does not depend on a billable/external model call or nondeterministic model output.
 
-UI regression coverage should specifically preserve the Prompt Blocks workspace invariants introduced after the first visual delivery: the run inspector must remain independently scrollable on desktop, loading a saved pipeline must invoke the pure beautification layout, a no-output run must require explicit user confirmation, and print media must exclude application controls while retaining the methodology graph. The layout behavior is covered in pure tests; browser-level scroll/print behavior should be added when the repository adopts an end-to-end browser test runner.
+The layout engine is covered by pure tests. Browser-level behavior such as actual scroll-container reachability and the browser print dialog is not covered by an end-to-end browser suite in the current repository.

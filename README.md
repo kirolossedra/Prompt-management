@@ -1,18 +1,17 @@
-# EurekaVault — React Release 1 Foundation
+# EurekaVault
 
 A private, version-controlled workspace for Prompts, methodologies, preferences, Prompt lineage, and AI-assisted Prompt intelligence.
 
+> **Evidence baseline:** GitHub `main` at `7e45248a408e372088d18cab74faef5a79523075` (commit date: 2026-08-20 UTC). This package contains a documentation/RoadmapPage cleanup on top of that baseline and does not invent a replacement commit SHA. Roadmap status is derived from actual GitHub Issues/labels and commit evidence; it does **not** invent delivery dates, priorities, percentages, or future commitments.
+
 ## Stack
 
-- React 19 + TypeScript
-- Vite 8
+- React 19 + TypeScript + Vite 8
 - Firebase Authentication + Realtime Database
-- Motion for accessible layout, page, drawer, and dialog animation
-- React Router
-- Lucide icons
-- Sonner notifications
-- Netlify Functions for server-side Gemini access
-- Spring Boot 4.1 / Java 21 migration backend (incremental 3-tier foundation)
+- Motion, React Router, Lucide, and Sonner
+- Netlify Functions for the currently deployed Gemini boundary
+- Spring Boot 4.1 / Java 21 backend foundation for the explicit 2-tier → 3-tier migration
+- GitHub Actions quality gates and gated Netlify/Render deployment hooks
 
 ## Run locally
 
@@ -29,15 +28,7 @@ npm run test
 npm run build
 ```
 
-### CI/CD safety gate
-
-Before functional migration continues, GitHub Actions now validates both tiers. Frontend CI runs ESLint, the Vitest suite, the production Vite build, and Netlify Function syntax checks. Backend CI runs Maven `clean verify`, Spring integration tests, then builds and boots the actual Docker image and verifies `/actuator/health`.
-
-Production deployment is designed to occur only after successful CI on `main`: GitHub Actions triggers Netlify and Render through protected deployment hooks. See `docs/CI-CD.md`, `docs/TESTING.md`, and `docs/DEPLOYMENT.md` for the complete contract and required host settings.
-
-### Spring Boot migration backend
-
-The first incremental 3-tier migration step lives under `backend/`. It currently exposes infrastructure health only; existing Firebase CRUD and Netlify AI behavior are intentionally unchanged.
+Spring Boot backend foundation:
 
 ```bash
 cd backend
@@ -50,189 +41,109 @@ Health endpoint:
 http://localhost:8080/actuator/health
 ```
 
-## Firebase setup
+## Current architecture boundary
 
-The supplied Firebase project configuration is included as a fallback in `src/lib/firebase.ts`. The public Firebase web configuration is safe to ship, but database access must be enforced by server-side Realtime Database rules.
+EurekaVault is **not yet fully 3-tier**. The migration requested in GitHub Issue #12 has started, and the Spring Boot service exists, but current application traffic still has two legacy paths:
 
-Merge `database.rules.json` with the project's existing rules. The important owner-only branch is:
-
-```json
-"intellectVault": {
-  "users": {
-    "$uid": {
-      ".read": "auth != null && auth.uid === $uid",
-      ".write": "auth != null && auth.uid === $uid"
-    }
-  }
-}
+```text
+React client
+  ├─ Firebase Authentication + Realtime Database   (vault CRUD still direct)
+  ├─ Netlify Functions → Gemini                    (AI calls still here)
+  └─ Spring Boot on Render                         (migration foundation / health today)
 ```
 
-Enable Email/Password in Firebase Authentication.
+The repository therefore distinguishes the **deployed backend foundation** from the **unfinished functional migration** rather than calling the migration complete.
 
 ## Implemented product areas
 
-- Account creation, sign-in, sign-out, verification email, and password reset
+- Account creation, sign-in/sign-out, verification email, and password reset
 - Owner-private Firebase workspace
 - Direct `Endeavor → Task → Prompt → Prompt Version` hierarchy
-- Automatic Prompt-local version history for Prompt creation and saved edits
-- Git-style Prompt version comparison and historical restore-as-new-version behavior
-- Prompt file attachments with per-file, per-Prompt count, and aggregate size limits
-- Explicit `inspired-by / inspires` Prompt lineage with cycle prevention and exportable relationship maps
+- Automatic Prompt-local version history and historical restore-as-new-version behavior
+- Git-style Prompt version comparison
+- Prompt file attachments
+- Directed `inspired-by / inspires` Prompt lineage with cycle prevention and map export
 - Mindsets, Preferences, deterministic Mindset Construction, Decisions, Archive, and Global Versions
 - Activity tracking and Achievements
-- Vault-wide Prompt search, command palette, responsive navigation, and light/dark/system themes
-- Gemini-backed Semantic Prompt Finder, Prompt Repurposer, Prompt Mixer, and Prompt Blocks through authenticated Netlify Functions
-- Prompt Blocks visual Prompt-transformation DAG with typed content/constraint flow, explicit priority, inspectable intermediate values, quick/saved pipelines, current/pinned Prompt references, and branching outputs
-- Editable Prompt Blocks transformation prompts seeded once into Firebase and thereafter treated as database-controlled behavior
-- Finder feedback learning: user-confirmed search → Prompt mappings become bounded few-shot retrieval examples
+- Vault-wide Prompt search, command palette, responsive navigation, and themes
+- Gemini-backed Semantic Prompt Finder, Prompt Repurposer, and Prompt Mixer
+- Finder feedback learning from explicit user-confirmed query → Prompt mappings
+- Prompt Blocks typed visual DAG with saved/quick pipelines, current/pinned Prompt references, typed content/constraint flow, explicit priority, branching, inspectable intermediates, and explicit output saving
+- Prompt Blocks refinements from Issues #17/#18: compact IDE-style controls, deterministic beautification, print layout, output-intent warning, and reachable/scrollable final run output
+- EurekaVault identity work including the epsilon mark, Alexandrian lighthouse motif, Greek identity copy, and the light-blue/gold/royal-red palette
+- Spring Boot/Render migration foundation
+- CI/CD quality gates and deployment gating
 
-## Not implemented / decision-gated
+## GitHub-backed roadmap
 
-Prompt Blocks MVP is now implemented in this delivery. Dedicated pipeline-local automatic version history remains a future extension; saved definitions are already included in Global Version snapshots and workspace export.
+The repository currently has **no GitHub Milestones configured**. The canonical future-scope evidence is the set of user-created GitHub Issues. The `epic` label is present on exactly these five issues in the inspected snapshot:
 
-
-- Markup-defined hierarchy parsing — blocked by unresolved markup-format decisions
-- Collaboration — blocked by unresolved ownership, permissions, synchronization, and conflict semantics
-- Formal Mindset inheritance/conflict rules and Preference precedence rules remain open architectural decisions
-
-# Product Roadmap
-
-> **Roadmap snapshot:** repository `main` at `3b61d705` on August 18, 2026. Historical dates are repository facts. Future dates and percentages below are analytical estimates and are explicitly labeled as such.
-
-## Current Product Phase
-
-**Phase 4 — Productization & Intelligence Expansion (current).**
-
-EurekaVault already has a functional versioned Prompt vault and three production-shaped Gemini workflows. The current repository evidence shows the product moving from rapid capability construction into productization: documentation modernization, the EurekaVault rebrand, UX cleanup, and establishment of a maintainable planning system before the next AI-intelligence and workflow-orchestration layers.
-
-## Completed Major Milestones
-
-| Milestone | Completed | Outcome |
+| Epic | GitHub state | Implementation evidence |
 |---|---|---|
-| React Vault Foundation | Aug 6, 2026 | React/TypeScript/Vite + Firebase authentication/private persistence + core CRUD lifecycle |
-| Versioned Prompt Workspace | Aug 7–8, 2026 | Prompt copying, automatic history, Mindset Construction, major UX overhaul, Git-style diffs |
-| Prompt Knowledge Graph & Engagement | Aug 8, 2026 | Attachments, relationships/map, activity tracking, achievements |
-| AI Prompt Intelligence | Aug 8, 2026 | Semantic Finder, Repurposer, Mixer, then arbitrary pasted Mixer sources |
-| Adaptive Retrieval | Aug 18, 2026 | Finder learns from explicitly confirmed query → Prompt choices |
-| Documentation Modernization | Aug 18, 2026 | Comprehensive implementation-led technical documentation added to `docs/` |
+| #3 — Base prompts modification/customization + revision history | Open | **Partial only:** Prompt Blocks transformation prompts are editable Firebase records, but the broad cross-feature epic is not implemented. |
+| #4 — Architecture helper AI | Open | No implementation evidence found. |
+| #7 — Prompt Blocks | Open | **MVP implemented** by `b556e64`; workspace refinements landed in `7e45248`. The open Issue contains broader ideas beyond the implemented MVP and is not treated as a promise to build every idea in it. |
+| #11 — CI/CD | Open | **Core implemented** by `3d2bfa9`, `54373c9`, and follow-up CI fixes. |
+| #12 — 2-tier → 3-tier | Open | **In progress:** Spring Boot foundation introduced by `4a3cc23`; the Issue comment explicitly chooses Spring Boot. Functional data/AI migration is not complete. |
 
-## Current Milestone
+Other open Issues remain individual bugs, enhancements, product work, or design questions. They are listed without invented sequencing in [`docs/roadmap/issue-mapping.yaml`](docs/roadmap/issue-mapping.yaml).
 
-### EurekaVault Productization & UX Hardening
-
-**Status:** Active — analytically inferred from the latest commit and open backlog.  
-**Estimated progress:** ~30% (**estimate, low/medium confidence**).  
-**Estimated completion window:** **Aug 24–Sep 6, 2026** (**forecast, low confidence**).
-
-Primary scope:
-
-- #1 finish roadmap/planning documentation and remove remaining public documentation drift;
-- #8 reproduce and fix the New Prompt lingering UI defect;
-- #9 complete the EurekaVault identity change beyond the current “part1” commit;
-- #10 refine and implement the requested frontend animation/theme overhaul without regressing existing responsive/theme behavior.
-
-## Planned Milestones
-
-| Milestone | Evidence | Estimated completion window | Confidence | Primary objective |
-|---|---|---|---|---|
-| Configurable AI & Version Intelligence | Issues #2, #3, #5 | Sep 21–Oct 11, 2026 | Low | User-configurable AI building prompts plus AI-assisted version/change interpretation |
-| Vault Intelligence & Contextual Assistance | Issues #4, #6 | Oct 12–Nov 1, 2026 | Low | Architecture-aware helper AI and contextual Prompt summaries in the vault UI |
-| Prompt Blocks MVP | Implemented Aug 19, 2026 | Completed | High | Typed Prompt-processing DAG, editable transformation prompts, reusable saved pipelines, deterministic execution, intermediate inspection and branching outputs |
-
-Markup parsing and collaboration remain confirmed long-term decision gates, but no delivery dates are assigned because their product/architecture decisions are still unresolved and no GitHub Issues currently define executable scope.
-
-## Strategic Initiatives
-
-1. **Product Experience & Identity** — documentation, EurekaVault rebrand, usability defects, frontend quality.
-2. **Prompt Intelligence & Explainability** — configurable AI instructions, version intelligence, architecture Q&A, contextual summaries.
-3. **Executable Methodology** — Prompt Blocks is now implemented; future work can deepen methodology-local history, reproducibility metadata, and approved advanced routing without turning it into a generic agent graph.
-4. **Decision-Gated Platform Expansion** — markup parsing, collaboration, inheritance/precedence semantics, workspace deletion policy.
-
-## Timeline
+### Commit-backed delivery history
 
 <!-- ROADMAP-GANTT:START -->
 ```mermaid
 gantt
-    title EurekaVault Product Roadmap
+    title EurekaVault Delivery History — Commit Evidence Only
     dateFormat YYYY-MM-DD
     axisFormat %b %d
 
-    section Completed
+    section Delivered
     React Vault Foundation                      :done, react-vault-foundation, 2026-08-06, 1d
     Versioned Prompt Workspace                  :done, versioned-prompt-workspace, 2026-08-07, 2026-08-08
     Prompt Knowledge Graph & Engagement         :done, prompt-knowledge-graph-engagement, 2026-08-08, 1d
     AI Prompt Intelligence                      :done, ai-prompt-intelligence, 2026-08-08, 1d
     Adaptive Retrieval                          :done, adaptive-retrieval, 2026-08-18, 1d
-    Documentation Modernization                 :done, documentation-modernization, 2026-08-18, 1d
-    Prompt Blocks MVP                           :done, prompt-blocks-mvp, 2026-08-19, 1d
-
-    section Current - forecast
-    EurekaVault Productization & UX Hardening   :active, productization-ux-hardening, 2026-08-18, 2026-09-06
-
-    section Planned - forecast
-    Configurable AI & Version Intelligence      :configurable-ai-version-intelligence, 2026-09-07, 2026-10-11
-    Vault Intelligence & Contextual Assistance  :vault-intelligence-contextual-assistance, 2026-10-12, 2026-11-01
+    Documentation + Product Identity            :done, docs-product-identity, 2026-08-18, 1d
+    Spring Boot Migration Foundation            :done, spring-boot-foundation, 2026-08-19, 1d
+    CI/CD Quality + Deployment Gate             :done, cicd-gate, 2026-08-19, 1d
+    Prompt Blocks MVP + Refinement              :done, prompt-blocks, 2026-08-20, 1d
 ```
 <!-- ROADMAP-GANTT:END -->
 
-## Milestone Progress
+This chart is historical. It deliberately contains **no future bars**.
 
-```text
-Productization & UX Hardening          ███░░░░░░░  ~30% estimated
-Configurable AI & Version Intelligence ░░░░░░░░░░    0% repository evidence
-Vault Intelligence & Assistance        ░░░░░░░░░░    0% repository evidence
-Prompt Blocks MVP                      ██████████  100% implementation delivery
+## Open Issue backlog — no inferred schedule
+
+As of the snapshot, Issues #1–#18 are open on GitHub. Several have implementation evidence despite remaining open, so the repository does not equate “open” with “not implemented.” In particular, #7, #11, #17, and #18 have substantial or direct implementation evidence.
+
+The following are explicitly **not promoted into roadmap commitments** merely because they appeared in older generated documentation: markup-defined hierarchy parsing, collaboration, formal Mindset inheritance rules, Preference precedence systems, and workspace deletion initiatives. They have no corresponding GitHub Issue/epic in this snapshot and are removed from the roadmap.
+
+## Roadmap source files
+
+- [`docs/roadmap/README.md`](docs/roadmap/README.md) — evidence and maintenance policy
+- [`docs/roadmap/roadmap.yaml`](docs/roadmap/roadmap.yaml) — repository snapshot and planning facts
+- [`docs/roadmap/initiatives.yaml`](docs/roadmap/initiatives.yaml) — **actual GitHub epics only**
+- [`docs/roadmap/issue-mapping.yaml`](docs/roadmap/issue-mapping.yaml) — Issues #1–#18 with implementation evidence
+- [`docs/roadmap/milestones.yaml`](docs/roadmap/milestones.yaml) — retrospective delivery groups only; not GitHub Milestones
+- [`docs/roadmap/generated-gantt.md`](docs/roadmap/generated-gantt.md) — generated historical delivery chart
+- [`docs/roadmap/weekly-velocity.yaml`](docs/roadmap/weekly-velocity.yaml) — factual commit counts by calendar week
+- [`docs/roadmap/product-audit.md`](docs/roadmap/product-audit.md) — evidence-based audit and scope cleanup
+- [`docs/roadmap/github-milestones.md`](docs/roadmap/github-milestones.md) — actual GitHub planning state, including the fact that no GitHub Milestones exist
+
+Regenerate the historical Gantt with:
+
+```bash
+npm run roadmap:gantt
 ```
 
-## Planned vs. Completed
+## Firebase setup
 
-```mermaid
-flowchart LR
-    A[Completed: Core Versioned Vault] --> B[Completed: Knowledge Graph + AI Tools]
-    B --> C[Completed: Adaptive Retrieval]
-    C --> D[Current: Productization + UX]
-    C --> G[Completed Aug 19: Prompt Blocks MVP]
-    D --> E[Planned: Configurable AI + Version Intelligence]
-    E --> F[Planned: Vault Intelligence]
-```
-
-## Major Dependencies
-
-```mermaid
-flowchart TD
-    A[React + Firebase Vault - done] --> B[Prompt Versioning + Diff - done]
-    A --> C[Authenticated Gemini Boundary - done]
-    B --> D[AI Version Comparison #2]
-    D --> E[AI Change / Commit Narratives #5]
-    C --> F[Configurable AI Base Prompts #3]
-    F -. recommended shared foundation .-> D
-    F -. reusable configuration .-> H[Contextual AI Summaries #6]
-    I[Implementation-led Documentation - done] --> J[Architecture Helper AI #4]
-    B --> K[Prompt Blocks Data Model #7]
-    C --> K
-    K --> L[Prompt Blocks Visual DAG Builder]
-    L --> M[Prompt Blocks Execution + Runtime]
-    M --> N[Workflow Versioning + Reproducibility]
-```
-
-## Roadmap Sources
-
-The concise roadmap above is generated from maintainable planning sources rather than acting as the only source of truth:
-
-- [`docs/roadmap/README.md`](docs/roadmap/README.md) — roadmap maintenance guide
-- [`docs/roadmap/product-audit.md`](docs/roadmap/product-audit.md) — full historical/product audit
-- [`docs/roadmap/github-milestones.md`](docs/roadmap/github-milestones.md) — proposed milestone/issue structure
-- [`docs/roadmap/roadmap.yaml`](docs/roadmap/roadmap.yaml) — current phase and forecast source
-- [`docs/roadmap/milestones.yaml`](docs/roadmap/milestones.yaml) — milestone definitions and dates
-- [`docs/roadmap/initiatives.yaml`](docs/roadmap/initiatives.yaml) — strategic initiative hierarchy
-- [`docs/roadmap/issue-mapping.yaml`](docs/roadmap/issue-mapping.yaml) — open-issue classification/mapping
-- [`docs/roadmap/weekly-velocity.yaml`](docs/roadmap/weekly-velocity.yaml) — week-by-week delivery dataset
-- [`docs/roadmap/weekly-velocity.svg`](docs/roadmap/weekly-velocity.svg) — generated velocity visualization
-
-## Data root
+The supplied Firebase web configuration can be overridden with environment variables. Database access must be enforced server-side by Realtime Database rules. The owner-scoped data root is:
 
 ```text
 intellectVault/users/{firebaseUid}/
 ```
 
-See `docs/ARCHITECTURE.md`, `docs/DECISION_LOG.md`, and `docs/roadmap/README.md`.
+## Documentation
+
+Start with [`docs/README.md`](docs/README.md). Architecture, AI boundaries, version control, deployment, security, implementation history, decisions, and feature-specific deep dives live under `docs/`.

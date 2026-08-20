@@ -1,94 +1,136 @@
-# Implementation History
+# EurekaVault Implementation History
 
-## 1. Method
+**GitHub evidence cutoff:** `7e45248a408e372088d18cab74faef5a79523075` on `main` (2026-08-20 UTC). The cleanup package modifies documentation/RoadmapPage on top of this evidence cutoff without inventing a new commit.
 
-This history is based on the repository's Git commits and current code. It does not infer product release numbers that the repository does not explicitly establish. Dates below are calendar dates in the repository history; the important requirement is the commit SHA, which gives an immutable implementation reference.
+This chronology uses Git history for delivery facts. It does not infer release names or future phases.
 
-## 2. Development chronology
+## 2026-08-06 — repository and React/Firebase foundation
 
-| Date | Commit | Message | Implementation significance |
-|---|---|---|---|
-| 2026-08-06 | `5eeec5f` | Initial commit | Repository begins with a minimal README. |
-| 2026-08-06 | `c80d143` | Converting the project to react | Establishes the React/TypeScript/Vite application foundation. |
-| 2026-08-06 | `c35286a` | Fixing Files | Early project/file correction during React scaffold setup. |
-| 2026-08-06 | `18ab918` | adding CRUD features | Adds core CRUD/lifecycle capability and the practical data-management baseline. |
-| 2026-08-07 | `417b29d` | Adding copy, versioning | Adds Prompt copy/versioning; Mindset Construction is verified present in this commit snapshot. |
-| 2026-08-07 | `fca6117` | GUI overhaul | Begins major application UI reorganization. |
-| 2026-08-07 | `8fcb57b` | changing-gui | Continues UI/navigation evolution. |
-| 2026-08-07 | `81e662f` | overhaul GUI | Completes another major UI restructuring pass. |
-| 2026-08-07 | `2a5c345` | fix error | Corrective commit after the GUI changes. |
-| 2026-08-08 | `2b0f270` | adding back copy functionality | Restores Prompt-copy behavior following UI refactors. |
-| 2026-08-08 | `1ac483e` | Github Line Diff | Adds Git-style line-diff review for Prompt versions. |
-| 2026-08-08 | `6f45937` | Achievements feature | Adds activity tracking and achievements. |
-| 2026-08-08 | `3920b8d` | Adding Files Functionality | Adds Prompt attachments and integrates them into vault lifecycle/snapshots. |
-| 2026-08-08 | `4e0310d` | Fixing an error | Immediate correction after file functionality. |
-| 2026-08-08 | `c09415a` | Adding Relationships between prompts | Adds Prompt lineage relationships, relationship UI/map integration and snapshot support. |
-| 2026-08-08 | `37dc892` | fixing relationship plotting | Corrects relationship visualization/layout. |
-| 2026-08-08 | `2038bdb` | prompt retrieval | Introduces Gemini-backed Semantic Prompt Finder via Netlify Function. |
-| 2026-08-08 | `fe018b7` | Improving AI prompts | Introduces Prompt Repurposer and related Gemini server-side path. |
-| 2026-08-08 | `40fc00e` | Prompt Mixer Feature | Introduces multi-Prompt Gemini synthesis. |
-| 2026-08-08 | `6923740` | Prompt Mixer generic instead of forcing existing ones | Generalizes Mixer sources so arbitrary pasted/typed Prompts are first-class inputs. |
-| 2026-08-18 | `6818b80` | feat: implementing feedback for AI search | Adds user-confirmed Finder feedback storage and bounded few-shot learning examples for later retrievals. |
+| Commit | Message | Evidence summary |
+|---|---|---|
+| `5eeec5f` | Initial commit | Repository baseline. |
+| `622f93c` | Create index.html | Initial web surface. |
+| `3f76f8b` | Update index.html | Early page update. |
+| `c80d143` | Converting the project to react | React/TypeScript/Vite application direction. |
+| `c35286a` | Fixing Files | Foundation correction. |
+| `42412a8` | Update Button.tsx | UI component update. |
+| `18ab918` | adding CRUD features | Core content CRUD/lifecycle functionality. |
 
-## 3. Phase interpretation
+## 2026-08-07 — versioned workspace and UI overhaul
 
-### Phase A - React product foundation (2026-08-06)
+| Commit | Message | Evidence summary |
+|---|---|---|
+| `417b29d` | Adding copy, versioning | Prompt copy/versioning; Mindset Construction is present by this snapshot. |
+| `fca6117` | GUI overhaul | Major UI redesign. |
+| `8fcb57b` | changing-gui | Continued UI work. |
 
-The project moved from a minimal repository into a React/TypeScript/Vite Firebase application. Authentication, owner-private persistence and CRUD/lifecycle behavior established the core workspace.
+## 2026-08-08 — knowledge graph, engagement, and AI tools
 
-### Phase B - Prompt craftsmanship and version-control foundation (2026-08-07)
+| Commit | Message | Evidence summary |
+|---|---|---|
+| `81e662f` | overhaul GUI | Continued application-shell/product UX work. |
+| `2a5c345` | fix error | Correction. |
+| `2b0f270` | adding back copy functionality | Copy behavior restoration. |
+| `1ac483e` | Github Line Diff | Git-style Prompt version comparison. |
+| `6f45937` | Achievements feature | Activity/Achievements. |
+| `3920b8d` | Adding Files Functionality | Prompt attachments. |
+| `4e0310d` | Fixing an error | File-feature correction. |
+| `c09415a` | Adding Relationships between prompts | Directed Prompt lineage. |
+| `37dc892` | fixing relationship plotting | Relationship visualization fix. |
+| `2038bdb` | prompt retrieval | Semantic Prompt Finder. |
+| `fe018b7` | Improving AI prompts | AI Prompt transformation/Repurposer path. |
+| `40fc00e` | Prompt Mixer Feature | Prompt Mixer. |
+| `6923740` | Prompt Mixer generic instead of forcing existing ones | Arbitrary pasted/custom Mixer sources. |
 
-Prompt copying and versioning became explicit capabilities. Mindset Construction is already present in the `417b29d` snapshot. The UI underwent several large redesigns that established the current application-shell style and more productized workspace experience.
+## 2026-08-18 — feedback learning, documentation, rebrand, and navigation
 
-### Phase C - Prompt knowledge platform expansion (2026-08-08)
+| Commit | Message | Evidence summary |
+|---|---|---|
+| `6818b80` | feat: implementing feedback for AI search | User-confirmed Finder feedback becomes bounded retrieval examples. |
+| `5b9e61d` | documentation-upgrade | Large implementation-led documentation set. |
+| `3b61d70` | Eureka-Vault Name Rebrand issue #9 part1 | EurekaVault naming transition. |
+| `2e9aa3f` | up: adding roadmap to docs | First roadmap documentation. |
+| `c7c2727` | up: adding gantt chart | Gantt tooling/documentation. |
+| `22916bb` | feat: minimalist landing page | Landing-page productization. |
+| `66ecfbb` | feat: efficient navigation | Navigation redesign. |
+| `a5e27b5` | up: nav wheel but for phone | Mobile navigation counterpart. |
+| `349b24f` | Eureka Identity | Epsilon mark, Alexandrian motif, Greek identity copy, and palette work. |
 
-One day added most of the distinguishing non-AI and AI capabilities:
+## 2026-08-19 — 3-tier foundation and deployment safety
 
-- Git-style Prompt diff;
-- activity and achievements;
-- Prompt files;
-- Prompt lineage relationships and map;
-- Semantic Prompt Finder;
-- Prompt Repurposer;
-- Prompt Mixer;
-- arbitrary pasted/custom Mixer inputs.
+### `4a3cc23` — starting 2-tier to 3-tier migration plan
 
-This is the point where the product can no longer be accurately summarized as a simple manual Prompt CRUD/versioning application.
+Introduced:
 
-### Phase D - Adaptive retrieval (2026-08-18)
+- Spring Boot 4.1 / Java 21 backend under `backend/`;
+- Actuator health endpoint;
+- Docker packaging;
+- Render service configuration;
+- documentation explicitly preserving existing Firebase CRUD and Netlify AI paths during incremental migration.
 
-Finder gained an explicit learning loop. The user can confirm the Prompt actually intended for a search, persist that mapping, and feed bounded recent confirmations back into later Gemini retrieval requests as few-shot preference evidence.
+This commit proves **migration foundation started**, not full 3-tier completion.
 
-This is a qualitative change: the AI retrieval layer starts adapting to the owner's retrieval language and distinctions rather than treating every search as isolated.
+GitHub Issue #12 is an `architecture` + `epic` Issue. Its owner comment explicitly states: `It's gonna be springboot`.
 
-### Phase E - Executable Prompt methodology (2026-08-19 delivery)
+### `3d2bfa9` — CI quality gates and gated deployments
 
-Prompt Blocks introduces a reusable visual Prompt-processing methodology layer. Unlike Mixer, it represents multiple typed stages, explicit constraints and priorities, intermediate values, branching outputs and deterministic dependency order. Saved pipeline definitions become first-class Firebase artifacts while runtime generated values remain ephemeral unless explicitly saved.
+Introduced:
 
-The delivery also introduces owner-editable transformation prompts. Thorough initial defaults are seeded only when missing; thereafter the database copy is authoritative. Prompt Blocks reuses the existing authenticated Netlify/Gemini boundary and existing Prompt version lifecycle rather than introducing a parallel backend or versioning system.
+- frontend lint/test/build checks;
+- Netlify Function syntax checks;
+- Maven backend verify/integration testing;
+- Docker build/runtime health smoke tests;
+- post-CI Netlify and Render deployment-hook workflow.
 
-Because the supplied delivery workspace is an extracted ZIP rather than a Git checkout, this phase is identified by delivery date and implementation files rather than by inventing a commit SHA.
+### `54373c9` — Netlify deployment gating
 
-## 4. Feature-by-feature date rules
+Added the `netlify.toml` ignore/build-hook gating behavior so ordinary Git-triggered builds do not bypass GitHub Actions.
 
-When documenting dates elsewhere:
+The commit also accidentally included deployment hook URLs in a local environment file. `daa6f7b` subsequently removed that tracked file after the gitignore naming problem was recognized. Since deletion does not purge Git history, those historical hook values should be considered exposed unless rotated.
 
-- Use the exact commit when the feature has a clear introducing commit.
-- Use **present by** when the earliest verified code snapshot contains the feature but the commit message is broader.
-- Distinguish initial introduction from a later fix or generalization.
-- Do not assign an official Release 2/3/etc. label from package version or memory without a product-owner decision.
+### Follow-up CI corrections
 
-## 5. Important documentation drift discovered
+- `daa6f7b` — tracked local environment file removal;
+- `3259398` — CI issue correction;
+- `6aad9a0` — frontend CI correction.
 
-The current root README was last materially aligned with the early 2026-08-06 foundation. It still claims:
+## 2026-08-20 UTC — Prompt Blocks and live-use fixes
 
-- no AI calls;
-- unlimited nested folders;
-- manual Prompt versions;
-- local/global commits as the primary model.
+### `b556e64` — Prompt Blocks visual transformation pipelines
 
-The current code contradicts each of those points in important ways. This docs package therefore documents implementation reality while preserving the old decisions as superseded history rather than silently deleting them.
+Introduced the Prompt Blocks MVP:
 
-### 2026-08-19 — Prompt Blocks workspace refinement
+- typed DAG model;
+- visual workspace;
+- current/pinned Prompt inputs;
+- direct inputs;
+- transformation and constraint blocks;
+- explicit constraint priority;
+- deterministic graph validation/topological execution;
+- per-block authenticated Gemini execution;
+- saved and quick pipelines;
+- intermediate result inspection;
+- explicit output persistence through normal Prompt/version paths;
+- editable Firebase-backed transformation prompts;
+- focused tests and documentation.
 
-The initial Prompt Blocks workspace was hardened after live UI use: the oversized sticky run header was replaced with compact IDE-style controls; the run inspector became an independently scrolling grid region so final outputs remain reachable; saved pipelines now auto-beautify on load; users receive an explicit warning before running without an Output block; and pipeline methodology designs can be printed in a dedicated landscape presentation. A pure deterministic layout module and focused layout tests were added alongside the UI changes.
+### `e079616` and `90b6799` — Prompt Blocks correctness fixes
+
+Cleaned a TypeScript issue and corrected graph-validation ordering so a cycle is reported as structural invalidity before single-input cardinality.
+
+### `7e45248` — addressing Issues #17 and #18
+
+Added live-workspace refinements:
+
+- compact IDE-style controls instead of an obstructive large run panel;
+- deterministic beautification, including on saved-pipeline load;
+- print-friendly methodology diagrams;
+- pre-run warning when no dedicated Output block is configured;
+- independently scrollable desktop run inspection so the final output remains reachable;
+- deterministic layout tests.
+
+## Current interpretation
+
+The repository now combines a mature frontend/Firebase product surface, multiple authenticated Gemini workflows, a substantial Prompt Blocks methodology layer, and an intentionally incremental Spring Boot migration foundation.
+
+The current GitHub Issue state must be read alongside this history: all Issues #1–#18 remain open, even when commits have already implemented part or all of their requested behavior. The documentation therefore tracks **GitHub state** and **implementation state** separately.

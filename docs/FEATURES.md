@@ -1,206 +1,164 @@
-# Feature Catalog
+# EurekaVault Feature Catalog
 
-## 1. Status basis
+**Implementation evidence baseline:** `main` at `7e45248a408e372088d18cab74faef5a79523075` (2026-08-20 UTC). The documentation cleanup itself is an uncommitted package change and is not assigned a fabricated SHA.
 
-This catalog uses the supplied repository baseline as historical evidence and includes the Prompt Blocks implementation delivery completed on **2026-08-19**. Historical dates are taken from Git history where available. Prompt Blocks is documented as a delivery-layer change because this working copy is an extracted repository snapshot rather than a Git checkout, so no new commit SHA is invented.
+This catalog documents current implementation and explicitly raised GitHub backlog. It does not turn absent features into future commitments.
 
-## 2. Implementation ledger
+## 1. Implementation ledger
 
-| Capability | Date | Commit | Evidence | Attribution |
-|---|---|---|---|---|
-| React/TypeScript application foundation | 2026-08-06 | `c80d143` | Converting the project to react | Exact commit |
-| Core CRUD and lifecycle baseline | 2026-08-06 | `18ab918` | adding CRUD features | Exact commit |
-| Prompt copy + Prompt versioning | 2026-08-07 | `417b29d` | Adding copy, versioning | Exact commit |
-| Mindset Construction | 2026-08-07 | `417b29d` | Adding copy, versioning | Verified present in commit snapshot |
-| Major GUI/navigation overhaul | 2026-08-07 | `fca6117 / 8fcb57b / 81e662f` | GUI overhaul sequence | Commit sequence |
-| Git-style Prompt line diff | 2026-08-08 | `1ac483e` | Github Line Diff | Exact commit |
-| Achievements + activity tracking | 2026-08-08 | `6f45937` | Achievements feature | Exact commit |
-| Prompt file attachments | 2026-08-08 | `3920b8d` | Adding Files Functionality | Exact commit |
-| Prompt relationship lineage | 2026-08-08 | `c09415a` | Adding Relationships between prompts | Exact commit |
-| Relationship plotting correction | 2026-08-08 | `37dc892` | fixing relationship plotting | Exact fix commit |
-| Semantic Prompt Finder | 2026-08-08 | `2038bdb` | prompt retrieval | Exact commit |
-| Prompt Repurposer | 2026-08-08 | `fe018b7` | Improving AI prompts | Exact commit |
-| Prompt Mixer | 2026-08-08 | `40fc00e` | Prompt Mixer Feature | Exact commit |
-| Mixer arbitrary pasted/custom sources | 2026-08-08 | `6923740` | Prompt Mixer generic instead of forcing existing ones | Exact commit |
-| Finder feedback-learning / few-shot retrieval adaptation | 2026-08-18 | `6818b80` | feat: implementing feedback for AI search | Exact commit |
-| Prompt Blocks MVP | 2026-08-19 | Delivery working tree | Typed Prompt-processing DAG, editable transform prompts, reusable saved pipelines | Implemented in this delivery |
+| Capability | Introduced / materially changed | Commit evidence |
+|---|---|---|
+| React/TypeScript/Vite application | 2026-08-06 | `c80d143` |
+| Core CRUD lifecycle | 2026-08-06 | `18ab918` |
+| Prompt copy + automatic Prompt versioning | 2026-08-07 | `417b29d` |
+| Major GUI/navigation overhaul | 2026-08-07/08 | `fca6117`, `8fcb57b`, `81e662f` |
+| Git-style Prompt line diff | 2026-08-08 | `1ac483e` |
+| Activity + Achievements | 2026-08-08 | `6f45937` |
+| Prompt file attachments | 2026-08-08 | `3920b8d`, `4e0310d` |
+| Prompt lineage relationships | 2026-08-08 | `c09415a`, `37dc892` |
+| Semantic Prompt Finder | 2026-08-08 | `2038bdb` |
+| Prompt Repurposer | 2026-08-08 | `fe018b7` |
+| Prompt Mixer | 2026-08-08 | `40fc00e`, `6923740` |
+| Finder feedback learning | 2026-08-18 | `6818b80` |
+| EurekaVault naming/identity/navigation work | 2026-08-18 | `3b61d70`, `22916bb`, `66ecfbb`, `a5e27b5`, `349b24f` |
+| Spring Boot migration foundation | 2026-08-19 | `4a3cc23` |
+| CI/CD quality/deployment gate | 2026-08-19 | `3d2bfa9`, `54373c9`, `3259398`, `6aad9a0` |
+| Prompt Blocks MVP | 2026-08-20 UTC | `b556e64`, `e079616`, `90b6799` |
+| Prompt Blocks live-workspace refinements | 2026-08-20 UTC | `7e45248` |
 
-## 3. Core workspace features
+## 2. Core workspace
 
-### Account and private workspace
+### Account and owner-private workspace
 
-Implemented functionality includes sign-up, sign-in, sign-out, password reset, verification email/resend, workspace initialization, owner-scoped Firebase data and settings diagnostics.
+Implemented: sign-up, sign-in, sign-out, password reset, verification email/resend, workspace initialization, and owner-scoped Firebase data.
 
-**Implementation timing:** part of the React/Firebase application foundation and core CRUD baseline by 2026-08-06.
+Current persisted root:
+
+```text
+intellectVault/users/{firebaseUid}/
+```
+
+The current product is owner-private. This is a statement of current behavior, not a commitment to add collaboration.
 
 ### Direct hierarchy
 
-The implemented hierarchy is Endeavor -> Task -> Prompt -> Prompt Version. There is no Folder entity.
+```text
+Endeavor → Task → Prompt → Prompt Version
+```
 
-**Implementation timing:** core React/CRUD baseline by 2026-08-06.
+There is no Folder entity in the current domain model.
 
-### CRUD, archive, restore and dependency-safe delete
+### Lifecycle
 
-Entity workflows provide normal create/read/update behavior, recoverable archive/restore and permanent deletion guarded by dependency checks.
+Content entities use create/read/update plus archive/restore where implemented. Permanent delete paths apply dependency checks where a referenced entity would otherwise be left dangling.
 
-**Implementation timing:** `18ab918` on 2026-08-06, with later features extending lifecycle behavior to their own records.
+## 3. Version control
 
-### Prompt library and workspace
+### Prompt-local history
 
-The Prompt Workspace has Editor, History, Files and Relationships tabs. It supports editing, dirty-state detection, save shortcuts, copy, duplicate, archive/delete, historical restore and direct Repurpose/Mix entry points.
+Prompt creation establishes Version 1. Saving changed Prompt content creates another historical snapshot. Restoring an old version produces a new current version rather than deleting later history.
 
-**Implementation timing:** progressively assembled across the CRUD/versioning/UI commits on 2026-08-06 and 2026-08-07, then extended by Files and Relationships on 2026-08-08.
+### Git-style version comparison
 
-## 4. Version-control features
-
-### Automatic Prompt-local history
-
-Prompt creation establishes Version 1. Saved Prompt changes create complete historical snapshots. Restoring an old version creates a new current version rather than erasing later history.
-
-**Implementation timing:** `417b29d` on 2026-08-07.
-
-### Git-style line comparison
-
-Prompt versions can be reviewed using line-numbered diffs with change statistics, unified/side-by-side presentation and collapsed unchanged context.
-
-**Implementation timing:** `1ac483e` on 2026-08-08.
+Historical Prompt versions can be compared with line-oriented change presentation and statistics. This comparison is deterministic; GitHub Issue #2 separately requests **AI version comparison**, which is not implemented.
 
 ### Global Versions
 
-The owner can release deliberate vault-level snapshots and later browse, compare and download them. Snapshot breadth expanded as new collections were introduced: attachments on 2026-08-08, relationships on 2026-08-08, and Finder feedback on 2026-08-18.
+The user can create vault-level snapshots spanning the collections included by the current snapshot implementation. Prompt Blocks pipeline definitions and transform-prompt configuration participate in current Global Version/export behavior; runtime-generated pipeline values do not.
 
-**Implementation timing:** vault-level versioning was already part of the version-control architecture by 2026-08-07; snapshot content evolved with subsequent features.
+## 4. Knowledge and methodology assets
 
-## 5. Knowledge enrichment
+### Prompt files
 
-### Files
+Attachments are Base64-backed with application limits of 2 MiB/file, 20 files/Prompt, and 10 MiB aggregate per Prompt.
 
-Prompt attachments are stored as Base64 with 2 MiB/file, 20 files/Prompt and 10 MiB/Prompt limits. They can be uploaded, downloaded and removed.
+### Prompt lineage
 
-**Implementation timing:** `3920b8d` on 2026-08-08, followed by `4e0310d` error correction.
+Explicit directed `inspired-by` relationships support cross-Endeavor links, reject duplicate/cyclic relationships, and can be visualized/exported. GitHub Issue #15 asks whether this model should be replaced by an “instance” concept; that Issue is a design proposal and no migration is treated as approved.
 
-### Prompt relationships
+### Mindsets and Mindset Construction
 
-Directed `inspired-by` links capture lineage between Prompts. Cycles and duplicates are rejected. The relationship map groups Prompts by Endeavor, supports cross-Endeavor links, provides a searchable ledger and exports SVG/PNG.
-
-**Implementation timing:** `c09415a` on 2026-08-08, plotting fix `37dc892` the same day.
-
-### Mindsets
-
-Mindsets support global, Endeavor, Task and Prompt scopes.
-
-### Mindset Construction
-
-A deterministic builder lets the user select vault Prompts, assemble their exact methodology into an editable persona-style artifact and save it as a normal Mindset. This workflow explicitly does not call an AI model.
-
-**Implementation timing:** verified present in `417b29d` on 2026-08-07.
+Mindsets support scoped storage. Mindset Construction deterministically assembles selected Prompt material into an editable artifact and does not call Gemini.
 
 ### Preferences
 
-Preferences can be scoped globally, to an Endeavor, or to a Task. The current code does not define Prompt-level Preference scope.
+Preferences are persisted with the scopes implemented by the current domain model. No separate future precedence system is claimed by this documentation.
 
 ### Decisions
 
-Open/Finalized product Decisions are persisted in the vault. Provider normalization updates certain early seeded decisions to newer finalized implementation semantics.
+Open/Finalized Decisions are persisted as product artifacts. Their presence in a user vault is not used by the repository roadmap generator to invent product commitments.
 
-## 6. Engagement and discoverability
+## 5. Engagement and discovery
 
-### Activity tracking
+Implemented areas include activity tracking, Achievements, conventional Prompt/history search, command palette, responsive navigation, and light/dark/system theming.
 
-The vault records sessions and important operations such as record lifecycle changes, Prompt commits, Global Versions, file actions, relationship actions and AI operations.
+The EurekaVault identity work includes an epsilon mark, Alexandrian lighthouse motif, Greek identity text, and the light-blue/gold/royal-red visual palette.
 
-**Implementation timing:** `6f45937` on 2026-08-08, with later action types added as new features arrived.
+## 6. AI features
 
-### Achievements
-
-Current achievements include:
-
-- 1st Prompt Commit
-- 1st Global Commit
-- 1st Mindset
-- 1st Endeavour
-- 1 Week of Activity
-- 30 Days of Activity
-- Builder
-- Fussy Builder
-- Skeptical
-
-**Implementation timing:** `6f45937` on 2026-08-08.
-
-### Conventional Search
-
-Search matches words across Prompt title, description, purpose, current content and saved history, optionally filtered by Endeavor. All query words must be present somewhere in the Prompt/history corpus for a match.
-
-### Command palette, responsive layout and themes
-
-These interaction features are part of the evolved application shell and UI overhaul sequence completed by 2026-08-07.
-
-## 7. AI features
+All currently deployed Gemini workflows use authenticated Netlify Functions. The browser does not receive `GEMINI_API_KEY`.
 
 ### Semantic Prompt Finder
 
-The Finder sends a bounded active Prompt corpus to Gemini and returns up to five existing Prompt IDs ranked by semantic fit. It is retrieval, not Prompt execution. Stored Prompt text is treated as untrusted data.
-
-**Implementation timing:** `2038bdb` on 2026-08-08.
+Ranks a bounded active Prompt corpus by semantic fit. Prompt content is corpus data, not executable instructions for the retrieval contract.
 
 ### Finder feedback learning
 
-After a search, the user can confirm "This is it" or choose any active Prompt as the correct result. That search/selection pair is stored. Future searches provide a bounded recent set of confirmed examples to Gemini as few-shot evidence of the user's retrieval style.
-
-This is the latest implemented AI-side feature in the inspected repository.
-
-**Implementation timing:** `6818b80` on 2026-08-18.
+Explicit user confirmation of the intended Prompt for a query can be stored and supplied later as bounded few-shot retrieval evidence.
 
 ### Prompt Repurposer
 
-One original Prompt plus a new objective is transformed into an editable candidate that preserves source structure, constraints, formatting, specificity and detail where possible. The source is never modified by generation. Saving creates a new Prompt and independent Version 1.
-
-**Implementation timing:** `fe018b7` on 2026-08-08.
+Transforms one source Prompt toward a user objective. Generation is non-destructive; persistence requires an explicit save.
 
 ### Prompt Mixer
 
-At least two non-empty sources are synthesized into one editable Prompt. Sources may come from the vault or arbitrary pasted/typed text. The output can be discarded, copied, saved as a new Prompt or saved as the next version of an existing Prompt.
-
-**Implementation timing:** initial feature `40fc00e` on 2026-08-08; arbitrary pasted/custom sources generalized by `6923740` later the same day.
+Synthesizes two or more vault/custom Prompt sources. The generated candidate can be discarded, copied, saved as a new Prompt, or saved through the normal version lifecycle.
 
 ### Prompt Blocks
 
-Prompt Blocks is EurekaVault's visual Prompt-processing environment. It models reusable methodology as a deterministic directed acyclic graph rather than as a single synthesis call. The first implementation distinguishes **Input**, **Transformation**, **Constraint**, and **Output** block families and uses typed content/constraint ports.
+Prompt Blocks is a deterministic visual Prompt-processing DAG rather than a generic autonomous-agent graph.
 
 Implemented capabilities include:
 
-- System Prompt inputs referencing the current Prompt or a pinned Prompt Version by ID;
-- Direct Input blocks for user-supplied Prompt/context material;
+- System Prompt inputs using current or pinned Prompt Versions;
+- Direct Input blocks;
+- typed content and constraint ports;
 - Context Free, Extract Context, Fill Context, Less Detailed, More Detailed, Without Markdown, With Markdown, Addition, Subtraction, and Extract Style transforms;
-- Mindset constraints referencing existing Mindsets and runtime Extracted Style constraints;
-- explicit stored/editable constraint priority;
-- As Is, Summarized and Conclusion Only outputs, including output branching;
-- deterministic DAG validation and topological execution;
-- inspectable intermediate results, block-level failures and downstream blocking;
-- temporary Quick pipelines and persisted saved pipelines with create/update/archive/restore/delete lifecycle;
-- current/pinned Prompt reference validation and dependency-safe deletion;
-- editable Firebase-backed transformation prompts seeded from thorough product defaults only when missing;
-- explicit output save into the existing Prompt creation/versioning lifecycle;
-- inclusion of saved pipeline definitions and transformation prompt configuration in Global Version snapshots/export;
-- desktop visual graph editing and a mobile-specific ordered workflow editor rather than a scaled-down canvas;
-- compact IDE-style run/save controls that do not obscure block placement and can expand for secondary methodology controls;
-- deterministic graph beautification, applied automatically when a saved pipeline is loaded and available manually for quick/saved graphs;
-- a pre-run warning when no dedicated Output block defines the intended final representation;
-- independently scrollable desktop run inspection so the final intermediate/output card remains reachable;
-- printable, printer-friendly pipeline methodology diagrams with application chrome removed.
+- Mindset and extracted-style constraints;
+- explicit stored constraint priority;
+- As Is, Summarized, and Conclusion Only output blocks;
+- DAG validation, cycle rejection, and topological execution;
+- inspectable intermediates and failure/downstream-blocking states;
+- quick and persisted pipelines;
+- create/update/archive/restore/delete lifecycle for saved pipelines;
+- editable Firebase-backed transformation prompts seeded only when missing;
+- explicit output save through the existing Prompt/version lifecycle;
+- desktop visual editing and a separate mobile ordered workflow interaction;
+- compact IDE-style run/save controls;
+- deterministic graph beautification and automatic beautification when loading saved pipelines;
+- no-output warning before execution;
+- independently scrollable desktop run inspection;
+- printable pipeline methodology diagrams.
 
-Runtime generated values are not persisted into the saved graph definition. Running a pipeline never mutates a source Prompt. Only explicit save actions create a Prompt or create the next normal Prompt Version.
+Prompt Blocks MVP implementation is backed by `b556e64`, with correctness fixes in `e079616`/`90b6799` and Issue #17/#18 refinements in `7e45248`.
 
-**Implementation timing:** 2026-08-19 delivery working tree.
+Issue #7 remains open. The large Issue body contains additional design possibilities; those are **not** documented as promised work merely because they were discussed inside the Issue.
 
-See [`features/prompt-blocks.md`](features/prompt-blocks.md) and [`AI_PIPELINES.md`](AI_PIPELINES.md) for the full behavioral and AI contracts.
+## 7. Explicit open GitHub work
 
-## 8. Current non-implemented/gated areas
+The authoritative open backlog is GitHub Issues #1–#18. Relevant not-yet-implemented or unresolved requests include:
 
-The following remain non-implemented or decision-gated:
+- #2 — AI version comparison;
+- #3 — broad configurable base prompts + revision history (partial Prompt Blocks-specific support exists);
+- #4 — architecture helper AI;
+- #5 — AI-generated commit/change messages;
+- #6 — Explorer hover + AI summary;
+- #8 — New Prompt lingering UI bug;
+- #13 — Favorite/bookmark Prompts;
+- #14 — mobile Decisions/bottom-bar bug;
+- #15 — relationship-instance design proposal;
+- #16 — frontend-only changes triggering backend deployment.
 
-- collaborative multi-user editing/sync;
-- finalized markup parsing;
-- Prompt Rating.
+Rebrand/frontend Issues #9/#10 are partially evidenced but remain open. Prompt Blocks/CI/CD Issues #7/#11 have major implementation despite remaining open. Issues #17/#18 are directly addressed in `7e45248` but also remain open in GitHub.
 
-Prompt Blocks is implemented as of the 2026-08-19 delivery. Dedicated pipeline-local automatic history/version objects, loops, conditional routing, typed non-text variables and autonomous-agent behavior remain deliberately outside the MVP.
+There is **no** repository-backed roadmap commitment for markup parsing, collaboration, formal Mindset inheritance, Preference precedence, or a workspace-deletion initiative in the inspected GitHub Issue set.

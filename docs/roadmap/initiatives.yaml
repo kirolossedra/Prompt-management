@@ -1,64 +1,41 @@
-schema_version: 1
-snapshot_commit: 3b61d7050f905a5c591971f6e8ecbdc8588870ac
-initiatives:
-- id: product-experience-identity
-  name: Product Experience & Identity
-  strategic_goal: Make EurekaVault coherent, discoverable and maintainable as a product
-    rather than only a fast-evolving codebase.
-  status: active
-  milestones:
-  - documentation-modernization
-  - productization-ux-hardening
-  issues:
-  - 1
-  - 8
-  - 9
-  - 10
-  estimated_completion:
-    value: '2026-09-06'
-    type: estimated
-    confidence: low
-- id: prompt-intelligence-explainability
-  name: Prompt Intelligence & Explainability
-  strategic_goal: Help the owner understand, configure and interpret Prompt behavior/evolution
-    with explicit AI assistance.
-  status: planned
-  milestones:
-  - configurable-ai-version-intelligence
-  - vault-intelligence-contextual-assistance
-  issues:
-  - 2
-  - 3
-  - 4
-  - 5
-  - 6
-  estimated_completion:
-    value: '2026-11-01'
-    type: estimated
-    confidence: low
-- id: executable-methodology
-  name: Executable Methodology
-  strategic_goal: Preserve not only individual Prompts but reusable multi-stage human-AI methodology as typed executable graphs with explicit constraints, inspectable runtime values and vault-level snapshot coverage.
-  status: completed_mvp
-  milestones:
-  - prompt-blocks-mvp
-  issues:
-  - 7
-  estimated_completion:
-    value: '2026-08-19'
-    type: delivery_fact
-    confidence: high
-- id: decision-gated-platform-expansion
-  name: Decision-Gated Platform Expansion
-  strategic_goal: Resolve product semantics before implementing markup parsing, collaboration,
-    inheritance/precedence rules, or destructive workspace lifecycle operations.
-  status: unscheduled
-  milestones: []
-  issues: []
-  decision_gates:
-  - Markup format
-  - Collaboration model
-  - Mindset inheritance/conflict
-  - Preference precedence
-  - Account/workspace deletion
-  estimated_completion: null
+schema_version: 2
+repository: kirolossedra/Prompt-management
+snapshot_commit: 7e45248a408e372088d18cab74faef5a79523075
+source: github_issue_label_epic
+note: These are the only Issues carrying the actual GitHub `epic` label in the inspected snapshot. No additional strategic initiative is inferred.
+epics:
+  - issue: 3
+    title: base prompts modification possibility instead of having it fixed in the database
+    github_state: open
+    labels: [architecture, epic]
+    implementation_status: partial
+    evidence:
+      - Prompt Blocks has editable Firebase-backed transformation prompts.
+      - The broader cross-feature customization and revision-history request is not implemented.
+  - issue: 4
+    title: There should be a helper AI that inspects the underlying arhcitecture and answer basic questions
+    github_state: open
+    labels: [epic]
+    implementation_status: not_started
+    evidence: []
+  - issue: 7
+    title: Prompt Blocks
+    github_state: open
+    labels: [epic]
+    implementation_status: mvp_implemented
+    evidence_commits: [b556e64, e079616, 90b6799, 7e45248]
+    note: The Issue body contains broader design possibilities; only implemented behavior is treated as delivered scope.
+  - issue: 11
+    title: CI/CD
+    github_state: open
+    labels: [epic]
+    implementation_status: core_implemented
+    evidence_commits: [3d2bfa9, 54373c9, 3259398, 6aad9a0]
+  - issue: 12
+    title: 2-tier to 3-tier
+    github_state: open
+    labels: [architecture, epic]
+    implementation_status: in_progress
+    evidence_commits: [4a3cc23]
+    issue_comment: "It's gonna be springboot"
+    note: Spring Boot foundation exists; Firebase CRUD and Netlify AI paths have not yet been functionally migrated.

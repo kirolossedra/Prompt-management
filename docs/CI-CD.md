@@ -50,7 +50,7 @@ The frontend job uses Node 22.12.0 and performs:
 4. TypeScript compilation plus Vite production bundling through `npm run build`;
 5. Node syntax checks for every `netlify/functions/*.mjs` serverless function.
 
-The repository currently has no npm lock file. CI therefore uses `npm install`, not `npm ci`. Adding and maintaining a lock file is a future reproducibility improvement; the workflow must switch to `npm ci` once a committed lock file exists.
+The repository currently has no npm lock file. CI therefore uses `npm install`, not `npm ci`. This is the current reproducibility boundary; no roadmap commitment is inferred from it.
 
 ### Backend gate
 
@@ -134,7 +134,7 @@ The local developer copies of these hook URLs may be stored in the git-ignored `
 Netlify continues to host:
 
 - the Vite/React production frontend;
-- the three existing Netlify Functions used for Gemini operations during the migration period.
+- the four existing Netlify Functions used for Gemini operations during the migration period.
 
 Netlify remains a current production boundary until those AI operations are explicitly migrated to Spring Boot.
 
@@ -214,8 +214,12 @@ The hook APIs are asynchronous: a successful hook request proves that the hostin
 
 Native host auto-deployment must remain disabled when GitHub Actions owns the release gate; enabling both paths creates a race and defeats the test-before-deploy guarantee.
 
-## 9. Branch protection recommendation
+## 9. Current deployment-coupling limitation — GitHub Issue #16
 
-The workflow gates deployment even without branch protection. For stronger repository governance, `main` should also require the CI checks before merge and restrict direct pushes once the team workflow needs that enforcement.
+The production deployment workflow reacts to a successful `main` CI run and currently contains separate frontend and backend deployment jobs without a source-path filter that suppresses the unaffected host. As a result, a frontend-only change can still cause the backend deployment job to run.
 
-This is a GitHub repository setting rather than a source-controlled application file, so it must be configured separately.
+GitHub Issue #16 explicitly records this question. It remains unresolved in the inspected snapshot and is not documented as fixed.
+
+## 10. Deployment-hook history warning
+
+Commit `54373c9` accidentally tracked deployment-hook URLs in a local environment file; `daa6f7b` removed the tracked file. Because Git history preserves removed values, those hooks should be rotated if they have not already been rotated. Secret values are intentionally omitted here.

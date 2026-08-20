@@ -2,7 +2,7 @@
 
 ## 1. Snapshot and source of truth
 
-The current repository baseline inspected for this architecture is commit `4a3cc23134da6133deab04bafa53df3c285e3113` (2026-08-19), which contains the first Spring Boot migration foundation. This document then incorporates the CI/CD hardening and deployment-state updates prepared after that commit. Current code, Firebase rules, Netlify functions, backend configuration, host configuration and tests take precedence over older prose.
+The current repository baseline for this architecture is `7e45248a408e372088d18cab74faef5a79523075` (2026-08-20 UTC). Current source code, Firebase rules, Netlify Functions, Spring Boot configuration, CI workflows, and tests take precedence over older prose. GitHub Issues/comments are used only for explicitly raised open scope; absence of a feature is not converted into a future commitment.
 
 ## 2. High-level architecture
 
@@ -339,7 +339,7 @@ Settings provides:
 
 ### Frontend host: Netlify
 
-Netlify continues to host the Vite/React frontend and the three existing AI functions. `netlify.toml` builds with Node 22.12.0, executes `npm run build`, publishes `dist`, applies the SPA fallback to `/index.html`, and sets `ignore = "exit 0"` so ordinary Git-triggered builds are skipped. Build-hook-triggered builds bypass that ignore rule and are therefore reserved for the post-CI production path.
+Netlify continues to host the Vite/React frontend and the four existing AI functions. `netlify.toml` builds with Node 22.12.0, executes `npm run build`, publishes `dist`, applies the SPA fallback to `/index.html`, and sets `ignore = "exit 0"` so ordinary Git-triggered builds are skipped. Build-hook-triggered builds bypass that ignore rule and are therefore reserved for the post-CI production path.
 
 During this migration stage, Netlify is therefore both a static frontend host and the temporary server-side AI boundary. Removing Netlify Functions before the Spring Boot replacement is implemented would break current AI functionality.
 
@@ -514,16 +514,17 @@ AI:             browser -> Netlify Functions -> Gemini
 Spring Boot:    health/infrastructure only
 ```
 
-When functional migration begins, each bounded capability must carry its tests with it before its old path is retired. In particular, future Firebase Admin access will be a privileged server-side boundary: the backend must derive identity from a verified Firebase token rather than trusting a browser-supplied UID. No Firebase Admin credential has been provisioned to Render yet.
+As functional migration proceeds under Issue #12, documentation should not call a bounded capability migrated until its replacement path and validation exist. If Firebase Admin access is introduced, it would be a privileged server-side boundary and must not trust a browser-supplied UID without verified identity. No Firebase Admin credential is present in the inspected Render/backend configuration.
 
-## 20. Architectural boundaries and known non-features
+## 20. Architectural boundaries and explicit open scope
 
-Current implementation still does **not** provide:
+Current implementation facts:
 
-- collaborative multi-user editing/sync;
-- markup parsing based on a finalized custom markup format;
-- Prompt Rating.
+- the workspace is owner-private;
+- no markup parser exists in the current source tree;
+- Prompt Rating is not implemented;
+- the Spring Boot service is a deployed migration foundation but is not yet the application's data/API authority.
 
-Prompt Blocks is implemented in the 2026-08-19 delivery. Its MVP deliberately excludes loops, conditional routing, autonomous-agent behavior and dedicated pipeline-local automatic version history; those exclusions should not be mistaken for missing core Prompt Blocks execution.
+Only GitHub-backed open work is treated as roadmap scope. Relevant architecture/product Issues include #3, #4, #7, #11, #12, #15, and #16. In particular, Issue #15 is a relationship/instance **proposal**, not an approved model change.
 
-The Spring Boot service is now a real deployed backend foundation, but it is not yet the application's data/API authority. That distinction should remain explicit until actual capabilities are migrated.
+Prompt Blocks is implemented by `b556e64` with follow-up fixes/refinements through `7e45248`. The larger Issue #7 text includes design possibilities beyond the current MVP; those possibilities are not considered committed work unless separately implemented or approved.

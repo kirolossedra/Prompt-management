@@ -1,22 +1,87 @@
-import { Bot, Braces, CircleHelp, LockKeyhole, UsersRound } from "lucide-react";
-import { useVault } from "../context/VaultContext";
-import { activeRecords } from "../lib/utils";
+import { Bot, Braces, Bug, GitBranch, ServerCog } from "lucide-react";
 import { Badge } from "../components/ui/Badge";
 import { Card } from "../components/ui/Card";
 import { PageHeader } from "../components/ui/PageHeader";
 
-export function RoadmapPage() {
-  const { data } = useVault();
-  const open = activeRecords(data.decisions).filter((decision) => decision.status === "Open");
-  const collaboration = open.filter((decision) => decision.category === "Collaboration");
-  const markup = open.filter((decision) => decision.category.includes("Markup") || decision.title.toLowerCase().includes("markup"));
+const openIssues = [
+  "#1 Documentation / roadmap accuracy",
+  "#2 AI version comparison",
+  "#3 Configurable base prompts + revision history (epic)",
+  "#4 Architecture helper AI (epic)",
+  "#5 AI commit/change messages",
+  "#6 Explorer hover + AI summary",
+  "#7 Prompt Blocks (epic; MVP implemented)",
+  "#8 New Prompt lingering UI bug",
+  "#9 EurekaVault rebrand",
+  "#10 Frontend overhaul",
+  "#11 CI/CD (epic; core implemented)",
+  "#12 2-tier → 3-tier (epic; in progress)",
+  "#13 Favorite/bookmark Prompts",
+  "#14 Mobile Decisions bottom-bar bug",
+  "#15 Relationship-instance design proposal",
+  "#16 Frontend changes triggering backend deploy",
+  "#17 Pipeline beautify + print (addressed in code)",
+  "#18 Final pipeline output scrolling (addressed in code)",
+];
 
+export function RoadmapPage() {
   return <>
-    <PageHeader eyebrow="Product boundaries" title="Roadmap gates" description="Unresolved product decisions remain visible here, while implemented AI capabilities are described according to the current repository rather than the superseded manual-only Release 1 boundary." />
+    <PageHeader
+      eyebrow="Evidence-backed planning"
+      title="Roadmap"
+      description="Commit history shows what shipped. GitHub Issues and real epic labels show what has actually been raised. This page does not invent dates, priorities, or future commitments."
+    />
     <div className="roadmap-grid">
-      <Card className="roadmap-card"><div className="roadmap-card__icon"><Braces /></div><div><div className="card-header"><h2>Markup-defined hierarchy</h2><Badge tone="warning">Status: Open</Badge></div><p>The product must eventually create endeavors, tasks, and prompt placeholders from approved markup.</p><div className="roadmap-block"><strong>Blocked by</strong>{markup.length ? markup.map((decision) => <span key={decision.id}><CircleHelp size={14} /> {decision.title}</span>) : <span><CircleHelp size={14} /> Exact markup format approval</span>}</div><div className="inline-callout"><strong>Current behavior</strong><span>Manual CRUD is fully available. No custom language or parser has been invented.</span></div></div></Card>
-      <Card className="roadmap-card"><div className="roadmap-card__icon"><UsersRound /></div><div><div className="card-header"><h2>Collaboration</h2><Badge tone="warning">Status: Open</Badge></div><p>Collaboration is required at a high level, but its ownership, permission, replica, synchronization, invitation, and conflict model remain unresolved.</p><div className="roadmap-block"><strong>Blocked by</strong>{collaboration.map((decision) => <span key={decision.id}><CircleHelp size={14} /> {decision.title}</span>)}</div><div className="inline-callout"><strong>Current behavior</strong><span>Each Firebase UID has an owner-private workspace. No shared storage model is implied.</span></div></div></Card>
-      <Card className="roadmap-card"><div className="roadmap-card__icon"><Bot /></div><div><div className="card-header"><h2>AI execution boundary</h2><Badge tone="success">Implemented</Badge></div><p>Semantic Finder, Repurposer, Prompt Mixer, and Prompt Blocks use authenticated Netlify Functions as the current server-side Gemini boundary. Prompt Blocks executes only the inputs and ordered constraints needed for the current transformation.</p><div className="roadmap-block"><strong>Current safeguards</strong><span><LockKeyhole size={14} /> Gemini API key remains server-side</span><span><LockKeyhole size={14} /> Source Prompts are not overwritten by generation</span><span><LockKeyhole size={14} /> Prompt Blocks runtime values persist only on explicit save</span></div><div className="inline-callout"><strong>Still manual</strong><span>Legacy agentic-summary, generated-context, suggested-improvement, generated-mindset, and evaluation fields remain manually editable unless a dedicated implemented workflow says otherwise.</span></div></div></Card>
+      <Card className="roadmap-card">
+        <div className="roadmap-card__icon"><Braces /></div>
+        <div>
+          <div className="card-header"><h2>Prompt Blocks · #7</h2><Badge tone="success">MVP implemented</Badge></div>
+          <p>The `epic` Issue remains open, but the typed Prompt-processing DAG is implemented. Commit <code>b556e64</code> delivered the MVP and <code>7e45248</code> added beautification, print, compact run controls, output-intent warning, and reachable final output inspection.</p>
+          <div className="inline-callout"><strong>Scope rule</strong><span>The broader ideas written inside Issue #7 are not automatically treated as promised follow-up work.</span></div>
+        </div>
+      </Card>
+
+      <Card className="roadmap-card">
+        <div className="roadmap-card__icon"><GitBranch /></div>
+        <div>
+          <div className="card-header"><h2>CI/CD · #11</h2><Badge tone="success">Core implemented</Badge></div>
+          <p>The `epic` has real implementation evidence: frontend/backend quality gates, Docker runtime smoke testing, and gated Netlify/Render deployment hooks.</p>
+          <div className="roadmap-block"><strong>Still open</strong><span><Bug size={14} /> #16 asks why frontend-only changes trigger backend deployment; the current workflow is not path-split.</span></div>
+        </div>
+      </Card>
+
+      <Card className="roadmap-card">
+        <div className="roadmap-card__icon"><ServerCog /></div>
+        <div>
+          <div className="card-header"><h2>2-tier → 3-tier · #12</h2><Badge tone="warning">In progress</Badge></div>
+          <p>The `architecture` + `epic` Issue explicitly chooses Spring Boot. Commit <code>4a3cc23</code> added the Java 21/Spring Boot/Render foundation.</p>
+          <div className="inline-callout"><strong>Current boundary</strong><span>Vault CRUD still goes directly to Firebase and Gemini calls still use Netlify Functions, so the functional migration is not complete.</span></div>
+        </div>
+      </Card>
+
+      <Card className="roadmap-card">
+        <div className="roadmap-card__icon"><Bot /></div>
+        <div>
+          <div className="card-header"><h2>Other actual epics</h2><Badge tone="warning">Open</Badge></div>
+          <div className="roadmap-block">
+            <strong>GitHub-labelled epics</strong>
+            <span>#3 — configurable base prompts + revision history: partial Prompt Blocks-specific support only</span>
+            <span>#4 — architecture helper AI: no implementation evidence found</span>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="roadmap-card">
+        <div className="roadmap-card__icon"><Bug /></div>
+        <div>
+          <div className="card-header"><h2>Open Issue ledger</h2><Badge tone="neutral">Unscheduled</Badge></div>
+          <p>All 18 Issues are open in GitHub at this snapshot. Open status is kept separate from implementation evidence.</p>
+          <div className="roadmap-block">
+            <strong>No inferred ordering</strong>
+            {openIssues.map((issue) => <span key={issue}>{issue}</span>)}
+          </div>
+        </div>
+      </Card>
     </div>
   </>;
 }

@@ -223,3 +223,12 @@ No Firebase Admin service-account secret has been added to Render yet because ba
 ## 13. Reliability boundary
 
 Render Free plus a five-minute external monitor is appropriate for migration, development and low-cost validation, not a production SLA. The design must not silently redefine availability expectations simply because periodic pings reduce idle behavior.
+
+
+## 14. Current deployment coupling — Issue #16
+
+The GitHub Actions production workflow currently starts both host-specific deployment jobs after a successful `main` CI run. It does not yet use source-path-aware deployment conditions to suppress the backend deployment for a frontend-only change (or vice versa). GitHub Issue #16 records this behavior as open.
+
+## 15. Deployment-hook history warning
+
+Commit `54373c9` briefly tracked deployment-hook URLs in a local environment file. Commit `daa6f7b` removed that file, but Git history retains removed content. Treat those historical hooks as exposed and rotate them if they have not already been rotated. The values are not reproduced in documentation.

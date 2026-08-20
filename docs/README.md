@@ -1,25 +1,32 @@
 # EurekaVault Documentation
 
-This directory documents the **implemented EurekaVault codebase** as inspected from the supplied repository baseline and extended by the Prompt Blocks implementation delivery on 2026-08-19.
+This directory documents the **implemented EurekaVault codebase and evidence-backed GitHub roadmap** using `main` commit `7e45248a408e372088d18cab74faef5a79523075` as the evidence baseline. The distributed package includes the documentation/RoadmapPage cleanup itself on top of that baseline; no new Git commit SHA is invented.
 
-The documentation is intentionally implementation-led: the current source code and commit history are treated as the source of truth for what the product actually does. Older repository prose that conflicts with the implementation is treated as stale or superseded rather than repeated as current behavior.
+The documentation uses a strict distinction:
+
+- current code + commits define **implemented state**;
+- GitHub Issues/comments/labels define **explicitly raised open scope**;
+- no AI-inferred feature, date, priority, percentage, or initiative is treated as a product commitment.
 
 ## Documentation map
 
 | Document | Purpose |
 |---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Runtime architecture, component boundaries, Firebase structure, AI boundary, lifecycle and major data flows. |
-| [DATA-MODEL.md](DATA-MODEL.md) | Detailed persisted entities, fields, relationships, invariants and snapshot behavior. |
-| [FEATURES.md](FEATURES.md) | Current feature catalog with implementation dates and commit evidence. |
-| [VERSION-CONTROL.md](VERSION-CONTROL.md) | Prompt-local history, Git-style diffs, restore behavior and vault-level Global Versions. |
-| [AI-SYSTEM.md](AI-SYSTEM.md) | Gemini integration, Netlify functions, payload boundaries, retrieval learning, Repurposer, Mixer, and Prompt Blocks. |
-| [AI_PIPELINES.md](AI_PIPELINES.md) | Canonical per-feature AI payload, prompting, validation, privacy, persistence, and Prompt Blocks execution contracts. |
-| [AUTHENTICATION-AND-SECURITY.md](AUTHENTICATION-AND-SECURITY.md) | Firebase authentication, owner scoping, server-side AI request verification and security assumptions. |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Vite/Netlify/Firebase deployment architecture and environment variables. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Runtime architecture, frontend/Firebase boundary, Spring Boot migration foundation, AI boundary, and data flow. |
+| [DATA-MODEL.md](DATA-MODEL.md) | Persisted entities, fields, relationships, invariants, and snapshot behavior. |
+| [FEATURES.md](FEATURES.md) | Current feature catalog plus explicit open GitHub requests. |
+| [VERSION-CONTROL.md](VERSION-CONTROL.md) | Prompt-local history, Git-style diffs, restore behavior, and Global Versions. |
+| [AI-SYSTEM.md](AI-SYSTEM.md) | Gemini integration and feature-level AI behavior. |
+| [AI_PIPELINES.md](AI_PIPELINES.md) | Canonical AI payload, validation, privacy, persistence, and Prompt Blocks execution contracts. |
+| [AUTHENTICATION-AND-SECURITY.md](AUTHENTICATION-AND-SECURITY.md) | Firebase auth, owner scoping, AI request verification, secret boundaries, and history-related secret handling. |
+| [CI-CD.md](CI-CD.md) | GitHub Actions quality gates and deployment orchestration, including the current Issue #16 limitation. |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Netlify/Firebase/Render deployment topology and environment responsibilities. |
 | [TESTING.md](TESTING.md) | Current automated test surface and validation commands. |
-| [IMPLEMENTATION-HISTORY.md](IMPLEMENTATION-HISTORY.md) | Evidence-based chronology of the product's development. |
-| [DECISION_LOG.md](DECISION_LOG.md) | Current, superseded and still-open architectural/product decisions. |
-| [intellectvault-comprehensive-reference.tex](intellectvault-comprehensive-reference.tex) | Pre-Prompt-Blocks comprehensive reference snapshot. For Prompt Blocks and post-2026-08-18 architecture, the Markdown docs above are authoritative until the LaTeX reference is deliberately regenerated. |
+| [IMPLEMENTATION-HISTORY.md](IMPLEMENTATION-HISTORY.md) | Commit-backed chronology through Prompt Blocks and CI/CD. |
+| [DECISION_LOG.md](DECISION_LOG.md) | Evidence-backed decisions and explicit open requests; unsupported pseudo-decisions removed. |
+| [intellectvault-comprehensive-reference.tex](intellectvault-comprehensive-reference.tex) | Current LaTeX comprehensive reference (legacy filename retained for repository compatibility). |
+| [intellectvault-comprehensive-reference.pdf](intellectvault-comprehensive-reference.pdf) | Rendered current comprehensive reference. |
+| [`roadmap/`](roadmap/) | GitHub-Issue/epic + commit-backed roadmap evidence. |
 | `features/` | Deep feature-specific documentation. |
 
 ## Feature deep dives
@@ -37,30 +44,17 @@ The documentation is intentionally implementation-led: the current source code a
 
 ## Current product shape
 
-EurekaVault is no longer accurately described as only a manual prompt CRUD application. The current implementation combines:
+EurekaVault currently combines:
 
-1. A private hierarchical Prompt knowledge base.
-2. Automatic Prompt-local version history and Git-style line comparison.
-3. Vault-level immutable Global Version snapshots.
-4. Prompt file attachments.
-5. Directed Prompt lineage relationships and a downloadable graph.
-6. Mindsets, scoped Preferences and a product Decision Log.
-7. Activity tracking and achievements.
-8. Conventional full-text Prompt/history search.
-9. Gemini-powered semantic Prompt retrieval.
-10. User-confirmed retrieval feedback that becomes bounded few-shot guidance for later Finder searches.
-11. Gemini-powered Prompt repurposing.
-12. Gemini-powered multi-Prompt synthesis through Prompt Mixer.
-13. Prompt Blocks: a typed visual Prompt-transformation DAG with reusable pipelines, explicit constraints/priorities, inspectable intermediate values, and editable Firebase-backed transformation prompts.
+1. owner-private Firebase-backed Prompt knowledge management;
+2. automatic Prompt-local version history and Git-style comparison;
+3. Global Version snapshots;
+4. Prompt files and lineage relationships;
+5. Mindsets, Preferences, Decisions, activity, and Achievements;
+6. conventional and Gemini-assisted Prompt retrieval;
+7. Gemini Repurposer and Mixer workflows;
+8. Prompt Blocks typed visual methodology pipelines;
+9. a Spring Boot/Render backend **foundation** for the explicit 3-tier migration;
+10. GitHub Actions quality/deployment gates.
 
-## Historical drift notes
-
-Earlier repository snapshots contained Release 1 prose that described AI as unimplemented and referenced an unlimited-folder hierarchy. Current implementation and current documentation supersede those statements. The direct hierarchy remains:
-
-```text
-Endeavor -> Task -> Prompt -> Prompt Version
-```
-
-This documentation does not silently rewrite repository history. Superseded decisions are retained and labeled in [DECISION_LOG.md](DECISION_LOG.md).
-
-- [`CI-CD.md`](CI-CD.md) — GitHub Actions test gates, deployment orchestration, required secrets, and host auto-deploy rules.
+The backend migration is deliberately documented as unfinished because the browser still performs direct Firebase CRUD and current Gemini calls still use Netlify Functions.

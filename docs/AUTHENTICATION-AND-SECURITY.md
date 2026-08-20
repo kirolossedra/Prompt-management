@@ -1,135 +1,93 @@
 # Authentication and Security
 
-## 1. Authentication provider
+**Snapshot:** `main` at `7e45248`.
 
-EurekaVault uses Firebase Authentication with Email/Password accounts.
+## 1. Authentication
 
-Supported account operations in `AuthContext`:
+EurekaVault uses Firebase Authentication for the browser session. Implemented account operations include sign-up, sign-in, sign-out, password reset, verification email/resend, and session-aware application access.
 
-- sign up with display name, workspace name, email and password;
-- sign in;
-- sign out;
-- password reset email;
-- verification email on account creation;
-- verification email resend.
+## 2. Owner-scoped Firebase data
 
-## 2. Workspace initialization
+The primary persisted workspace is:
 
-On sign-up, the application:
-
-1. creates the Firebase account;
-2. updates the Firebase profile display name;
-3. initializes `intellectVault/users/{{uid}}/profile`;
-4. seeds initial Decision records under the same UID;
-5. sends an email-verification message.
-
-## 3. Owner-private Realtime Database subtree
-
-For EurekaVault records, `database.rules.json` requires:
-
-```json
-"intellectVault": {
-  "users": {
-    "$uid": {
-      ".read": "auth != null && auth.uid === $uid",
-      ".write": "auth != null && auth.uid === $uid"
-    }
-  }
-}
+```text
+intellectVault/users/{uid}/
 ```
 
-This means a signed-in user can read/write only the vault stored under that user's Firebase UID.
+Realtime Database rules require the authenticated Firebase UID to match the path UID for reads/writes. Client-side UI checks are convenience controls; Realtime Database rules are the authorization boundary.
 
-## 4. Public Firebase web configuration
+The current workspace is owner-private. This is a description of current security behavior, not a roadmap commitment to add multi-user collaboration.
 
-The Firebase browser configuration identifies the Firebase project and is not treated as a secret. Authorization must be enforced by Firebase Authentication plus Realtime Database rules.
+## 3. Gemini secret boundary
 
-## 5. Gemini secret isolation
+Current Gemini features are:
 
-`GEMINI_API_KEY` is server-side only. `.env.example` explicitly warns not to prefix it with `VITE_`, because Vite-prefixed variables are bundled for the browser.
+- Semantic Prompt Finder;
+- Prompt Repurposer;
+- Prompt Mixer;
+- Prompt Blocks AI transformations.
 
-## 6. AI request authentication
+They use Netlify Functions so `GEMINI_API_KEY` remains server-side and is not compiled into the Vite browser bundle.
 
-For Finder, Repurposer and Mixer:
+Each AI function receives a Firebase ID token and verifies that the authenticated identity matches the requested user context before invoking Gemini.
 
-1. the browser obtains a Firebase ID token from the active user;
-2. the token is sent as a Bearer token to the Netlify Function;
-3. the function looks up the token through Firebase Identity Toolkit;
-4. the verified `localId` must match the request UID;
-5. only then can the function call Gemini.
-
-This prevents a caller from merely supplying a different user's UID in the request body.
-
-## 7. Retrieval prompt-injection defense
-
-The Semantic Prompt Finder sends Prompt text to a model for retrieval, so its system instruction explicitly classifies stored Prompt fields and historical feedback examples as **data, not instructions**. It forbids following instructions embedded in those records and constrains results to Prompt IDs from the authoritative supplied corpus.
-
-## 8. Output validation
-
-AI response handlers validate/normalize structured output before returning it to the UI. Finder in particular rejects invented Prompt IDs by checking against the current set of supplied IDs.
-
-## 9. User data minimization by feature
-
-The AI features intentionally send different bounded payloads rather than the full Firebase user record.
+## 4. Data minimization by AI feature
 
 ### Finder
 
-Sends active Prompt retrieval fields + direct relationship context + bounded confirmed Finder examples.
-
-Does not send attachments, version history, profile, Mindsets, Preferences or Decisions.
+Sends the bounded active Prompt corpus needed for semantic ranking plus bounded user-confirmed retrieval examples. It does not require the entire persisted vault or all historical versions.
 
 ### Repurposer
 
-Sends the selected source Prompt plus hierarchy labels and the explicit repurpose objective.
+Sends one selected source Prompt and the explicit repurpose objective.
 
 ### Mixer
 
-Sends only the non-empty source windows and optional direction. It does not send relationships, versions, attachments, Mindsets, Preferences, activity or achievements.
+Sends only the selected/pasted non-empty Prompt sources and optional mix direction.
 
-## 10. Gemini storage setting
+### Prompt Blocks
 
-The inspected Finder implementation sets `store: false` on the Gemini interaction request.
-
-## 11. Current collaboration boundary
-
-The current data model is owner-private rather than collaborative. There is no implemented role/invitation/shared-edit model for multiple users in one vault. Any future collaboration system must define ownership and authorization semantics before Realtime Database rules can safely broaden access.
-
-## 12. Security-sensitive operational requirements
-
-- Keep real Gemini keys in Netlify environment-variable configuration, never the repository.
-- Deploy the EurekaVault owner-only Realtime Database rule.
-- Treat client-side checks as usability validation, not authorization.
-- Preserve server-side Firebase ID-token verification for every AI function.
-- If a conventional backend replaces Netlify Functions, move AI secret handling and token validation to that backend rather than into the browser.
-
-
-## 8. Prompt Blocks security and data minimization
-
-Prompt Blocks preserves the current application security boundaries rather than using the emerging Spring Boot service as an implicit migration target.
-
-### Saved data
-
-Saved pipeline definitions and editable transformation prompts live under the authenticated owner's existing Firebase subtree. The current Realtime Database owner rule therefore applies automatically. Runtime intermediate/final generated values are not persisted merely because a pipeline ran.
-
-### Gemini execution
-
-AI-based Prompt Blocks operations call `/.netlify/functions/prompt-block-transform`. The client supplies a current Firebase ID token; the function verifies the token before calling Gemini. `GEMINI_API_KEY` remains server-only.
-
-A block call is deliberately scoped to the information required for that block:
+Each executing AI block receives only:
 
 - the selected operation;
-- the database-resolved transformation prompt for that operation;
-- only the required content inputs;
-- only constraints connected to that transformation, in explicit priority order.
+- that operation's database-resolved transformation instruction;
+- current required content inputs;
+- constraints connected to that block, ordered by explicit priority;
+- authentication/user identifiers required by the server boundary.
 
-The function does not require the whole vault, attachments, achievements, unrelated Prompt history, relationship graph, activity history or account profile.
+The entire vault, unrelated Prompt history, attachments, activity, and the whole pipeline runtime are not required for one block call.
 
-### Editable transformation prompts
+## 5. Source-record safety
 
-Initial thorough transformation instructions are stored in a React constants module and written to Firebase only when the corresponding owner record is missing. After seeding, Firebase is authoritative and code defaults do not overwrite edits. The Prompt Blocks workspace exposes the records for owner inspection/editing.
+AI generation is non-destructive by default:
 
-Because the initial seeding is performed by browser code, the seed strings are technically present in the built JavaScript bundle even though they are not rendered as ordinary UI content. They must therefore **not** be treated as secrets. If future product policy requires confidential system prompts, seeding and authoritative prompt retrieval must move behind the server/backend boundary.
+- Finder is read-only except explicit feedback recording;
+- Repurposer/Mixer candidates persist only after explicit save;
+- Prompt Blocks runs do not mutate referenced Prompts, Prompt Versions, or Mindsets;
+- Prompt Blocks runtime values are ephemeral unless explicitly saved through the normal Prompt/version lifecycle.
 
-### Source-record safety
+## 6. Editable Prompt Blocks transformation instructions
 
-Pipeline execution is read-only with respect to referenced Prompts, Prompt Versions and Mindsets. A run cannot mutate them. Saving generated text requires an explicit user action and reuses normal Prompt creation/versioning methods.
+Default transform instructions are shipped as client constants and seeded to the owner's Firebase subtree only when a corresponding record is absent. After seeding, the Firebase record is authoritative and owner-editable.
+
+Because the initial seed strings exist in the browser bundle, they are **not secrets**. Confidential instructions would require a different server-side storage/retrieval design; no such design is claimed as current scope.
+
+## 7. Spring Boot migration security boundary
+
+GitHub Issue #12 explicitly selects Spring Boot for the 2-tier → 3-tier migration, and `4a3cc23` creates the backend foundation. No Firebase user-data CRUD or Gemini operation has yet been moved behind Spring Boot.
+
+When an operation is actually migrated, the server must authenticate the request from a verified identity rather than trusting a browser-supplied UID. The current repository does not contain a Firebase Admin credential for Render and does not pretend the functional migration is already complete.
+
+## 8. Deployment-hook secret history
+
+Commit `54373c9` accidentally tracked a local environment file containing Netlify/Render deployment-hook URLs. Commit `daa6f7b` removed that file after the gitignore naming problem was recognized.
+
+Removing a secret from the current tree does **not** remove it from Git history. Those deployment hooks should be treated as exposed and rotated if they have not already been rotated. This document intentionally does not reproduce their values.
+
+## 9. Security-sensitive operational requirements
+
+- Keep Gemini and deployment secrets out of tracked files and browser-bundled `VITE_` variables.
+- Keep owner-only Firebase rules deployed while the current owner-private model is in use.
+- Preserve Firebase ID-token verification for server-side AI calls.
+- Treat Prompt/Prompt Block text as user-controlled content, not trusted server instructions.
+- Maintain the distinction between a deployable Spring Boot service and a functionally migrated authenticated backend.

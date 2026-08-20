@@ -1,182 +1,121 @@
-# Decision Log
+# EurekaVault Decision Log
 
-This file distinguishes **current finalized decisions**, **superseded historical decisions**, and **still-open decisions**. Superseded entries are retained because they explain how the product evolved.
+**Snapshot:** `main` at `7e45248`.
 
-## Current finalized decisions
+This log records decisions only when current implementation, Git history, a GitHub Issue/comment, or an explicit product-owner statement supports them. It no longer manufactures “open decisions” merely because a feature is absent.
+
+## Current decisions with evidence
 
 ### Direct hierarchy
 
-**Status:** Finalized
-
-The hierarchy is:
+**State:** implemented.
 
 ```text
-Endeavor -> Task -> Prompt -> Prompt Version
+Endeavor → Task → Prompt → Prompt Version
 ```
 
-There is no Folder entity in the current domain model.
+No Folder entity exists in the current domain model.
 
-### Automatic Prompt history
+### Automatic Prompt-local history + deliberate Global Versions
 
-**Status:** Finalized
+**State:** implemented.
 
-Prompt creation and saved Prompt changes create Prompt-local historical snapshots automatically. Restoring an old snapshot produces another new version instead of deleting later history.
+Prompt saves create Prompt-local historical snapshots. Global Versions are separate deliberate vault-level snapshots.
 
-### Prompt-local vs vault-global versions
+### Owner-private workspace
 
-**Status:** Finalized
+**State:** implemented current boundary.
 
-Each Prompt has automatic local versions. Separately, the owner may explicitly release a Global Version containing a snapshot of the current vault.
+Realtime Database data is owner-scoped under `intellectVault/users/{uid}`. This statement does not imply a future collaboration roadmap.
 
-### Private workspace
+### Explicit AI workflows use a server-side key boundary
 
-**Status:** Finalized
+**State:** implemented.
 
-The current product is owner-private. Realtime Database access under `intellectVault/users/{{uid}}` is restricted to the authenticated matching UID.
-
-### CRUD and lifecycle
-
-**Status:** Finalized for current implemented content model
-
-Implemented content records support create/read/update and archive/restore where applicable. Permanent deletion is implemented with dependency safety rather than universally forbidden.
-
-### AI exists, but only in explicit AI workflows
-
-**Status:** Finalized by implementation
-
-AI calls now exist in Semantic Prompt Finder, Prompt Repurposer and Prompt Mixer. Manual analysis/context fields on records do not automatically trigger AI calls.
-
-### AI secret boundary
-
-**Status:** Finalized by implementation
-
-Gemini calls use Netlify Functions so `GEMINI_API_KEY` remains server-side. AI functions authenticate the Firebase session before calling Gemini.
+Semantic Finder, Repurposer, Mixer, and Prompt Blocks execute Gemini requests through authenticated Netlify Functions so `GEMINI_API_KEY` is not bundled into the browser.
 
 ### Mindset Construction is deterministic
 
-**Status:** Finalized by implementation
+**State:** implemented.
 
-Mindset Construction does not call Gemini. It assembles selected Prompt text deterministically, allows the owner to edit the result and saves it as a normal Mindset.
+Mindset Construction assembles selected Prompt material without a Gemini call and remains editable before save.
 
-### Prompt relationships are explicit lineage
+### Prompt relationships are explicit directed lineage
 
-**Status:** Finalized by implementation
+**State:** implemented current model.
 
-Prompt relationships use directed `inspired-by` semantics, support cross-Endeavor links, prevent cycles/duplicates and are created explicitly by the user.
+`inspired-by / inspires` links are explicit, cycle-safe, and user-created. GitHub Issue #15 proposes an alternative “instance” concept, but that is an open design proposal rather than an approved replacement.
 
-### AI-generated Repurposer output does not create an automatic lineage link
+### Repurposer generation does not silently create lineage
 
-**Status:** Finalized by implementation
+**State:** implemented.
 
-Saving a repurposed Prompt creates a new Prompt and Version 1, but no Prompt relationship is automatically created. The user can add one manually if semantically appropriate.
+Saving Repurposer output creates a normal Prompt/version artifact. A relationship is added only if the user explicitly creates one.
 
-### Incremental migration to a Spring Boot 3-tier architecture
+### EurekaVault identity direction
 
-**Status:** Finalized by product-owner direction on 2026-08-19
+**State:** partially implemented; GitHub Issue #9 remains open.
 
-EurekaVault will migrate incrementally from the current browser-to-Firebase architecture to a 3-tier architecture with a Spring Boot backend. The migration is deliberately non-big-bang: existing working paths remain active until bounded backend replacements are implemented and verified.
+The repository contains EurekaVault naming, epsilon identity, Alexandrian lighthouse motif, Greek identity text, and the light-blue/gold/royal-red palette. The open Issue state is retained rather than declaring the rebrand “finished.”
 
-The backend deployment target is Render. During the low-cost migration/testing phase, UptimeRobot is intended to call the backend health endpoint every 5 minutes. Existing Netlify Functions remain in place until their responsibilities are explicitly migrated to Spring Boot.
+### Incremental Spring Boot 3-tier migration
 
-## Superseded historical decisions
+**State:** explicitly selected and in progress.
 
-### "Release 1 is manual-first and performs no AI calls"
+GitHub Issue #12 is labeled `architecture` + `epic`; the owner comment says **“It's gonna be springboot.”** Commit `4a3cc23` created the Java 21/Spring Boot backend foundation.
 
-**Historical status:** Superseded on 2026-08-08.
+The migration is not called complete because current vault CRUD still talks directly to Firebase and current Gemini features still use Netlify Functions.
 
-Semantic Prompt Finder, Prompt Repurposer and Prompt Mixer now make authenticated Gemini calls through Netlify Functions.
+### CI/CD as release gate
 
-### "Prompts have manual version history"
+**State:** core implemented; GitHub Issue #11 remains open.
 
-**Historical status:** Superseded by the automatic Prompt-history workflow introduced by 2026-08-07.
+Commits `3d2bfa9` and `54373c9` establish GitHub Actions quality gates and gated Netlify/Render deployment hooks, followed by CI fixes. Issue #16 remains open because frontend-only changes can still lead to the backend deployment job under the current non-path-split workflow.
 
-Prompt saves now create history automatically.
+### Prompt Blocks is deterministic methodology orchestration, not generic autonomous agents
 
-### "Changes support local and global commits with manual commit-to-commit summaries"
+**State:** MVP implemented; GitHub Issue #7 remains open.
 
-**Historical status:** Partially superseded / terminology evolved.
+Commit `b556e64` implements a typed DAG with explicit inputs, transformations, constraints, outputs, graph validation, topological execution, inspectable intermediates, and explicit persistence. Commit `7e45248` refines the live workspace.
 
-Legacy commit-oriented data structures remain, but the current UI is centered on automatic Prompt Versions and deliberate Global Versions.
+The larger Issue #7 text contains additional possibilities. Their presence in the Issue does not, by itself, make them approved roadmap commitments.
 
-### "Permanent historical deletion remains undecided"
+## Superseded historical statements
 
-**Historical status:** Superseded for implemented record lifecycle.
+### “Release 1 performs no AI calls”
 
-Permanent deletion is now implemented with dependency checks.
+Superseded by the 2026-08-08 AI feature commits and later Prompt Blocks implementation.
 
-### "AI execution/generation/evaluation is deliberately not implemented"
+### “Prompt versions are manual commits”
 
-**Historical status:** Superseded on 2026-08-08 for the explicit AI tools.
+Superseded by automatic Prompt-local history introduced in the versioning workflow.
 
-This statement still appears in stale repository documentation and the in-app Roadmap page but no longer describes implementation reality.
+### “No backend exists”
 
-## Still-open product/architecture decisions
+Superseded as a deployment statement by the Spring Boot foundation. It remains true that the **functional application data path** has not fully migrated behind that backend.
 
-### Markup format
+## Explicit open GitHub decisions / requests
 
-The exact custom markup format remains unresolved. No markup parser should be documented as implemented until a format is approved and code exists.
+The following are open because there is actual GitHub evidence:
 
-### Collaboration
+- #2 — AI version comparison;
+- #3 (`epic`) — owner-customizable base prompts + revision history;
+- #4 (`epic`) — architecture helper AI;
+- #5 — AI commit/change messages;
+- #6 — Explorer hover + AI summary;
+- #8 — New Prompt lingering bug;
+- #9 — rebrand completion;
+- #10 — broad frontend overhaul;
+- #12 (`epic`) — remaining 3-tier migration work;
+- #13 — Favorite/bookmark Prompts;
+- #14 — mobile Decisions bottom-bar bug;
+- #15 — relationship-instance model proposal;
+- #16 — frontend/backend deployment coupling.
 
-Ownership, roles, permissions, invitations, synchronization, replica behavior and conflict handling are not finalized. The current Firebase rule is intentionally owner-only.
+Issues #7, #11, #17, and #18 also remain open in GitHub even though substantial/direct implementation exists.
 
-### Mindset inheritance/conflict semantics
+## Removed pseudo-decisions
 
-Current Mindsets have scopes and can be constructed from Prompts, but a formal inheritance/conflict-resolution system is not established in the inspected code.
+Older generated documentation listed markup parsing, collaboration, formal Mindset inheritance/conflict rules, Preference precedence, and workspace deletion as if they were confirmed future product decisions. No corresponding GitHub Issue/epic exists in the inspected snapshot. They are therefore removed from this decision log as roadmap decisions.
 
-### Preference precedence
-
-Preferences can be scoped globally, by Endeavor or by Task. A formal merge/override precedence model remains an architectural/product decision.
-
-### Account/workspace deletion
-
-The exact full-account deletion and whole-workspace deletion policy is not represented as a finalized product workflow in the inspected code.
-
-## Current implementation boundary after Prompt Blocks delivery
-
-Prompt Rating remains unimplemented in the supplied baseline.
-
-Prompt Blocks is implemented in the 2026-08-19 delivery with the following finalized product decisions:
-
-- Prompt Blocks is a typed Prompt-transformation DAG, not a generic autonomous-agent graph.
-- Input, Transformation, Constraint and Output blocks remain semantically distinct.
-- Prompt/content flow and Constraint flow use different typed connections.
-- Mindset constraints reference existing Mindset entities rather than duplicate constraint records.
-- Multiple constraints use explicit, editable integer priority; lower numbers take precedence.
-- The v1 execution model is deterministic and acyclic; loops/conditional routing are not silently introduced.
-- Running a pipeline never overwrites source Prompts. Generated values remain runtime-only unless explicitly saved.
-- Saved pipelines are first-class owner artifacts with create/update/archive/restore/delete lifecycle.
-- Quick pipelines do not require persistence.
-- System Prompt inputs support following the current Prompt or pinning a specific Prompt Version.
-- Transformation prompts are product behavior: initial thorough defaults are seeded only when missing, then the owner's Firebase records are authoritative and editable.
-- Prompt Blocks retains the existing authenticated Netlify/Gemini boundary while Spring Boot remains an emerging infrastructure-only backend.
-- Addition performs structure-aware semantic incorporation rather than literal append. Subtraction performs semantic removal while preserving unrelated meaning rather than literal string deletion.
-- Dedicated pipeline-local automatic version history is deferred; saved pipeline definitions are included in Global Version snapshots/export so future methodology versioning can be introduced deliberately.
-
-### CI must gate both frontend and backend production deployment
-
-**Status:** Finalized by product-owner direction on 2026-08-19
-
-Before any functional 2-tier-to-3-tier migration continues, EurekaVault will establish substantial automated validation for both frontend and Spring Boot backend. GitHub Actions is the common validation/release gate. Frontend checks include lint, Vitest, production build and Netlify Function syntax validation. Backend checks include Spring Boot unit/configuration tests, integration tests, Maven `verify`, Docker image build and a live container health/exposure smoke test.
-
-Production deployment is automatic only after successful CI on a push to `main`. GitHub Actions triggers the existing Netlify deployment and the Render backend deployment using protected deploy-hook secrets. Native host auto-deploy should be disabled once this path is active so a host cannot bypass CI by deploying immediately on push.
-
-### Render backend runs as Docker -> JVM -> Spring Boot
-
-**Status:** Finalized and verified on 2026-08-19
-
-The Render backend is a Docker Web Service rooted at `backend/`. Render builds `backend/Dockerfile`; the runtime image contains an Eclipse Temurin Java 21 JRE that runs the packaged Spring Boot JAR and embedded Tomcat. The public service is `https://eurekavault-backend.onrender.com`, and `/actuator/health` was verified externally as `UP`.
-
-The current Render service was created manually through the Web Service UI rather than from a Blueprint. `render.yaml` therefore records the desired/recreation configuration but is not automatically authoritative for the existing service unless it is later placed under Blueprint management.
-
-### UptimeRobot is an external monitor, not a backend host or deployment system
-
-**Status:** Finalized and configured on 2026-08-19
-
-UptimeRobot independently requests the Render health endpoint every 5 minutes using its free monitoring interval. It does not host Spring Boot, perform deployments, run CI, or replace application observability. Its present purpose is external reachability monitoring and periodic traffic during the Render Free migration/testing phase.
-
-### Netlify direct Git-triggered builds are skipped; build-hook deploys remain active
-
-**Status:** Finalized on 2026-08-19
-
-GitHub Actions is the frontend release gate. Netlify builds must remain active because the production workflow uses a Netlify build hook, but ordinary Git pushes must not bypass CI. `netlify.toml` therefore uses `ignore = "exit 0"`: ordinary Git-triggered builds are skipped, while Netlify's build-hook path bypasses the ignore command and can run after CI succeeds. The build-hook URL is stored locally only in git-ignored `.env.local` for developer reference and separately in GitHub Actions as `NETLIFY_BUILD_HOOK_URL` for hosted workflow execution.
+The code may still document current facts — for example, “the workspace is owner-private” — without converting those facts into a future commitment.

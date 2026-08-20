@@ -1,49 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="920" height="520" viewBox="0 0 920 520" role="img" aria-labelledby="title desc">
-<title id="title">EurekaVault weekly development velocity</title>
-<desc id="desc">Engineering, feature, architecture and overall product delivery indices for three calendar Agile weeks. Week 3 is partial through August 18, 2026.</desc>
-<rect width="100%" height="100%" fill="white"/>
-<line x1="80" y1="400.0" x2="890" y2="400.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="68" y="405.0" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#374151">0</text>
-<line x1="80" y1="328.0" x2="890" y2="328.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="68" y="333.0" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#374151">20</text>
-<line x1="80" y1="256.0" x2="890" y2="256.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="68" y="261.0" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#374151">40</text>
-<line x1="80" y1="184.0" x2="890" y2="184.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="68" y="189.0" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#374151">60</text>
-<line x1="80" y1="112.0" x2="890" y2="112.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="68" y="117.0" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#374151">80</text>
-<line x1="80" y1="40.0" x2="890" y2="40.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="68" y="45.0" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#374151">100</text>
-<line x1="80" y1="40" x2="80" y2="400" stroke="#111827"/>
-<line x1="80" y1="400" x2="890" y2="400" stroke="#111827"/>
-<text x="80.0" y="428" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#111827">W1</text>
-<text x="485.0" y="428" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#111827">W2</text>
-<text x="890.0" y="428" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#111827">W3*</text>
-<polyline points="80.0,40.0 485.0,400.0 890.0,245.2" fill="none" stroke="#111827" stroke-width="3"/>
-<circle cx="80.0" cy="40.0" r="4.5" fill="white" stroke="#111827" stroke-width="2"/>
-<circle cx="485.0" cy="400.0" r="4.5" fill="white" stroke="#111827" stroke-width="2"/>
-<circle cx="890.0" cy="245.2" r="4.5" fill="white" stroke="#111827" stroke-width="2"/>
-<polyline points="80.0,40.0 485.0,400.0 890.0,299.2" fill="none" stroke="#4b5563" stroke-width="3" stroke-dasharray="8 4"/>
-<circle cx="80.0" cy="40.0" r="4.5" fill="white" stroke="#4b5563" stroke-width="2"/>
-<circle cx="485.0" cy="400.0" r="4.5" fill="white" stroke="#4b5563" stroke-width="2"/>
-<circle cx="890.0" cy="299.2" r="4.5" fill="white" stroke="#4b5563" stroke-width="2"/>
-<polyline points="80.0,40.0 485.0,400.0 890.0,256.0" fill="none" stroke="#6b7280" stroke-width="3" stroke-dasharray="3 3"/>
-<circle cx="80.0" cy="40.0" r="4.5" fill="white" stroke="#6b7280" stroke-width="2"/>
-<circle cx="485.0" cy="400.0" r="4.5" fill="white" stroke="#6b7280" stroke-width="2"/>
-<circle cx="890.0" cy="256.0" r="4.5" fill="white" stroke="#6b7280" stroke-width="2"/>
-<polyline points="80.0,40.0 485.0,400.0 890.0,274.0" fill="none" stroke="#9ca3af" stroke-width="3" stroke-dasharray="12 4 2 4"/>
-<circle cx="80.0" cy="40.0" r="4.5" fill="white" stroke="#9ca3af" stroke-width="2"/>
-<circle cx="485.0" cy="400.0" r="4.5" fill="white" stroke="#9ca3af" stroke-width="2"/>
-<circle cx="890.0" cy="274.0" r="4.5" fill="white" stroke="#9ca3af" stroke-width="2"/>
-<text x="460.0" y="22" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111827">Weekly Development Velocity (0–100 normalized index)</text>
-<text x="20" y="220.0" transform="rotate(-90 20 220.0)" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#374151">Delivery / Velocity Index</text>
-<text x="460.0" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">W1 Aug 3–9 · W2 Aug 10–16 · W3* Aug 17–23 (partial through Aug 18)</text>
-<line x1="80" y1="495" x2="108" y2="495" stroke="#111827" stroke-width="3"/>
-<text x="116" y="500" font-family="Arial, sans-serif" font-size="12" fill="#111827">Engineering Activity</text>
-<line x1="275" y1="495" x2="303" y2="495" stroke="#4b5563" stroke-width="3" stroke-dasharray="8 4"/>
-<text x="311" y="500" font-family="Arial, sans-serif" font-size="12" fill="#111827">Feature Delivery</text>
-<line x1="470" y1="495" x2="498" y2="495" stroke="#6b7280" stroke-width="3" stroke-dasharray="3 3"/>
-<text x="506" y="500" font-family="Arial, sans-serif" font-size="12" fill="#111827">Architecture Delivery</text>
-<line x1="665" y1="495" x2="693" y2="495" stroke="#9ca3af" stroke-width="3" stroke-dasharray="12 4 2 4"/>
-<text x="701" y="500" font-family="Arial, sans-serif" font-size="12" fill="#111827">Overall Product Delivery</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360" role="img" aria-labelledby="title desc">
+  <title id="title">EurekaVault weekly commit count</title>
+  <desc id="desc">23 commits from August 3 to 9, zero from August 10 to 16, and 19 from August 17 through the August 20 snapshot.</desc>
+  <rect width="900" height="360" fill="white"/>
+  <text x="48" y="42" font-family="sans-serif" font-size="22" font-weight="700" fill="#111">Weekly Git commit count</text>
+  <text x="48" y="68" font-family="sans-serif" font-size="13" fill="#555">Historical activity only — not a productivity target or forecast</text>
+  <line x1="70" y1="290" x2="850" y2="290" stroke="#999"/>
+  <line x1="70" y1="100" x2="70" y2="290" stroke="#999"/>
+  <rect x="140" y="106" width="130" height="184" rx="5" fill="#444"/>
+  <rect x="385" y="290" width="130" height="0" rx="5" fill="#777"/>
+  <rect x="630" y="138" width="130" height="152" rx="5" fill="#555"/>
+  <text x="205" y="96" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#111">23</text>
+  <text x="450" y="278" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#111">0</text>
+  <text x="695" y="128" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#111">19*</text>
+  <text x="205" y="320" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#333">Aug 3–9</text>
+  <text x="450" y="320" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#333">Aug 10–16</text>
+  <text x="695" y="320" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#333">Aug 17–23*</text>
+  <text x="695" y="342" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#555">*partial through Aug 20 UTC</text>
 </svg>
