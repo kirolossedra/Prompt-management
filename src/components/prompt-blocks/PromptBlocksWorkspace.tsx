@@ -13,7 +13,6 @@ import type {
   PromptBlockConnection,
   PromptBlockKind,
   PromptBlockNodeDefinition,
-  PromptBlockPipeline,
   PromptBlockRunNodeState,
   PromptBlockRunState,
 } from "../../types/domain";
